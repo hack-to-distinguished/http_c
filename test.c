@@ -38,7 +38,7 @@ int main(void) {
 
   // accept incoming connection
   foreign_addr_size = sizeof(foreign_addr);
-  char *msg = "deauihfiurawhgiuewhfiuwrehfiuwehfiu";
+  char *msg = "Fuck you!";
   int len, bytes_sent;
   len = strlen(msg);
   while (1) {
