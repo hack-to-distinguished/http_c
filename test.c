@@ -8,7 +8,7 @@
 #define PORT 8080
 #define BACKLOG 10
 
-int main() {
+int main(void) {
   struct sockaddr_storage foreign_addr;
   struct sockaddr_in server_addr; // struct holds server address info
   socklen_t foreign_addr_size;
@@ -38,9 +38,18 @@ int main() {
 
   // accept incoming connection
   foreign_addr_size = sizeof(foreign_addr);
-  // accept connection and get new file descriptor which will be used only for
-  // the lifecycle of that connection, the original socket fd of the server will
-  // stay intact in order to listen for more possible connections in the future
-  int current_connection_fd =
-      accept(server_fd, (struct sockaddr *)&foreign_addr, &foreign_addr_size);
+  char *msg = "deauihfiurawhgiuewhfiuwrehfiuwehfiu";
+  int len, bytes_sent;
+  len = strlen(msg);
+  while (1) {
+    // accept connection and get new file descriptor which will be used only for
+    // the lifecycle of that connection, the original socket fd of the server
+    // will stay intact in order to listen for more possible connections in the
+    // future
+
+    int current_connection_fd =
+        accept(server_fd, (struct sockaddr *)&foreign_addr, &foreign_addr_size);
+    send(current_connection_fd, msg, len, 0);
+    close(current_connection_fd);
+  }
 }
