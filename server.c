@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 #define MYPORT "8080"
-#define BACKLOG 100 // how many pending connections queue will hold
+#define BACKLOG 10 // how many pending connections queue will hold
 
 void error(const char *msg) {
     perror(msg);
@@ -54,10 +54,8 @@ int main(int argc, char *argv[]) {
         char *msg = "Chris was here!\n";
         int len, bytes_sent;
         len = strlen(msg);
-        char buf[32];
         int bytes_recv;
 
-        /*int send(int sockfd, const void *msg, int len, int flags); */
         send(new_sockfd, msg, len, 0);
 
         struct sockaddr_in peer_addr_in;
@@ -78,11 +76,20 @@ int main(int argc, char *argv[]) {
 
 
         // TODO: format the received msg + add an end character so the messages don't get split up
+        char buf[1024];
         bytes_recv = recv(new_sockfd, buf, sizeof(buf), 0);
         if (bytes_recv == -1) {
-            error("Error receiving message");
+            error("Error receiving message in while loop");
         } else {
-            printf("Message received: %s\n", buf);
+            int i, len_buf = strlen(buf);
+            /*printf("In else statement, buf: %s", buf);*/
+            for (i = 0; i < len_buf - 1; i++) {
+                printf("c%", buf[i]);
+                if (buf[i] == '\n' && buf[i+1] == '\r') {
+                    printf("Message received: %s\n", buf);
+                }
+            }
+            printf("\n");
         }
 
 

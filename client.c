@@ -9,7 +9,6 @@
 #include <unistd.h>
 
 #define MYPORT "8080"
-#define BACKLOG 10     // how many pending connections queue will hold
 
 void error(const char *msg) {
     perror(msg);
@@ -51,7 +50,7 @@ int main(int argc, char *argv[]) {
         error("Unable to start connection");
     }
 
-    char *msg = "SEND SERVER OBESERVER!";
+    char *msg = "SEND SERVER OBESERVER!\n";
     int len_recv, len_sent;
     char buf[1024];
     len_sent = strlen(msg);
@@ -72,15 +71,20 @@ int main(int argc, char *argv[]) {
     }
 
 
-    char *cmd_msg = argv[2];
-    /*send(sockfd, cmd_msg, strlen(cmd_msg), 0);*/
+    // TODO: convert to htonl
+    char cmd_msg[1024];
+    strcat(cmd_msg, argv[2]);
+    strcat(cmd_msg, "\n\r");
     if (send(sockfd, cmd_msg, strlen(cmd_msg), 0) == -1) {
-        error("unable to send cmd message");
+        error("unable to send command line message");
+    } else {
+        printf("Message sent: s%\n", cmd_msg);
     }
 
     /*char *cmdl_msg = */
     /*while(1){*/
     /*    if (cmdl_msg != NULL) {*/
+    /*char cmd_msg = [128];*/
     /*        if (send(sockfd, cmdl_msg, strlen(cmdl_msg), 0) == -1){*/
     /*            error("unable to send message");*/
     /*        } else {*/
