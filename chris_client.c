@@ -51,6 +51,7 @@ int main(int argc, char *argv[]) {
         error("Unable to start connection");
     }
 
+    // TODO: Add the ability to send data
 
     freeaddrinfo(res);
 }
