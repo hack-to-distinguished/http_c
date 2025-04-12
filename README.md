@@ -31,9 +31,14 @@ A bare-bones HTTP server written in C from scratch using low-level socket progra
 
 - Listen on TCP port
 - Read and parse **incoming HTTP requests**
-- Understand HTTP request headers
-- Construct valid HTTP response
-- Send HTML back to the client
+
+---
+
+### ✅ Phase 3: Messaging
+
+- Enable users to send messages to the server
+- Create end to end messaging without using the server as a middle man
+- Create group chat style messaging by messaging the server and it redirect the message to all clients
 
 ---
 
