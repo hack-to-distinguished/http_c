@@ -61,11 +61,8 @@ int main(int argc, char *argv[]) {
     } else {
         printf("Bytes received: %d\n", recv_data);
         printf("Message recieved: %s\n", buf);
-        int i;
-        for (i = 0; i < recv_data; i++) {
-            printf("char: %s", buf[i]);
-        }
     }
+
     int sent_data = send(sockfd, msg, len_sent, 0);
     if (sent_data == -1) {
         error("Unable to send data");

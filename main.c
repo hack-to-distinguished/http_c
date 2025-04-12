@@ -56,6 +56,15 @@ int main(int argc, char *argv[]) {
         char buf[32];
         int bytes_recv;
 
+        int peer = getpeername(new_sockfd, (struct sockaddr *)&peer_addr_in,
+                               (socklen_t *)&peer_addr_in_len);
+        their_addr_len = sizeof(their_addr_len);
+        char *their_ipv4_addr = inet_ntoa(peer_addr_in.sin_addr);
+        // form the message
+        msg = strcat(their_ipv4_addr, " is the IP address of the user!");
+        msg = strcat(their_ipv4_addr, "\n");
+        len = strlen(msg);
+
         /*int send(int sockfd, const void *msg, int len, int flags); */
         send(new_sockfd, msg, len, 0);
 
