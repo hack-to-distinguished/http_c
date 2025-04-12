@@ -9,8 +9,7 @@
 #include <unistd.h>
 
 #define MYPORT "8080"
-#define BACKLOG 10 // how many pending connections queue will hold
-#define CONN_TYPE ""
+#define BACKLOG 10     // how many pending connections queue will hold
 
 void error(const char *msg) {
     perror(msg);
@@ -52,7 +51,25 @@ int main(int argc, char *argv[]) {
         error("Unable to start connection");
     }
 
-    // TODO: Add the ability to send data
+    char *msg = "SEND SERVER OBESERVER!";
+    int len_recv, len_sent;
+    char buf[1024];
+    len_sent = strlen(msg);
+
+    int recv_data = recv(sockfd, buf, len_recv, 0);
+    if (recv_data == -1) {
+        error("unable to receive data");
+    } else {
+        printf("Bytes received: %d\n", recv_data);
+        printf("Message recieved: %s\n", buf);
+    }
+
+    int sent_data = send(sockfd, msg, len_sent, 0);
+    if (sent_data == -1) {
+        error("Unable to send data");
+    } else {
+        printf("data sent: %d\n", sent_data);
+    }
 
     freeaddrinfo(res);
 }
