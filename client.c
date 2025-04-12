@@ -71,5 +71,23 @@ int main(int argc, char *argv[]) {
         printf("data sent: %d\n", sent_data);
     }
 
+
+    char *cmd_msg = argv[2];
+    /*send(sockfd, cmd_msg, strlen(cmd_msg), 0);*/
+    if (send(sockfd, cmd_msg, strlen(cmd_msg), 0) == -1) {
+        error("unable to send cmd message");
+    }
+
+    /*char *cmdl_msg = */
+    /*while(1){*/
+    /*    if (cmdl_msg != NULL) {*/
+    /*        if (send(sockfd, cmdl_msg, strlen(cmdl_msg), 0) == -1){*/
+    /*            error("unable to send message");*/
+    /*        } else {*/
+    /*            printf("sent message: %s\n", cmdl_msg);*/
+    /*        }*/
+    /*    }*/
+    /*}*/
+
     freeaddrinfo(res);
 }

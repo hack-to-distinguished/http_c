@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 #define MYPORT "8080"
-#define BACKLOG 10 // how many pending connections queue will hold
+#define BACKLOG 100 // how many pending connections queue will hold
 
 void error(const char *msg) {
     perror(msg);
@@ -69,11 +69,15 @@ int main(int argc, char *argv[]) {
                                (socklen_t *)&peer_addr_in_len);
         their_addr_len = sizeof(their_addr_len);
         char *their_ipv4_addr = inet_ntoa(peer_addr_in.sin_addr);
-        msg = strcat(their_ipv4_addr, " is the IP address of the user!");
-        msg = strcat(their_ipv4_addr, "\n");
-        len = strlen(msg);
+        char *ip_msg = malloc(128);
+        strcat(ip_msg, their_ipv4_addr);
+        strcat(ip_msg, " is the IP address of the user!");
+        strcat(ip_msg, "\n");
+        printf("%s\n", ip_msg);
+        free(ip_msg);
 
 
+        // TODO: format the received msg + add an end character so the messages don't get split up
         bytes_recv = recv(new_sockfd, buf, sizeof(buf), 0);
         if (bytes_recv == -1) {
             error("Error receiving message");
