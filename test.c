@@ -5,7 +5,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 // good for development hence why we use 8080
-#define PORT 8080
+#define PORT 3490
 #define BACKLOG 10
 
 int main(void) {
@@ -13,6 +13,8 @@ int main(void) {
   struct sockaddr_in server_addr; // struct holds server address info
   socklen_t foreign_addr_size;
   int server_fd; // file descriptor for the socket for the server
+  int reuse_addr_flag = 1;
+  int *ptr_reuse_addr_flag = &reuse_addr_flag;
 
   // AF_INET ipv4 family addr
   // SOCK_STREAM -> tcp
@@ -21,6 +23,10 @@ int main(void) {
   server_fd = socket(AF_INET, SOCK_STREAM,
                      0); // this returns a an integer value file descripdtor;
                          // used to refer to the socket we have just created
+
+  // setting socket options
+  setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, ptr_reuse_addr_flag,
+             sizeof(reuse_addr_flag));
 
   server_addr.sin_family = AF_INET; // ipv4
   server_addr.sin_addr.s_addr =
@@ -38,7 +44,7 @@ int main(void) {
 
   // accept incoming connection
   foreign_addr_size = sizeof(foreign_addr);
-  char *msg = "Fuck you!";
+  char *msg = "Hello from Alejandro's HTTP server!";
   int len, bytes_sent;
   len = strlen(msg);
   while (1) {
