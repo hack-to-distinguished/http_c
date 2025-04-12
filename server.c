@@ -55,11 +55,14 @@ void *server_thread_to_run(void *args) {
     send(client_fd, msg, len, 0);
     free(msg);
 
-    char buf[1024];
+    char buf[64];
     bytes_recv = recv(client_fd, buf, sizeof(buf), 0);
     if (bytes_recv == -1) {
         error("Error receiving message");
     } else {
+        // for (int i = 0; i < ; i++) {
+        //     printf("Char: %c", buf);
+        // }
         printf("Message received: %s\n", buf);
     }
     close(client_fd);

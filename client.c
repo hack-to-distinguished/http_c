@@ -21,6 +21,9 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    const char *string_to_parse = argv[2];
+    printf("String Inputted: %s\n", string_to_parse);
+
     const char *server = argv[1];
     struct addrinfo hints, *res;
     int sockfd;
@@ -56,13 +59,13 @@ int main(int argc, char *argv[]) {
 
     printf("Received from server: %s\n", buf);
 
-    const char *msg = "SEND SERVER OBESERVER!";
-    int sent_data = send(sockfd, msg, strlen(msg), 0);
+    // const char *msg = "SEND SERVER OBESERVER!";
+    int sent_data = send(sockfd, string_to_parse, strlen(string_to_parse), 0);
     if (sent_data == -1) {
         error("send failed");
     }
 
-    printf("Message sent to server: %s\n", msg);
+    printf("Message sent to server: %s\n", string_to_parse);
 
     // close(sockfd);
     freeaddrinfo(res);
