@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
     listen(sockfd, BACKLOG);
 
     while (1) {
-    /*int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen); */
+        /*int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen); */
         new_sockfd = accept(sockfd, (struct sockaddr *)&their_addr, &addr_size);
 
         char *msg = "Chris was here!\n";
@@ -58,9 +58,17 @@ int main(int argc, char *argv[]) {
 
         /*int send(int sockfd, const void *msg, int len, int flags); */
         send(new_sockfd, msg, len, 0);
-        /*bytes_recv = recv(sockfd, buf, sizeof(buf), 0);*/
+
+        bytes_recv = recv(sockfd, buf, sizeof(buf), 0);
+        if (bytes_recv == -1) {
+            error("Error receiving message");
+        } else {
+            printf("Message received: %s\n", buf);
+        }
+
+
         close(new_sockfd);
     }
-    /*freeaddrinfo(res);*/
+    freeaddrinfo(res);
 
 }
