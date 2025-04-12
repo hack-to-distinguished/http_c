@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 
     if (!server) {
         error("Couldn't get a server address");
-    } else { printf("Server name: %d \n", server); }
+    } else { printf("Server name: %s \n", server); }
 
     memset(&hints, 0, sizeof hints); /* will just copy 0s*/
     hints.ai_family = AF_INET;
