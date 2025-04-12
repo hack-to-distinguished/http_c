@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
         /*int send(int sockfd, const void *msg, int len, int flags); */
         send(new_sockfd, msg, len, 0);
 
-        bytes_recv = recv(sockfd, buf, sizeof(buf), 0);
+        bytes_recv = recv(new_sockfd, buf, sizeof(buf), 0);
         if (bytes_recv == -1) {
             error("Error receiving message");
         } else {
