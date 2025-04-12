@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define MYPORT "3490"
+#define MYPORT "8080"
 #define BACKLOG 10 // how many pending connections queue will hold
 #define CONN_TYPE ""
 
