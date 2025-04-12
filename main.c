@@ -65,12 +65,12 @@ int main(int argc, char *argv[]) {
         struct sockaddr_in peer_addr_in;
         int peer_addr_in_len = sizeof(peer_addr_in);
         int *ptr_peer_adr_in_len = &peer_addr_in_len;
-        socklen_t foreign_addr_len;
+        socklen_t their_addr_len;
 
         // get peer name
         int peer = getpeername(new_sockfd, (struct sockaddr *)&peer_addr_in,
                                (socklen_t *)&peer_addr_in_len);
-        foreign_addr_len = sizeof(their_addr_len);
+        their_addr_len = sizeof(their_addr_len);
         char *their_ipv4_addr = inet_ntoa(peer_addr_in.sin_addr);
         // form the message
         msg = strcat(their_ipv4_addr, " is the IP address of the user!");
