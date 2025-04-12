@@ -11,6 +11,7 @@
 
 #define MYPORT "8080"
 #define BACKLOG 10 // how many pending connections queue will hold
+#define BUFFER_SIZE 1024
 
 void error(const char *msg) {
     perror(msg);
@@ -18,7 +19,7 @@ void error(const char *msg) {
 }
 
 void send_http_response(int sock, const char *body) {
-    char response[BACKLOG];
+    char response[BUFFER_SIZE];
     printf("sizeof response: %ld\n", sizeof(response));
     int body_len = strlen(body);
 

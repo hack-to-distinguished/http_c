@@ -6,10 +6,10 @@
 #include <netinet/in.h>
 
 #define PORT 8080
-#define BACKLOG 1024
+#define BUFFER_SIZE 1024
 
 void send_http_response(int sock, const char *body) {
-    char response[BACKLOG];
+    char response[BUFFER_SIZE];
     int body_len = strlen(body);
 
     /*
@@ -43,7 +43,7 @@ int main() {
     };
     int opt = 1;
     int addrlen = sizeof(address);
-    char buffer[BACKLOG] = {0};
+    char buffer[BUFFER_SIZE] = {0};
     
     // Create socket file descriptor
     /*
@@ -129,14 +129,13 @@ int main() {
             * read() copies data from the socket into the buffer.
             * new_socket is the file descriptor for the accepted connection.
             * buffer is the memory location where data will be stored.
-            * BACKLOG is the maximum number of bytes to read.
+            * BUFFER_SIZE is the maximum number of bytes to read.
         */
-        read(new_socket, buffer, BACKLOG);
+        read(new_socket, buffer, BUFFER_SIZE);
         printf("Request:\n%s\n", buffer);
         
         // Send HTTP response
-        char *msg = "Suiiiiii\n";
-        send_http_response(new_socket, msg);
+        send_http_response(new_socket, "Hello from server\n");
         printf("Response sent\n");
         
         close(new_socket);
