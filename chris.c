@@ -50,14 +50,14 @@ int main(int argc, char *argv[]) {
     /*int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen); */
         new_sockfd = accept(sockfd, (struct sockaddr *)&their_addr, &addr_size);
 
-        char *msg = "Chris was here!";
+        char *msg = "Chris was here!\n";
         int len, bytes_sent;
         len = strlen(msg);
         char buf[32];
         int bytes_recv;
 
         /*int send(int sockfd, const void *msg, int len, int flags); */
-        send(sockfd, msg, len, 0);
+        send(new_sockfd, msg, len, 0);
         /*bytes_recv = recv(sockfd, buf, len, 0);*/
         close(new_sockfd);
     }
