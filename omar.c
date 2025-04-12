@@ -8,6 +8,32 @@
 #define PORT 8080
 #define BUFFER_SIZE 1024
 
+void send_http_response(int sock, const char *body) {
+    char response[BUFFER_SIZE];
+    int body_len = strlen(body);
+
+    /*
+        * snprintf() formats and stores a string in the response buffer.
+        * response is the pointer to character buffer where the formatted string will be written.
+        * sizeof(response) is the maximum size of the buffer.
+        * "HTTP/1.1 200 OK\r\n" is the status line of the HTTP response(protocol version, status code, brief description of status code).
+        * \r\n terminates the header
+        * %s placeholder for body
+        * body_len is the length of the body string.
+        * body is the actual content of the response.
+    */
+    snprintf(response, sizeof(response),
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/plain\r\n"
+        "Content-Length: %d\r\n"
+        "Connection: close\r\n"
+        "\r\n" 
+        "%s", 
+        body_len, body);
+    
+    write(sock, response, strlen(response));
+}
+
 int main() {
     int server_fd, new_socket;
     struct sockaddr_in address = {
@@ -109,16 +135,7 @@ int main() {
         printf("Request:\n%s\n", buffer);
         
         // Send HTTP response
-        /*
-            * char *response is a string containing the HTTP response.
-            * write() sends data from the buffer to the socket.
-            * new_socket is the file descriptor for the accepted connection.
-            * response is the memory location where data will be stored.
-            * strlen(response) is the length of the response string.
-            * close(new_socket) closes the socket after sending the response.
-        */
-        char *response = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!";
-        write(new_socket, response, strlen(response));
+        send_http_response(new_socket, "Hello from server\n");
         printf("Response sent\n");
         
         close(new_socket);
