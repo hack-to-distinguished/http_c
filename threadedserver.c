@@ -46,44 +46,34 @@ void *server_thread_to_run(void *args) {
     int bytes_recv;
     char *msg = "Alejandro was here!\n";
     len = strlen(msg);
-    char buf[len];
 
     /*int send(int sockfd, const void *msg, int len, int flags); */
     send(client_fd, msg, len, 0);
 
-    // TODO: Will work on this later...
-    //  struct sockaddr_in peer_addr_in;
-    //  int peer_addr_in_len = sizeof(peer_addr_in);
-    //  int *ptr_peer_adr_in_len = &peer_addr_in_len;
-    //  socklen_t their_addr_len;
-    //
-    //  int peer = getpeername(client_fd, (struct sockaddr *)&peer_addr_in,
-    //                         (socklen_t *)&peer_addr_in_len);
-    //  their_addr_len = sizeof(their_addr_len);
-    //  char *their_ipv4_addr = inet_ntoa(peer_addr_in.sin_addr);
-    //  char *msg = malloc(128);
-    //  strcat(msg, their_ipv4_addr);
-    //  strcat(msg, " is the IP address of the user!");
-    //  strcat(msg, "\n");
-    //  len = strlen(msg);
-    //  send(client_fd, msg, len, 0);
-    //  free(msg);
+    struct sockaddr_in *ptr_peer_addr_in = malloc(sizeof(struct sockaddr_in));
+    socklen_t peer_addr_in =
+        sizeof(struct sockaddr_in); // socklen_t required as it is basically
+                                    // letting the getpeername() function
+                                    // know how much data it can safely write to
+    int peer = getpeername(client_fd, (struct sockaddr *)ptr_peer_addr_in,
+                           (socklen_t *)&peer_addr_in);
+    char *ptr_ip = inet_ntoa(
+        ptr_peer_addr_in
+            ->sin_addr); // inet_ntoa returns a pointer to a char buffer
+    char *second_msg = malloc(128);
+    strcat(second_msg, ptr_ip);
+    strcat(second_msg, " is the connected user's IP!\n");
+    send(client_fd, second_msg, strlen(second_msg), 0);
+    free(second_msg);
 
-    // char buf[512];
-    // bytes_recv = recv(client_fd, buf, sizeof(buf), 0);
-    // if (bytes_recv == -1) {
-    //     error("Error receiving message");
-    // } else {
-    //     // for (int i = 0; i < bytes_recv; i++) {
-    //     //     char c = buf[i];
-    //     //     if (c == 'f') {
-    //     //         printf("letter f present in string\n");
-    //     //     }
-    //     //     // printf("Char: %s\n", &c);
-    //     //     // printf("Char: %s\n", &buf[i]);
-    //     // }
-    //     // printf("Message received: %s\n", buf);
-    // }
+    char buf[512];
+    bytes_recv = recv(client_fd, buf, sizeof(buf), 0);
+    if (bytes_recv < 0) {
+        error("Error receiving message from clien!");
+    } else {
+        printf("Message received: %s\n", buf);
+    }
+    close(client_fd);
 
     gettimeofday(&end, NULL);
     time_used =
@@ -92,7 +82,6 @@ void *server_thread_to_run(void *args) {
            client_fd);
     printf("\n");
 
-    close(client_fd);
     return NULL;
 }
 

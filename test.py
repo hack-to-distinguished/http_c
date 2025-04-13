@@ -1,9 +1,9 @@
-import socket
-import threading
+# all of this is mostly chatgpt; used just for stress testing the code in a quick manner.
+
 import random
 import string
-
-# all of this is mostly chatgpt; used just for stress testing the code in a quick manner.
+import subprocess
+from concurrent.futures import ThreadPoolExecutor
 
 
 def random_string(min_length=5, max_length=15):
@@ -35,29 +35,14 @@ def random_string(min_length=5, max_length=15):
     return "".join(random.choice(characters) for _ in range(length))
 
 
-def client_thread(id):
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(("127.0.0.1", 8080))
-        # Receive server message
-        msg = s.recv(512)
-        print(f"Client {id} received: {msg.decode()}")
-        # Send message to server (do later...)
-        # s.sendall(random_string(10, 20).encode())
-        # s.close()
-    except Exception as e:
-        print(f"Client {id} error: {e}")
+def run_client(_):
+    subprocess.run(["./client", "127.0.0.1", random_string(20, 30)])
 
 
-threads = []
-NUM_CONNECTIONS = 50
+def main():
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        executor.map(run_client, range(1, 51))
 
-for i in range(NUM_CONNECTIONS):
-    t = threading.Thread(target=client_thread, args=(i,))
-    t.start()
-    threads.append(t)
 
-for t in threads:
-    t.join()
-
-print("All client threads have finished.")
+if __name__ == "__main__":
+    main()

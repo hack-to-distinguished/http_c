@@ -51,21 +51,21 @@ int main(int argc, char *argv[]) {
         error("connect failed");
     }
 
-    char buf[1024] = {0};
-    int recv_data = recv(sockfd, buf, sizeof(buf) - 1, 0);
-    if (recv_data == -1) {
-        error("recv failed");
+    // send data to server
+    int sent_data = send(sockfd, string_to_parse, strlen(string_to_parse), 0);
+    if (sent_data == -1) {
+        error("send failed");
     }
 
-    printf("Received from server: %s\n", buf);
+    printf("Message sent to server: %s\n", string_to_parse);
 
-    // const char *msg = "SEND SERVER OBESERVER!";
-    // int sent_data = send(sockfd, string_to_parse, strlen(string_to_parse),
-    // 0); if (sent_data == -1) {
-    //     error("send failed");
-    // }
-    //
-    // printf("Message sent to server: %s\n", string_to_parse);
+    // recevie data from server
+    char buf[1024];
+    int bytes_recv;
+    while (recv(sockfd, buf, sizeof(buf), 0) > 0) {
+        // printf("Received: %s", buf);
+        printf("%s", buf);
+    }
 
     freeaddrinfo(res);
     return 0;
