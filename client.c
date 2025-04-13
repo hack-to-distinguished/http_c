@@ -6,8 +6,8 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
-
 #define MYPORT "8080"
 
 void error(const char *msg) {
@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 
     printf("Connecting to server: %s\n", server);
 
-    memset(&hints, 0, sizeof hints);
+    memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
 
@@ -60,14 +60,13 @@ int main(int argc, char *argv[]) {
     printf("Received from server: %s\n", buf);
 
     // const char *msg = "SEND SERVER OBESERVER!";
-    int sent_data = send(sockfd, string_to_parse, strlen(string_to_parse), 0);
-    if (sent_data == -1) {
-        error("send failed");
-    }
+    // int sent_data = send(sockfd, string_to_parse, strlen(string_to_parse),
+    // 0); if (sent_data == -1) {
+    //     error("send failed");
+    // }
+    //
+    // printf("Message sent to server: %s\n", string_to_parse);
 
-    printf("Message sent to server: %s\n", string_to_parse);
-
-    // close(sockfd);
     freeaddrinfo(res);
     return 0;
 }

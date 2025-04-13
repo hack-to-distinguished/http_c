@@ -8,7 +8,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 
 #define MYPORT "8080"
@@ -28,48 +30,74 @@ typedef struct {
 void *server_thread_to_run(void *args) {
     thread_config_t *ptr_client_config = (thread_config_t *)args;
     int client_fd = ptr_client_config->sockfd;
-    printf("Client file descriptor: %d\n", client_fd);
+
+    // using wall-clock time to time how long thread takes to run
+    struct timeval start, end;
+    double time_used;
+    gettimeofday(&start, NULL);
+
+    // here i made it artificially do work by just adding a random time delay so
+    // it is actually easier to see the concurrency work in action with the
+    // threads
+    int delay_seconds = 1 + rand() % 6; // 1-3 seconds
+    sleep(delay_seconds);
 
     int len, bytes_sent;
     int bytes_recv;
-    // char *msg = "Alejandro was here!\n";
-    // len = strlen(msg);
-    // char buf[len];
-    /*int send(int sockfd, const void *msg, int len, int flags); */
-    // send(client_fd, msg, len, 0);
-
-    struct sockaddr_in peer_addr_in;
-    int peer_addr_in_len = sizeof(peer_addr_in);
-    int *ptr_peer_adr_in_len = &peer_addr_in_len;
-    socklen_t their_addr_len;
-
-    int peer = getpeername(client_fd, (struct sockaddr *)&peer_addr_in,
-                           (socklen_t *)&peer_addr_in_len);
-    their_addr_len = sizeof(their_addr_len);
-    char *their_ipv4_addr = inet_ntoa(peer_addr_in.sin_addr);
-    char *msg = malloc(128);
-    strcat(msg, their_ipv4_addr);
-    strcat(msg, " is the IP address of the user!");
-    strcat(msg, "\n");
+    char *msg = "Alejandro was here!\n";
     len = strlen(msg);
-    send(client_fd, msg, len, 0);
-    free(msg);
+    char buf[len];
 
-    char buf[64];
-    bytes_recv = recv(client_fd, buf, sizeof(buf), 0);
-    if (bytes_recv == -1) {
-        error("Error receiving message");
-    } else {
-        // for (int i = 0; i < ; i++) {
-        //     printf("Char: %c", buf);
-        // }
-        printf("Message received: %s\n", buf);
-    }
+    /*int send(int sockfd, const void *msg, int len, int flags); */
+    send(client_fd, msg, len, 0);
+
+    // TODO: Will work on this later...
+    //  struct sockaddr_in peer_addr_in;
+    //  int peer_addr_in_len = sizeof(peer_addr_in);
+    //  int *ptr_peer_adr_in_len = &peer_addr_in_len;
+    //  socklen_t their_addr_len;
+    //
+    //  int peer = getpeername(client_fd, (struct sockaddr *)&peer_addr_in,
+    //                         (socklen_t *)&peer_addr_in_len);
+    //  their_addr_len = sizeof(their_addr_len);
+    //  char *their_ipv4_addr = inet_ntoa(peer_addr_in.sin_addr);
+    //  char *msg = malloc(128);
+    //  strcat(msg, their_ipv4_addr);
+    //  strcat(msg, " is the IP address of the user!");
+    //  strcat(msg, "\n");
+    //  len = strlen(msg);
+    //  send(client_fd, msg, len, 0);
+    //  free(msg);
+
+    // char buf[512];
+    // bytes_recv = recv(client_fd, buf, sizeof(buf), 0);
+    // if (bytes_recv == -1) {
+    //     error("Error receiving message");
+    // } else {
+    //     // for (int i = 0; i < bytes_recv; i++) {
+    //     //     char c = buf[i];
+    //     //     if (c == 'f') {
+    //     //         printf("letter f present in string\n");
+    //     //     }
+    //     //     // printf("Char: %s\n", &c);
+    //     //     // printf("Char: %s\n", &buf[i]);
+    //     // }
+    //     // printf("Message received: %s\n", buf);
+    // }
+
+    gettimeofday(&end, NULL);
+    time_used =
+        (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000.0;
+    printf("Time taken: %.4lf seconds to finish thread for fd=%d \n", time_used,
+           client_fd);
+    printf("\n");
+
     close(client_fd);
-    return 0;
+    return NULL;
 }
 
 int main(int argc, char *argv[]) {
+
     struct addrinfo hints, *res;
     int server_fd;
     int reuse_addr_flag = 1;
@@ -96,6 +124,8 @@ int main(int argc, char *argv[]) {
     listen(server_fd, BACKLOG);
 
     while (1) {
+        printf("Waiting for a connection!\n");
+
         // setting up client connection
         socklen_t client_addr_len;
         int client_fd;
@@ -104,22 +134,29 @@ int main(int argc, char *argv[]) {
         client_fd = accept(server_fd, (struct sockaddr *)&client_addr,
                            &client_addr_len);
 
-        // printf("Client file descriptor: %d\n", client_fd);
-
         // error checking
         if (client_fd < 0) {
             perror("ERROR on accepting connection from client!");
+        } else {
+            // setting up thread
+            pthread_t client_thread;
+            // malloc data on the heap to avoid race conditions (stop threads
+            // accessing shared data)
+            thread_config_t *ptr_client_config =
+                malloc(sizeof(thread_config_t));
+            ptr_client_config->sockfd = client_fd;
+            printf("\nThread started with fd=%d\n", client_fd);
+
+            // create the actual thread (comment both these lines out if you
+            // want to convert to sequential server)
+            pthread_create(&client_thread, NULL, server_thread_to_run,
+                           ptr_client_config);
+            pthread_detach(client_thread);
+
+            // comment this line out for sequential server to see the time
+            // difference between concurrency with threads and not
+            // server_thread_to_run(ptr_client_config);
         }
-
-        // setting up thread
-        pthread_t client_thread;
-        thread_config_t client_config;
-        client_config.sockfd = client_fd;
-        thread_config_t *ptr_client_config = &client_config;
-        pthread_create(&client_thread, NULL, server_thread_to_run,
-                       ptr_client_config);
-
-        pthread_detach(client_thread);
     }
     freeaddrinfo(res);
 }
