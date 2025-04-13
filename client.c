@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
     char buf[1024];
     int bytes_recv;
     while (recv(sockfd, buf, sizeof(buf), 0) > 0) {
-        // printf("Received: %s", buf);
+        printf("\nMessage(s) recevied from server:\n");
         printf("%s", buf);
     }
 
