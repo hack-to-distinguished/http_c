@@ -71,24 +71,22 @@ int main(int argc, char *argv[]) {
     }
 
 
-    // TODO: convert to htonl
     char cmd_msg[1024];
     strcat(cmd_msg, argv[2]);
     strcat(cmd_msg, "\n\r");
     if (send(sockfd, cmd_msg, strlen(cmd_msg), 0) == -1) {
         error("unable to send command line message");
     } else {
-        printf("Message sent: s%\n", cmd_msg);
+        printf("Message sent: %s\n", cmd_msg);
     }
 
-    /*char *cmdl_msg = */
-    /*while(1){*/
+    /*char cmdl_msg[256];*/
+    /*while(1) {*/
     /*    if (cmdl_msg != NULL) {*/
-    /*char cmd_msg = [128];*/
     /*        if (send(sockfd, cmdl_msg, strlen(cmdl_msg), 0) == -1){*/
     /*            error("unable to send message");*/
     /*        } else {*/
-    /*            printf("sent message: %s\n", cmdl_msg);*/
+    /*            printf("while loop sent message: %s\n", cmdl_msg);*/
     /*        }*/
     /*    }*/
     /*}*/
