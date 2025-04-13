@@ -50,7 +50,7 @@ def client_thread(id):
 
 
 threads = []
-NUM_CONNECTIONS = 10
+NUM_CONNECTIONS = 50
 
 for i in range(NUM_CONNECTIONS):
     t = threading.Thread(target=client_thread, args=(i,))

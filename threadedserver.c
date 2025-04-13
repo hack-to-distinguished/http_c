@@ -149,13 +149,13 @@ int main(int argc, char *argv[]) {
 
             // create the actual thread (comment both these lines out if you
             // want to convert to sequential server)
-            // pthread_create(&client_thread, NULL, server_thread_to_run,
-            //                ptr_client_config);
-            // pthread_detach(client_thread);
+            pthread_create(&client_thread, NULL, server_thread_to_run,
+                           ptr_client_config);
+            pthread_detach(client_thread);
 
             // comment this line out for sequential server to see the time
             // difference between concurrency with threads and not
-            server_thread_to_run(ptr_client_config);
+            // server_thread_to_run(ptr_client_config);
         }
     }
     freeaddrinfo(res);
