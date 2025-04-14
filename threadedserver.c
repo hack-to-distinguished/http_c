@@ -55,14 +55,15 @@ void *server_thread_to_run(void *args) {
         sizeof(struct sockaddr_in); // socklen_t required as it is basically
                                     // letting the getpeername() function
                                     // know how much data it can safely write to
+    char str[peer_addr_in];
     int peer =
         getpeername(new_connection_fd, (struct sockaddr *)ptr_peer_addr_in,
                     (socklen_t *)&peer_addr_in);
-    char *ptr_ip = inet_ntoa(
-        ptr_peer_addr_in
-            ->sin_addr); // inet_ntoa returns a pointer to a char buffer
+    // network to presenetation
+    inet_ntop(AF_INET, &(ptr_peer_addr_in->sin_addr), str, peer_addr_in);
+
     char *second_msg = malloc(128);
-    strcat(second_msg, ptr_ip);
+    strcat(second_msg, str);
     strcat(second_msg, " is the connected user's IP!\n");
     send(new_connection_fd, second_msg, strlen(second_msg), 0);
 
