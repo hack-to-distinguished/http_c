@@ -29,7 +29,7 @@ typedef struct {
 // void *args generic input parameters
 void *server_thread_to_run(void *args) {
     thread_config_t *ptr_client_config = (thread_config_t *)args;
-    int client_fd = ptr_client_config->sockfd;
+    int new_connection_fd = ptr_client_config->sockfd;
 
     // using wall-clock time to time how long thread takes to run
     struct timeval start, end;
@@ -42,44 +42,45 @@ void *server_thread_to_run(void *args) {
     int delay_seconds = 1 + rand() % 6; // 1-3 seconds
     sleep(delay_seconds);
 
-    int len, bytes_sent;
-    int bytes_recv;
+    int len, bytes_recv;
     char *msg = "Alejandro was here!\n";
     len = strlen(msg);
 
     /*int send(int sockfd, const void *msg, int len, int flags); */
-    send(client_fd, msg, len, 0);
+    send(new_connection_fd, msg, len, 0);
 
     struct sockaddr_in *ptr_peer_addr_in = malloc(sizeof(struct sockaddr_in));
     socklen_t peer_addr_in =
         sizeof(struct sockaddr_in); // socklen_t required as it is basically
                                     // letting the getpeername() function
                                     // know how much data it can safely write to
-    int peer = getpeername(client_fd, (struct sockaddr *)ptr_peer_addr_in,
-                           (socklen_t *)&peer_addr_in);
+    int peer =
+        getpeername(new_connection_fd, (struct sockaddr *)ptr_peer_addr_in,
+                    (socklen_t *)&peer_addr_in);
     char *ptr_ip = inet_ntoa(
         ptr_peer_addr_in
             ->sin_addr); // inet_ntoa returns a pointer to a char buffer
     char *second_msg = malloc(128);
     strcat(second_msg, ptr_ip);
     strcat(second_msg, " is the connected user's IP!\n");
-    send(client_fd, second_msg, strlen(second_msg), 0);
+    send(new_connection_fd, second_msg, strlen(second_msg), 0);
     free(second_msg);
+    free(ptr_peer_addr_in);
 
     char buf[512];
-    bytes_recv = recv(client_fd, buf, sizeof(buf), 0);
+    bytes_recv = recv(new_connection_fd, buf, sizeof(buf), 0);
     if (bytes_recv < 0) {
         error("Error receiving message from clien!");
     } else {
         printf("Message received: %s\n", buf);
     }
-    close(client_fd);
+    close(new_connection_fd);
 
     gettimeofday(&end, NULL);
     time_used =
         (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000.0;
     printf("Time taken: %.4lf seconds to finish thread for fd=%d \n", time_used,
-           client_fd);
+           new_connection_fd);
     printf("\n");
 
     return NULL;
