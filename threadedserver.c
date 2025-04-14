@@ -29,6 +29,7 @@ typedef struct {
 // void *args generic input parameters
 void *server_thread_to_run(void *args) {
     thread_config_t *ptr_client_config = (thread_config_t *)args;
+    printf("ptr_client_config (thread function): %p\n", ptr_client_config);
     int new_connection_fd = ptr_client_config->sock_fd;
 
     // using wall-clock time to time how long thread takes to run
@@ -139,6 +140,7 @@ int main(int argc, char *argv[]) {
                 malloc(sizeof(thread_config_t));
             ptr_client_config->sock_fd = client_fd;
             printf("\nThread started with fd=%d\n", client_fd);
+            printf("ptr_client_config (while loop): %p\n", ptr_client_config);
 
             // create the actual thread (comment both these lines out if you
             // want to convert to sequential server)
