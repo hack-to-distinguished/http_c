@@ -22,14 +22,14 @@ void error(const char *msg) {
 
 // custom struct to pass values
 typedef struct {
-    int sockfd;
+    int sock_fd;
 } thread_config_t;
 
 // void* generic pointer, allow return of any type of data
 // void *args generic input parameters
 void *server_thread_to_run(void *args) {
     thread_config_t *ptr_client_config = (thread_config_t *)args;
-    int new_connection_fd = ptr_client_config->sockfd;
+    int new_connection_fd = ptr_client_config->sock_fd;
 
     // using wall-clock time to time how long thread takes to run
     struct timeval start, end;
@@ -64,8 +64,11 @@ void *server_thread_to_run(void *args) {
     strcat(second_msg, ptr_ip);
     strcat(second_msg, " is the connected user's IP!\n");
     send(new_connection_fd, second_msg, strlen(second_msg), 0);
+
+    // free memory
     free(second_msg);
     free(ptr_peer_addr_in);
+    free(ptr_client_config);
 
     char buf[512];
     bytes_recv = recv(new_connection_fd, buf, sizeof(buf), 0);
@@ -134,7 +137,7 @@ int main(int argc, char *argv[]) {
             // accessing shared data)
             thread_config_t *ptr_client_config =
                 malloc(sizeof(thread_config_t));
-            ptr_client_config->sockfd = client_fd;
+            ptr_client_config->sock_fd = client_fd;
             printf("\nThread started with fd=%d\n", client_fd);
 
             // create the actual thread (comment both these lines out if you

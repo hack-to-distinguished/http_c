@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
 
     const char *server = argv[1];
     struct addrinfo hints, *res;
-    int sockfd;
+    int client_fd;
     int reuse_addr_flag = 1;
 
     printf("Connecting to server: %s\n", server);
@@ -39,20 +39,21 @@ int main(int argc, char *argv[]) {
         error("getaddrinfo failed");
     }
 
-    sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    if (sockfd == -1) {
+    client_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    if (client_fd == -1) {
         error("socket failed");
     }
 
-    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse_addr_flag,
+    setsockopt(client_fd, SOL_SOCKET, SO_REUSEADDR, &reuse_addr_flag,
                sizeof(reuse_addr_flag));
 
-    if (connect(sockfd, res->ai_addr, res->ai_addrlen) == -1) {
+    if (connect(client_fd, res->ai_addr, res->ai_addrlen) == -1) {
         error("connect failed");
     }
 
     // send data to server
-    int sent_data = send(sockfd, string_to_parse, strlen(string_to_parse), 0);
+    int sent_data =
+        send(client_fd, string_to_parse, strlen(string_to_parse), 0);
     if (sent_data == -1) {
         error("send failed");
     }
@@ -62,7 +63,7 @@ int main(int argc, char *argv[]) {
     // recevie data from server
     char buf[1024];
     int bytes_recv;
-    while (recv(sockfd, buf, sizeof(buf), 0) > 0) {
+    while (recv(client_fd, buf, sizeof(buf), 0) > 0) {
         printf("\nMessage(s) recevied from server:\n");
         printf("%s", buf);
     }
