@@ -24,25 +24,24 @@ void send_http_response(int sock, const char *body) {
     int body_len = strlen(body);
 
     /*
-     * snprintf() formats and stores a string in the response buffer.
-     * response is the pointer to character buffer where the formatted string
-     * will be written. sizeof(response) is the maximum size of the buffer.
-     * "HTTP/1.1 200 OK\r\n" is the status line of the HTTP response(protocol
-     * version, status code, brief description of status code).
-     * \r\n terminates the header
-     * %s placeholder for body
-     * body_len is the length of the body string.
-     * body is the actual content of the response.
-     */
+        * snprintf() formats and stores a string in the response buffer.
+        * response is the pointer to character buffer where the formatted string will be written.
+        * sizeof(response) is the maximum size of the buffer.
+        * "HTTP/1.1 200 OK\r\n" is the status line of the HTTP response(protocol version, status code, brief description of status code).
+        * \r\n terminates the header
+        * %s placeholder for body
+        * body_len is the length of the body string.
+        * body is the actual content of the response.
+    */
     snprintf(response, sizeof(response),
-             "HTTP/1.1 200 OK\r\n"
-             "Content-Type: text/plain\r\n"
-             "Content-Length: %d\r\n"
-             "Connection: close\r\n"
-             "\r\n"
-             "%s",
-             body_len, body);
-
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/plain\r\n"
+        "Content-Length: %d\r\n"
+        "Connection: close\r\n"
+        "\r\n" 
+        "%s", 
+        body_len, body);
+    
     write(sock, response, strlen(response));
 }
 
@@ -78,8 +77,7 @@ int main(int argc, char *argv[]) {
 
     while (1) {
         /*int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen); */
-        new_sockfd =
-            accept(sockfd, (struct sockaddr *)&their_addr, &their_addr_len);
+        new_sockfd = accept(sockfd, (struct sockaddr *)&their_addr, &their_addr_len);
 
         char *msg = "Chris was here!\n";
         int len, bytes_sent;
@@ -90,6 +88,7 @@ int main(int argc, char *argv[]) {
         /*int send(int sockfd, const void *msg, int len, int flags); */
         // send(new_sockfd, msg, len, 0);
         send_http_response(new_sockfd, msg);
+
 
         struct sockaddr_in peer_addr_in;
         int peer_addr_in_len = sizeof(peer_addr_in);
@@ -107,6 +106,7 @@ int main(int argc, char *argv[]) {
         printf("%s\n", ip_msg);
         free(ip_msg);
 
+
         bytes_recv = recv(new_sockfd, buf, sizeof(buf), 0);
         if (bytes_recv == -1) {
             error("Error receiving message");
@@ -114,7 +114,9 @@ int main(int argc, char *argv[]) {
             printf("Message received: %s\n", buf);
         }
 
+
         close(new_sockfd);
     }
     freeaddrinfo(res);
+
 }
