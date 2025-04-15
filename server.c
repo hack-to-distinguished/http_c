@@ -118,5 +118,4 @@ int main(int argc, char *argv[]) {
         close(new_sockfd);
     }
     freeaddrinfo(res);
-
 }
