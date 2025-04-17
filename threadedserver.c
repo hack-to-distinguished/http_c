@@ -15,15 +15,40 @@
 
 #define MYPORT "8080"
 #define BACKLOG 50 // how many pending connections queue will hold
-void error(const char *msg) {
-    perror(msg);
-    exit(0);
-}
+#define BUFFER_SIZE 1024
 
 // custom struct to pass values
 typedef struct {
     int sock_fd;
 } thread_config_t;
+
+void send_http_response(int new_connection_fd) {}
+
+void handle_hello(int new_connection_fd) {
+    // formatting a HTTP response
+    char *ptr_http_hello_response =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/html; charset=UTF-8\r\n\r\n"
+        "<!DOCTYPE html>\r\n"
+        "<html>\r\n"
+        "<head>\r\n"
+        "<title>Testing Basic HTTP-SERVER</title>\r\n"
+        "</head>\r\n"
+        "<body>\r\n"
+        "Hello, Alejandro!\r\n"
+        "</body>\r\n"
+        "</html>\r\n";
+    // write(new_connection_fd, ptr_http_hello_response,
+    //       strlen(ptr_http_hello_response));
+    send(new_connection_fd, ptr_http_hello_response,
+         strlen(ptr_http_hello_response), 0);
+    // free(ptr_http_hello_response);
+}
+
+void error(const char *msg) {
+    perror(msg);
+    exit(0);
+}
 
 // void* generic pointer, allow return of any type of data
 // void *args generic input parameters
@@ -44,32 +69,35 @@ void *server_thread_to_run(void *args) {
     sleep(delay_seconds);
 
     int len, bytes_recv;
-    char *msg = "Alejandro was here!\n";
-    len = strlen(msg);
-
-    /*int send(int sockfd, const void *msg, int len, int flags); */
-    send(new_connection_fd, msg, len, 0);
-
-    struct sockaddr_in *ptr_peer_addr_in = malloc(sizeof(struct sockaddr_in));
-    socklen_t peer_addr_in =
-        sizeof(struct sockaddr_in); // socklen_t required as it is basically
-                                    // letting the getpeername() function
-                                    // know how much data it can safely write to
-    char str[peer_addr_in];
-    int peer =
-        getpeername(new_connection_fd, (struct sockaddr *)ptr_peer_addr_in,
-                    (socklen_t *)&peer_addr_in);
-    // network to presenetation
-    inet_ntop(AF_INET, &(ptr_peer_addr_in->sin_addr), str, peer_addr_in);
-
-    char *second_msg = malloc(128);
-    strcat(second_msg, str);
-    strcat(second_msg, " is the connected user's IP!\n");
-    send(new_connection_fd, second_msg, strlen(second_msg), 0);
+    // char *msg = "Alejandro was here!\n";
+    // len = strlen(msg);
+    //
+    // /*int send(int sockfd, const void *msg, int len, int flags); */
+    // send(new_connection_fd, msg, len, 0);
+    //
+    // struct sockaddr_in *ptr_peer_addr_in = malloc(sizeof(struct
+    // sockaddr_in)); socklen_t peer_addr_in =
+    //     sizeof(struct sockaddr_in); // socklen_t required as it is basically
+    //                                 // letting the getpeername() function
+    //                                 // know how much data it can safely write
+    //                                 to
+    // char str[peer_addr_in];
+    // int peer =
+    //     getpeername(new_connection_fd, (struct sockaddr *)ptr_peer_addr_in,
+    //                 (socklen_t *)&peer_addr_in);
+    // // network to presenetation
+    // inet_ntop(AF_INET, &(ptr_peer_addr_in->sin_addr), str, peer_addr_in);
+    //
+    // char *second_msg = malloc(128);
+    // strcat(second_msg, str);
+    // strcat(second_msg, " is the connected user's IP!\n");
+    // send(new_connection_fd, second_msg, strlen(second_msg), 0);
+    //
+    handle_hello(new_connection_fd);
 
     // free memory
-    free(second_msg);
-    free(ptr_peer_addr_in);
+    // free(second_msg);
+    // free(ptr_peer_addr_in);
     free(ptr_client_config);
 
     char buf[512];
