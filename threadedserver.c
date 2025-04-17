@@ -38,11 +38,40 @@ void handle_hello(int new_connection_fd) {
         "Hello, Alejandro!\r\n"
         "</body>\r\n"
         "</html>\r\n";
-    // write(new_connection_fd, ptr_http_hello_response,
-    //       strlen(ptr_http_hello_response));
     send(new_connection_fd, ptr_http_hello_response,
          strlen(ptr_http_hello_response), 0);
-    // free(ptr_http_hello_response);
+}
+
+// sending simple byte messages: out of the scope right no was I will be
+// focussing on http stuff
+void send_simple_byte_messages(int new_connection_fd) {
+    int len;
+    char *msg = "Alejandro was here!\n";
+    len = strlen(msg);
+
+    /*int send(int sockfd, const void *msg, int len, int flags); */
+    send(new_connection_fd, msg, len, 0);
+
+    struct sockaddr_in *ptr_peer_addr_in = malloc(sizeof(struct sockaddr_in));
+    socklen_t peer_addr_in =
+        sizeof(struct sockaddr_in); // socklen_t required as it is basically
+                                    // letting the getpeername() function
+                                    // know how much data it can safely write to
+    char str[peer_addr_in];
+    int peer =
+        getpeername(new_connection_fd, (struct sockaddr *)ptr_peer_addr_in,
+                    (socklen_t *)&peer_addr_in);
+    // network to presenetation
+    inet_ntop(AF_INET, &(ptr_peer_addr_in->sin_addr), str, peer_addr_in);
+
+    char *second_msg = malloc(128);
+    strcat(second_msg, str);
+    strcat(second_msg, " is the connected user's IP!\n");
+    send(new_connection_fd, second_msg, strlen(second_msg), 0);
+
+    // free memory
+    free(second_msg);
+    free(ptr_peer_addr_in);
 }
 
 void error(const char *msg) {
@@ -68,39 +97,12 @@ void *server_thread_to_run(void *args) {
     int delay_seconds = 1 + rand() % 6; // 1-3 seconds
     sleep(delay_seconds);
 
-    int len, bytes_recv;
-    // char *msg = "Alejandro was here!\n";
-    // len = strlen(msg);
-    //
-    // /*int send(int sockfd, const void *msg, int len, int flags); */
-    // send(new_connection_fd, msg, len, 0);
-    //
-    // struct sockaddr_in *ptr_peer_addr_in = malloc(sizeof(struct
-    // sockaddr_in)); socklen_t peer_addr_in =
-    //     sizeof(struct sockaddr_in); // socklen_t required as it is basically
-    //                                 // letting the getpeername() function
-    //                                 // know how much data it can safely write
-    //                                 to
-    // char str[peer_addr_in];
-    // int peer =
-    //     getpeername(new_connection_fd, (struct sockaddr *)ptr_peer_addr_in,
-    //                 (socklen_t *)&peer_addr_in);
-    // // network to presenetation
-    // inet_ntop(AF_INET, &(ptr_peer_addr_in->sin_addr), str, peer_addr_in);
-    //
-    // char *second_msg = malloc(128);
-    // strcat(second_msg, str);
-    // strcat(second_msg, " is the connected user's IP!\n");
-    // send(new_connection_fd, second_msg, strlen(second_msg), 0);
-    //
     handle_hello(new_connection_fd);
 
-    // free memory
-    // free(second_msg);
-    // free(ptr_peer_addr_in);
     free(ptr_client_config);
 
-    char buf[512];
+    int bytes_recv;
+    char buf[BUFFER_SIZE];
     bytes_recv = recv(new_connection_fd, buf, sizeof(buf), 0);
     if (bytes_recv < 0) {
         error("Error receiving message from clien!");
