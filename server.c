@@ -99,28 +99,19 @@ int main(int argc, char *argv[]) {
 
         // TODO: format the received msg + add an end character so the messages don't get split up
         char buf[1024];
-        int bytes_recv = recv(new_sockfd, buf, sizeof(buf), 0);
+        int bytes_recv;
+        bytes_recv = recv(new_sockfd, buf, sizeof(buf), 0);
         if (bytes_recv == -1) {
             error("Error receiving message in while loop");
+            close(new_sockfd);
         } else {
+            printf("Bytes received: %d\t", bytes_recv);
             printf("Message received: %s\n", buf);
-            /*int i, len_buf = strlen(buf);*/
-            /*/*printf("In else statement, buf: %s", buf);*/
-            /*for (i = 0; i < len_buf - 1; i++) {*/
-            /*    printf("c%", buf[i]);*/
-            /*    if (buf[i] == '\n' && buf[i+1] == '\r') {*/
-            /*        printf("Message received: %s\n", buf);*/
-            /*    }*/
-            /*}*/
-            /*printf("\n");*/
-            // TODO: if the message is incomplete, you need to call recv again
-            /*if (buf[i] == '\n' && buf[i+1] == '\r') {*/
-            /**/
-            /*}*/
         }
-
-
-        close(new_sockfd);
+        printf("Current buffer: %s\n", buf);
+        printf("Connection status: %d\n", new_sockfd);
+        
     }
+    close(new_sockfd);
     freeaddrinfo(res);
 }

@@ -76,41 +76,67 @@ int main(int argc, char *argv[]) {
 
     /*
      * TODO: Stream messages:
-     * Keep the command line active for sending more messages
-     * Get the logic of the printing/sending messages then worry about converting
+     * Keep the command line active for sending more messages - DONE
+     * Get the message sent and received, worry about the integrety of the message later
      * Handle the length of the string send so that the packet don't mess up
      * Handle the hex mapping (unicode, ASCII, etc)
      */
 
-    puts("Press <enter> to quit:");
+    puts("Press C-c to quit:");
 
     int ch[MAX_IN];
-    int i = 0, n = 0;
-    while (i < MAX_IN && ch[i] != EOF) {
-        ch[i] = getchar();
+    int i = 0, n = 0, c;
+    while ((c = getchar()) != EOF) {
+        putchar(c);
+        printf("inputed: %c\n", (char)(c));
+        char *cmdl_msg = malloc(i + 1);
+        cmdl_msg[i] = c;
+        if (c == 10) {
+            printf("\nMessage to send: %s\n", cmdl_msg);
 
-        if (ch[i] == 10) { // 10 is '\n'
-            printf("New line detected\n", ch[i]);
-            char *cmdl_msg = malloc(i + 1);
-            for (int j = 0; j < i; j++) {
-                cmdl_msg[j] = ch[j];
-                printf("adding %c to cmdl_msg\n", (char)(ch[j])); 
-            }
-            printf("\nmessage to send: %s\n", cmdl_msg);
-
-            // This ends the process for some reason
-            if (send(client_fd, cmdl_msg, strlen(cmdl_msg), 0) == -1) {
+            int bytes_sent = send(client_fd, cmdl_msg, strlen(cmdl_msg), 0); 
+            if (bytes_sent == -1) {
                 error("unable to send entered messaged");
             } else {
+                printf("Bytes sent: %d\t ", bytes_sent);
                 printf("Triggered message send: %s\n", cmdl_msg);
             }
             free(cmdl_msg);
             i = -1;
         }
-        /*printf("current char: %c ", (char)(ch[i]));*/
-        ++n;
         i++;
     }
+
+    /*while (i < MAX_IN && (ch[i] = getchar()) != EOF) {*/
+    /*    putchar(ch[i]);*/
+    /*    // I think the problem lies with the getchar macro and how I'm using it*/
+    /*    printf("inputed: %c\n", (char)(ch[i]));*/
+    /**/
+    /*    if (ch[i] == 10) { // 10 is '\n'*/
+    /*        printf("New line detected\n", ch[i]);*/
+    /*        char *cmdl_msg = malloc(i + 1);*/
+    /*        for (int j = 0; j < i; j++) {*/
+    /*            cmdl_msg[j] = ch[j];*/
+    /*            printf("adding %c to cmdl_msg\n", (char)(ch[j])); */
+    /*        }*/
+    /*        printf("\nmessage to send: %s\n", cmdl_msg);*/
+    /**/
+    /*        // This ends the process for some reason*/
+    /*        int bytes_sent = send(client_fd, cmdl_msg, strlen(cmdl_msg), 0); */
+    /*        if (bytes_sent == -1) {*/
+    /*            error("unable to send entered messaged");*/
+    /*        } else {*/
+    /*            printf("Bytes sent: %d\t ", bytes_sent);*/
+    /*            printf("Triggered message send: %s\n", cmdl_msg);*/
+    /*        }*/
+    /*        free(cmdl_msg);*/
+    /*        i = -1;*/
+    /*    }*/
+    /*    printf("current char: %c ", (char)(ch[i]));*/
+    /*    ++n;*/
+    /*    i++;*/
+        /*printf("Space left %d/%d\n", i, MAX_IN);*/
+    /*}*/
 
 
     // SUMMARY
