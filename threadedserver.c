@@ -25,7 +25,8 @@ typedef struct {
 void send_http_response(int new_connection_fd) {}
 
 void handle_hello(int new_connection_fd) {
-    // formatting a HTTP response
+    // this just sends a simple html response packet when user enters the
+    // correct url (formatting a HTTP response)
     char *ptr_http_hello_response =
         "HTTP/1.1 200 OK\r\n"
         "Content-Type: text/html; charset=UTF-8\r\n\r\n"
@@ -42,7 +43,7 @@ void handle_hello(int new_connection_fd) {
          strlen(ptr_http_hello_response), 0);
 }
 
-// sending simple byte messages: out of the scope right no was I will be
+// sending simple byte messages: out of the scope right now as I will be
 // focussing on http stuff
 void send_simple_byte_messages(int new_connection_fd) {
     int len;
@@ -94,21 +95,27 @@ void *server_thread_to_run(void *args) {
     // here i made it artificially do work by just adding a random time delay so
     // it is actually easier to see the concurrency work in action with the
     // threads
-    int delay_seconds = 1 + rand() % 6; // 1-3 seconds
-    sleep(delay_seconds);
+    // int delay_seconds = 1 + rand() % 6; // 1-3 seconds
+    // sleep(delay_seconds);
 
+    // receive the http packet from web browser and 'process' it (in this case
+    // im just printing it out)
+    int bytes_recv;
+    char http_request_buffer[BUFFER_SIZE];
+    bytes_recv = recv(new_connection_fd, http_request_buffer,
+                      sizeof(http_request_buffer), 0);
+    if (bytes_recv < 0) {
+        error("Error receiving message from client!");
+    } else {
+        printf("HTTP REQUEST PACKET RECEIVED: %s\n", http_request_buffer);
+    }
+
+    // send http response!
     handle_hello(new_connection_fd);
 
+    // free mem
     free(ptr_client_config);
 
-    int bytes_recv;
-    char buf[BUFFER_SIZE];
-    bytes_recv = recv(new_connection_fd, buf, sizeof(buf), 0);
-    if (bytes_recv < 0) {
-        error("Error receiving message from clien!");
-    } else {
-        printf("Message received: %s\n", buf);
-    }
     close(new_connection_fd);
 
     gettimeofday(&end, NULL);
