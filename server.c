@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
             send(new_sockfd, buf, bytes_recv, 0);
             fflush(stdout);
         }
-        if (bytes_recv == -1) {
+        if (bytes_recv == 0) {
             printf("Client %d disconnected.\n", new_sockfd);
         } else if (bytes_recv == -1) {
             error("Error receiving message in while loop");
@@ -112,7 +112,9 @@ int main(int argc, char *argv[]) {
 
         printf("Closing connection for client %d.\n", new_sockfd);
         int closed = close(new_sockfd);
-        printf("Closed status %d.\n", closed);
+        if (closed == 0) {
+            printf("Connection successfully closed. Status: %d.\n", closed);
+        }
     }
     freeaddrinfo(res);
 }
