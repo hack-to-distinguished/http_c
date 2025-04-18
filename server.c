@@ -43,7 +43,7 @@ void send_http_response(int sock, const char *body) {
 int main(int argc, char *argv[]) {
     struct addrinfo hints, *res;
     struct sockaddr_storage their_addr;
-    socklen_t their_addr_len;
+    socklen_t their_addr_len = sizeof(their_addr);
     int sockfd, new_sockfd;
     int reuse_addr_flag = 1;
     int *ptr_reuse_addr_flag = &reuse_addr_flag;
@@ -79,16 +79,9 @@ int main(int argc, char *argv[]) {
         send(new_sockfd, msg, len, 0);
         send_http_response(new_sockfd, msg);
 
-
-        struct sockaddr_in peer_addr_in;
-        int peer_addr_in_len = sizeof(peer_addr_in);
-        /*int *ptr_peer_adr_in_len = &peer_addr_in_len;*/
-        socklen_t their_addr_len;
-
-        int peer = getpeername(new_sockfd, (struct sockaddr *)&peer_addr_in,
-                               (socklen_t *)&peer_addr_in_len);
-        their_addr_len = sizeof(their_addr_len);
-        char *their_ipv4_addr = inet_ntoa(peer_addr_in.sin_addr);
+        int peer = getpeername(new_sockfd, (struct sockaddr *)&their_addr,
+                               (socklen_t *)&their_addr_len);
+        char *their_ipv4_addr = inet_ntoa(their_addr.sin_addr);
 
         char *ip_msg = malloc(128);
         strcat(ip_msg, their_ipv4_addr);
@@ -100,18 +93,26 @@ int main(int argc, char *argv[]) {
         // TODO: format the received msg + add an end character so the messages don't get split up
         char buf[1024];
         int bytes_recv;
-        bytes_recv = recv(new_sockfd, buf, sizeof(buf), 0);
+        /*bytes_recv = recv(new_sockfd, buf, sizeof(buf), 0); // INFO: This happens only once*/
+        /*if (bytes_recv == -1) {*/
+        /*    error("Error receiving message in while loop");*/
+        /*    close(new_sockfd);*/
+        /*} else {*/
+        /*    printf("Bytes received: %d\t", bytes_recv);*/
+        /*    printf("Message received: %s\n", buf);*/
+        /*}*/
+        /*printf("Current buffer: %s\n", buf);*/
+        /*printf("Connection status: %d\n", new_sockfd);*/
+
+        while((bytes_recv = recv(new_sockfd, buf, sizeof(buf), 0)) > 0) {
+            printf("Wp bytes received: %d\t", bytes_recv);
+            printf("WP message received: %.*s\n", bytes_recv, buf); // Only prints the bytes recv
+        }
         if (bytes_recv == -1) {
             error("Error receiving message in while loop");
-            close(new_sockfd);
-        } else {
-            printf("Bytes received: %d\t", bytes_recv);
-            printf("Message received: %s\n", buf);
         }
-        printf("Current buffer: %s\n", buf);
-        printf("Connection status: %d\n", new_sockfd);
-        
+
+        close(new_sockfd);
     }
-    close(new_sockfd);
     freeaddrinfo(res);
 }
