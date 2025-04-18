@@ -9,6 +9,8 @@
 #include <time.h>
 #include <unistd.h>
 #define MYPORT "8080"
+#define MAX_IN 20
+
 
 void error(const char *msg) {
     perror(msg);
@@ -20,9 +22,6 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Usage: %s <server-address>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
-
-    const char *string_to_parse = argv[2];
-    printf("String Inputted: %s\n", string_to_parse);
 
     const char *server = argv[1];
     struct addrinfo hints, *res;
@@ -48,44 +47,78 @@ int main(int argc, char *argv[]) {
                sizeof(reuse_addr_flag));
 
     if (connect(client_fd, res->ai_addr, res->ai_addrlen) == -1) {
-        error("connect failed");
+        error("connection failed");
     }
 
+    const char *string_to_parse = argv[2];
     int sent_data =
         send(client_fd, string_to_parse, strlen(string_to_parse), 0);
     if (sent_data == -1) {
         error("send failed");
     }
-
     printf("Message sent to server: %s\n", string_to_parse);
 
     char buf[1024];
-    int bytes_recv;
     while (recv(client_fd, buf, sizeof(buf), 0) > 0) {
         printf("\nMessage(s) recevied from server:\n");
-        printf("%s", buf);
+        printf("%s\n", buf);
     }
 
 
-    char cmd_msg[1024];
-    strcat(cmd_msg, argv[2]);
-    strcat(cmd_msg, "\n\r");
-    if (send(sockfd, cmd_msg, strlen(cmd_msg), 0) == -1) {
-        error("unable to send command line message");
-    } else {
-        printf("Message sent: %s\n", cmd_msg);
-    }
-
-    /*char cmdl_msg[256];*/
-    /*while(1) {*/
-    /*    if (cmdl_msg != NULL) {*/
-    /*        if (send(sockfd, cmdl_msg, strlen(cmdl_msg), 0) == -1){*/
-    /*            error("unable to send message");*/
-    /*        } else {*/
-    /*            printf("while loop sent message: %s\n", cmdl_msg);*/
-    /*        }*/
-    /*    }*/
+    /*char cmd_msg[1024];*/
+    /*strcat(cmd_msg, argv[2]);*/
+    /*strcat(cmd_msg, "\n\r");*/
+    /*if (send(client_fd, cmd_msg, strlen(cmd_msg), 0) == -1) {*/
+    /*    error("unable to send command line message");*/
+    /*} else {*/
+    /*    printf("Message sent: %s\n", cmd_msg);*/
     /*}*/
+
+    /*
+     * TODO: Stream messages:
+     * Keep the command line active for sending more messages
+     * Get the logic of the printing/sending messages then worry about converting
+     * Handle the length of the string send so that the packet don't mess up
+     * Handle the hex mapping (unicode, ASCII, etc)
+     */
+
+    puts("Press <enter> to quit:");
+
+    int ch[MAX_IN];
+    int i = 0, n = 0;
+    while (i < MAX_IN && ch[i] != EOF) {
+        ch[i] = getchar();
+
+        if (ch[i] == 10) { // 10 is '\n'
+            printf("New line detected\n", ch[i]);
+            char *cmdl_msg = malloc(i + 1);
+            for (int j = 0; j < i; j++) {
+                cmdl_msg[j] = ch[j];
+                printf("adding %c to cmdl_msg\n", (char)(ch[j])); 
+            }
+            printf("\nmessage to send: %s\n", cmdl_msg);
+
+            // This ends the process for some reason
+            if (send(client_fd, cmdl_msg, strlen(cmdl_msg), 0) == -1) {
+                error("unable to send entered messaged");
+            } else {
+                printf("Triggered message send: %s\n", cmdl_msg);
+            }
+            free(cmdl_msg);
+            i = -1;
+        }
+        /*printf("current char: %c ", (char)(ch[i]));*/
+        ++n;
+        i++;
+    }
+
+
+    // SUMMARY
+    printf("\n");
+    for (i = 0; i < n; ++i) {
+        printf("%c ", (char)(ch[i]));
+    }
+    printf("\n");
 
     freeaddrinfo(res);
     return 0;
