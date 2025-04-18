@@ -36,7 +36,6 @@ void send_http_response(int sock, const char *body) {
         "\r\n" 
         "%s", 
         body_len, body);
-    
     write(sock, response, strlen(response));
 }
 
@@ -95,13 +94,12 @@ int main(int argc, char *argv[]) {
 
 
         // TODO: format the received msg + add an end character so the messages don't get split up
-        char buf[1024];
-        int bytes_recv;
 
-        while((bytes_recv = recv(new_sockfd, buf, sizeof(buf), 0)) > 0) {
+        char *ptr_str;
+        ptr_str = malloc(256);
+        while ((bytes_recv = recv(new_sockfd, ptr_str, 512, 0)) > 0) {
             printf("Received: %d bytes from client %d\t", bytes_recv, new_sockfd);
             printf("Message received: %.*s\n", bytes_recv, buf); // Only prints the bytes recv
-            send(new_sockfd, buf, bytes_recv, 0);
             fflush(stdout);
         }
         if (bytes_recv == 0) {
@@ -115,6 +113,7 @@ int main(int argc, char *argv[]) {
         if (closed == 0) {
             printf("Connection successfully closed. Status: %d.\n", closed);
         }
+
     }
     freeaddrinfo(res);
 }
