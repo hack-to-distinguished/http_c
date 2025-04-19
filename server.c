@@ -96,6 +96,7 @@ int main(int argc, char *argv[]) {
         // TODO: format the received msg + add an end character so the messages don't get split up
 
         char *ptr_str;
+        int bytes_recv;
         ptr_str = malloc(256);
         while ((bytes_recv = recv(new_sockfd, ptr_str, 512, 0)) > 0) {
             printf("Received: %d bytes from client %d\t", bytes_recv, new_sockfd);

@@ -9,8 +9,6 @@
 #include <time.h>
 #include <unistd.h>
 #define MYPORT "8080"
-#define MAX_IN 20
-
 
 void error(const char *msg) {
     perror(msg);
@@ -22,6 +20,9 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Usage: %s <server-address>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
+
+    const char *string_to_parse = argv[2];
+    printf("String Inputted: %s\n", string_to_parse);
 
     const char *server = argv[1];
     struct addrinfo hints, *res;
@@ -47,50 +48,25 @@ int main(int argc, char *argv[]) {
                sizeof(reuse_addr_flag));
 
     if (connect(client_fd, res->ai_addr, res->ai_addrlen) == -1) {
-        error("connection failed");
+        error("connect failed");
     }
 
-    /*const char *string_to_parse = argv[2];*/
-    /*int sent_data =*/
-    /*    send(client_fd, string_to_parse, strlen(string_to_parse), 0);*/
-    /*if (sent_data == -1) {*/
-    /*    error("send failed");*/
-    /*}*/
-    /*printf("Message sent to server: %s\n", string_to_parse);*/
-    /**/
-    /*char buf[1024];*/
-    /*while (recv(client_fd, buf, sizeof(buf), 0) > 0) {*/
-    /*    printf("\nMessage(s) recevied from server:\n");*/
-    /*    printf("%s\n", buf);*/
-    /*} */
-    // INFO: The while loop won't be interactive. Once the server finishes sending messages,
-    // it will stop and won't run again
-
-    /*
-     * TODO: Stream messages:
-     * Handle the length of the string send so that the packet don't mess up
-     * Handle the hex mapping (unicode, ASCII, etc)
-     */
-
-    puts("Press C-c to quit:");
-
-    char *ptr_str = malloc(128);
-    while (1) {
-        printf("\nEnter String to send: \n");
-        scanf("%s", ptr_str);
-
-        int bytes_sent = send(client_fd, ptr_str, strlen(ptr_str), 0);
-        if (bytes_sent == -1) {
-            error("unable to send entered messaged");
-        } else {
-            printf("Bytes sent: %d - ", bytes_sent);
-            printf("Message sent: %s\n", ptr_str);
-        }
-
-        free(ptr_str);
-        ptr_str = malloc(128);
+    // send data to server
+    int sent_data =
+        send(client_fd, string_to_parse, strlen(string_to_parse), 0);
+    if (sent_data == -1) {
+        error("send failed");
     }
 
+    printf("Message sent to server: %s\n", string_to_parse);
+
+    // recevie data from server
+    char buf[1024];
+    int bytes_recv;
+    while (recv(client_fd, buf, sizeof(buf), 0) > 0) {
+        printf("\nMessage(s) recevied from server:\n");
+        printf("%s", buf);
+    }
 
     freeaddrinfo(res);
     return 0;
