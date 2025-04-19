@@ -30,13 +30,13 @@ void send_http_response(int sock, const char *body) {
      * %s placeholder for body
      */
     snprintf(response, sizeof(response),
-             "HTTP/1.1 200 OK\r\n"
-             "Content-Type: text/plain\r\n"
-             "Content-Length: %d\r\n"
-             "Connection: close\r\n"
-             "\r\n"
-             "%s",
-             body_len, body);
+         "HTTP/1.1 200 OK\r\n"
+         "Content-Type: text/plain\r\n"
+         "Content-Length: %d\r\n"
+         "Connection: close\r\n"
+         "\r\n"
+         "%s",
+         body_len, body);
     write(sock, response, strlen(response));
 }
 
@@ -70,8 +70,7 @@ int main(int argc, char *argv[]) {
 
     listen(sockfd, BACKLOG);
     while (1) {
-        new_sockfd =
-            accept(sockfd, (struct sockaddr *)&their_addr, &their_addr_len);
+        new_sockfd = accept(sockfd, (struct sockaddr *)&their_addr, &their_addr_len);
 
         char *msg = "You're connected to the server.\n";
         int len;
@@ -93,15 +92,13 @@ int main(int argc, char *argv[]) {
         printf("%s\n", ip_msg);
         free(ip_msg);
 
-        // TODO: format the received msg + add an end character so the messages
-        // don't get split up
+        // TODO: format the received msg + add an end character so the messages don't get split up
 
         char *ptr_str;
         int bytes_recv;
         ptr_str = malloc(256);
         while ((bytes_recv = recv(new_sockfd, ptr_str, 512, 0)) > 0) {
-            printf("Received: %d bytes from client %d\t", bytes_recv,
-                   new_sockfd);
+            printf("Received: %d bytes from client %d\t", bytes_recv, new_sockfd);
             printf("Message received: %s\n", ptr_str);
             fflush(stdout);
         }
