@@ -24,31 +24,26 @@ void send_http_response(int sock, const char *body) {
     int body_len = strlen(body);
 
     /*
-        * snprintf() formats and stores a string in the response buffer.
-        * response is the pointer to character buffer where the formatted string will be written.
-        * sizeof(response) is the maximum size of the buffer.
-        * "HTTP/1.1 200 OK\r\n" is the status line of the HTTP response(protocol version, status code, brief description of status code).
-        * \r\n terminates the header
-        * %s placeholder for body
-        * body_len is the length of the body string.
-        * body is the actual content of the response.
-    */
+     * response is the pointer to character buffer where the formatted string
+     * will be written.
+     * \r\n terminates the header
+     * %s placeholder for body
+     */
     snprintf(response, sizeof(response),
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: text/plain\r\n"
-        "Content-Length: %d\r\n"
-        "Connection: close\r\n"
-        "\r\n" 
-        "%s", 
-        body_len, body);
-    
+         "HTTP/1.1 200 OK\r\n"
+         "Content-Type: text/plain\r\n"
+         "Content-Length: %d\r\n"
+         "Connection: close\r\n"
+         "\r\n"
+         "%s",
+         body_len, body);
     write(sock, response, strlen(response));
 }
 
 int main(int argc, char *argv[]) {
     struct addrinfo hints, *res;
     struct sockaddr_storage their_addr;
-    socklen_t their_addr_len;
+    socklen_t their_addr_len = sizeof(their_addr);
     int sockfd, new_sockfd;
     int reuse_addr_flag = 1;
     int *ptr_reuse_addr_flag = &reuse_addr_flag;
@@ -65,57 +60,59 @@ int main(int argc, char *argv[]) {
     setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, ptr_reuse_addr_flag,
                sizeof(reuse_addr_flag));
 
-    /*int socket(int domain, int type, int protocol);  */
     sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 
-    int bind_conn = bind(sockfd, res->ai_addr,
-                         res->ai_addrlen); /*int bind(int sockfd, struct
-                                              sockaddr *my_addr, int addrlen);*/
+    int bind_conn = bind(sockfd, res->ai_addr, res->ai_addrlen);
+    if (bind_conn == -1) {
+        error("Unable to start the server");
+    }
     printf("starting server: %d\n", bind_conn);
 
     listen(sockfd, BACKLOG);
-
     while (1) {
-        /*int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen); */
         new_sockfd = accept(sockfd, (struct sockaddr *)&their_addr, &their_addr_len);
 
-        char *msg = "Chris was here!\n";
-        int len, bytes_sent;
+        char *msg = "You're connected to the server.\n";
+        int len;
         len = strlen(msg);
-        char buf[32];
-        int bytes_recv;
 
-        /*int send(int sockfd, const void *msg, int len, int flags); */
-        // send(new_sockfd, msg, len, 0);
+        send(new_sockfd, msg, len, 0);
         send_http_response(new_sockfd, msg);
-
 
         struct sockaddr_in peer_addr_in;
         int peer_addr_in_len = sizeof(peer_addr_in);
-        int *ptr_peer_adr_in_len = &peer_addr_in_len;
-        socklen_t their_addr_len;
 
         int peer = getpeername(new_sockfd, (struct sockaddr *)&peer_addr_in,
                                (socklen_t *)&peer_addr_in_len);
-        their_addr_len = sizeof(their_addr_len);
         char *their_ipv4_addr = inet_ntoa(peer_addr_in.sin_addr);
+
         char *ip_msg = malloc(128);
         strcat(ip_msg, their_ipv4_addr);
-        strcat(ip_msg, "is the IP address of the user!");
-        strcat(ip_msg, "\n");
+        strcat(ip_msg, " is the IP address of the user!");
         printf("%s\n", ip_msg);
         free(ip_msg);
 
+        // TODO: format the received msg + add an end character so the messages don't get split up
 
-        bytes_recv = recv(new_sockfd, buf, sizeof(buf), 0);
-        if (bytes_recv == -1) {
-            error("Error receiving message");
-        } else {
-            printf("Message received: %s\n", buf);
+        char *ptr_str;
+        int bytes_recv;
+        ptr_str = malloc(256);
+        while ((bytes_recv = recv(new_sockfd, ptr_str, 512, 0)) > 0) {
+            printf("Received: %d bytes from client %d\t", bytes_recv, new_sockfd);
+            printf("Message received: %s\n", ptr_str);
+            fflush(stdout);
+        }
+        if (bytes_recv == 0) {
+            printf("Client %d disconnected.\n", new_sockfd);
+        } else if (bytes_recv == -1) {
+            error("Error receiving message in while loop");
         }
 
-
-        close(new_sockfd);
+        printf("Closing connection for client %d.\n", new_sockfd);
+        int closed = close(new_sockfd);
+        if (closed == 0) {
+            printf("Connection successfully closed. Status: %d.\n", closed);
+        }
     }
     freeaddrinfo(res);
 }
