@@ -1,4 +1,6 @@
 client
 omar 
 threadedserver
+server
+persistent_client
 .clang-format
