@@ -76,6 +76,9 @@ int main(int argc, char *argv[]) {
     // - When a message is received just echo it back to all clients
     // - Refine in future PR
     while (1) {
+        // TODO: Change this to listen to multiple conn
+        // All places that have new_sockfd need to change to be able to listen 
+        // to multiple connections
         new_sockfd = accept(sockfd, (struct sockaddr *)&their_addr, &their_addr_len);
 
         char *msg = "You're connected to the server.\n";
@@ -103,9 +106,12 @@ int main(int argc, char *argv[]) {
         char *ptr_str;
         int bytes_recv;
         ptr_str = malloc(256);
+        // INFO: Once someone enters this loop I can't listen to new conn
+        // TODO: Try bringing this into the main loop
         while ((bytes_recv = recv(new_sockfd, ptr_str, 512, 0)) > 0) {
             printf("Received: %d bytes from client %d\t", bytes_recv, new_sockfd);
             printf("Message received: %s\n", ptr_str);
+            break;
             fflush(stdout);
         }
         if (bytes_recv == 0) {
@@ -114,6 +120,7 @@ int main(int argc, char *argv[]) {
             error("Error receiving message in while loop");
         }
 
+        // TODO: See if you can add an if disconnect here
         printf("Closing connection for client %d.\n", new_sockfd);
         int closed = close(new_sockfd);
         if (closed == 0) {

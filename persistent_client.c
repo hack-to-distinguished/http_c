@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
 
     char *ptr_str = malloc(128);
     while (1) {
-        printf("\nEnter String to send: \n");
+        printf("\nEnter to send message: \n");
         scanf("%s", ptr_str);
 
         int bytes_sent = send(client_fd, ptr_str, strlen(ptr_str), 0);
