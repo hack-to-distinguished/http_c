@@ -69,6 +69,12 @@ int main(int argc, char *argv[]) {
     printf("starting server: %d\n", bind_conn);
 
     listen(sockfd, BACKLOG);
+
+    // TODO:
+    // - Accept connections from multiple clients (they don't need to be able
+    //  to send messages, just let them connect)
+    // - When a message is received just echo it back to all clients
+    // - Refine in future PR
     while (1) {
         new_sockfd = accept(sockfd, (struct sockaddr *)&their_addr, &their_addr_len);
 

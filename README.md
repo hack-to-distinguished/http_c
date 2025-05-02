@@ -18,10 +18,10 @@ A bare-bones HTTP server written in C from scratch using low-level socket progra
 
 ### ✅ Phase 1: TCP Echo Server
 
-- Create a socket
-- Bind to a port
-- Listen and accept connections
-- Receive data and send it back (echo)
+-[x] Create a socket
+-[x] Bind to a port
+-[x] Listen and accept connections
+-[x] Receive data and send it back (echo)
 
 > 💡 Used to get familiar with sockets, ports, TCP connection lifecycle
 
@@ -29,16 +29,16 @@ A bare-bones HTTP server written in C from scratch using low-level socket progra
 
 ### ✅ Phase 2: HTTP Server
 
-- Listen on TCP port
-- Read and parse **incoming HTTP requests**
+-[x] Listen on TCP port
+-[x] Read and parse **incoming HTTP requests**
 
 ---
 
-### ✅ Phase 3: Messaging
+### Phase 3: Messaging
 
-- Enable users to send messages to the server
-- Create end to end messaging without using the server as a middle man
-- Create group chat style messaging by messaging the server and it redirect the message to all clients
+-[x] Enable users to send messages to the server
+-[ ] Create end to end messaging without using the server as a middle man
+-[ ] Create group chat style messaging by messaging the server and it redirect the message to all clients (Ongoing - Christian)
 
 ---
 
