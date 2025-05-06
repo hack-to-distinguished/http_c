@@ -30,73 +30,58 @@ typedef struct {
 void send_http_response(int new_connection_fd) {}
 
 void handle_hello(int new_connection_fd) {
-    // this just sends a simple html response packet when user enters the
-    // correct url (formatting a HTTP response)
-    char *ptr_http_hello_response =
-        "HTTP/1.1 200 OK\r\n" // status line, 2xx - success, 1xx -
-                              // informational, 3xx redirection, 4xx client
-                              // error, 5xx server error
-        "Content-Type: text/html; charset=UTF-8\r\n\r\n"
-        "<!DOCTYPE html>\r\n"
-        "<html>\r\n"
-        "<head>\r\n"
-        "<title>Testing Basic HTTP-SERVER</title>\r\n"
-        "</head>\r\n"
-        "<body>\r\n"
-        "Hello, Alejandro!\r\n"
-        "</body>\r\n"
-        "</html>\r\n";
-    send(new_connection_fd, ptr_http_hello_response,
-         strlen(ptr_http_hello_response), 0);
+    char packet_buffer[BUFFER_SIZE];
+    char *ptr_body = "<body>\r\n"
+                     "Hello, Response Packet!\r\n"
+                     "</body>\r\n";
+    int body_len = strlen(ptr_body);
+    // format http response, will be stored in packet_buffer
+    snprintf(packet_buffer, sizeof(packet_buffer),
+             "HTTP/1.1 200 OK\r\n"
+             "Content-Length: %d\r\n"
+             "Content-Type: text/html;\r\n\r\n"
+             "%s",
+             body_len, ptr_body);
+    printf("HTTP Response packet sent back to browser/client:\n%s\n",
+           packet_buffer);
+    send(new_connection_fd, packet_buffer, strlen(packet_buffer), 0);
 }
 
-void receive_HTTP(int new_connection_fd) {
+char *receive_HTTP(int new_connection_fd) {
     int bytes_recv;
-    char http_request_buffer[BUFFER_SIZE];
-    bytes_recv = recv(new_connection_fd, http_request_buffer,
-                      sizeof(http_request_buffer), 0);
+    char *ptr_http_request_buffer = malloc(BUFFER_SIZE);
+    bytes_recv =
+        recv(new_connection_fd, ptr_http_request_buffer, BUFFER_SIZE, 0);
     if (bytes_recv <= 0) {
         error("Error receiving message from client!");
     } else {
-        printf("HTTP REQUEST PACKET (msg from client) RECEIVED: %s\n",
-               http_request_buffer);
+        printf("\nBytes received: %d", bytes_recv);
     }
+
+    return ptr_http_request_buffer;
 }
 
 void create_HTTP_response_packet(int new_connection_fd) {}
 
-void handle_HTTP_requests(int new_connection_fd) {}
+void parse_HTTP_requests(int new_connection_fd) {
+    char *ptr_http_response_buffer = receive_HTTP(new_connection_fd);
+    char *token = strtok(ptr_http_response_buffer, "\r\n");
 
-// sending simple byte messages: out of the scope right now as I will be
-// focussing on http stuff
-void send_simple_byte_messages(int new_connection_fd) {
-    int len;
-    char *msg = "Alejandro was here!\n";
-    len = strlen(msg);
-
-    /*int send(int sockfd, const void *msg, int len, int flags); */
-    send(new_connection_fd, msg, len, 0);
-
-    struct sockaddr_in *ptr_peer_addr_in = malloc(sizeof(struct sockaddr_in));
-    socklen_t peer_addr_in =
-        sizeof(struct sockaddr_in); // socklen_t required as it is basically
-                                    // letting the getpeername() function
-                                    // know how much data it can safely write to
-    char str[peer_addr_in];
-    int peer =
-        getpeername(new_connection_fd, (struct sockaddr *)ptr_peer_addr_in,
-                    (socklen_t *)&peer_addr_in);
-    // network to presenetation
-    inet_ntop(AF_INET, &(ptr_peer_addr_in->sin_addr), str, peer_addr_in);
-
-    char *second_msg = malloc(128);
-    strcat(second_msg, str);
-    strcat(second_msg, " is the connected user's IP!\n");
-    send(new_connection_fd, second_msg, strlen(second_msg), 0);
-
-    // free memory
-    free(second_msg);
-    free(ptr_peer_addr_in);
+    printf("\n");
+    printf("HTTP Packet received from browser/client:\n");
+    int status_line_found = 0;
+    char *ptr_status_line;
+    while (token != NULL) {
+        printf("%s\n", token);
+        if (status_line_found == 0) {
+            ptr_status_line = token;
+            status_line_found = 1;
+        }
+        token = strtok(NULL, "\r\n"); // split string by delimitter CRLF
+    }
+    printf("\n");
+    printf("Status Line: %s\n\n", ptr_status_line);
+    free(ptr_http_response_buffer);
 }
 
 // void* generic pointer, allow return of any type of data
@@ -119,15 +104,13 @@ void *server_thread_to_run(void *args) {
 
     // receive the http packet from web browser and 'process' it (in this case
     // im just printing it out)
-    receive_HTTP(new_connection_fd);
-
+    parse_HTTP_requests(new_connection_fd);
     // send http response!
     handle_hello(new_connection_fd);
 
     // free mem
-    free(ptr_client_config);
-
     close(new_connection_fd);
+    free(ptr_client_config);
 
     gettimeofday(&end, NULL);
     time_used =
