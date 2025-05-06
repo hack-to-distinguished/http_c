@@ -71,19 +71,19 @@ int main(int argc, char *argv[]) {
     listen(sockfd, BACKLOG);
 
     // TODO:
-    // - Accept connections from multiple clients (they don't need to be able
-    //  to send messages, just let them connect)
-    // - When a message is received just echo it back to all clients
-    // - Refine in future PR
+    // [x] Accept connection from a client
+    // [x] Wait for the client to send a message
+    // [] Save the message
+    // [x] Send the client to the back of the queue
+    // [x] Listen and acception the connection from the next client in line
+    // [] Send him the saved message
+    // [x] Listen to his message, print, and save the message
+    // [x] Send him to the back of the queue
     while (1) {
-        // TODO: Change this to listen to multiple conn
-        // All places that have new_sockfd need to change to be able to listen 
-        // to multiple connections
         new_sockfd = accept(sockfd, (struct sockaddr *)&their_addr, &their_addr_len);
 
         char *msg = "You're connected to the server.\n";
-        int len;
-        len = strlen(msg);
+        int len = strlen(msg);
 
         send(new_sockfd, msg, len, 0);
         send_http_response(new_sockfd, msg);
@@ -101,26 +101,19 @@ int main(int argc, char *argv[]) {
         printf("%s\n", ip_msg);
         free(ip_msg);
 
-        // TODO: format the received msg + add an end character so the messages don't get split up
-
-        char *ptr_str;
         int bytes_recv;
-        ptr_str = malloc(256);
-        // INFO: Once someone enters this loop I can't listen to new conn
-        // TODO: Try bringing this into the main loop
+        char *ptr_str = malloc(256);
         while ((bytes_recv = recv(new_sockfd, ptr_str, 512, 0)) > 0) {
             printf("Received: %d bytes from client %d\t", bytes_recv, new_sockfd);
             printf("Message received: %s\n", ptr_str);
-            break;
             fflush(stdout);
         }
         if (bytes_recv == 0) {
             printf("Client %d disconnected.\n", new_sockfd);
         } else if (bytes_recv == -1) {
-            error("Error receiving message in while loop");
+            printf("Error receiving message - Client likely disconnected");
         }
 
-        // TODO: See if you can add an if disconnect here
         printf("Closing connection for client %d.\n", new_sockfd);
         int closed = close(new_sockfd);
         if (closed == 0) {

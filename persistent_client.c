@@ -50,21 +50,6 @@ int main(int argc, char *argv[]) {
         error("connection failed");
     }
 
-    /*const char *string_to_parse = argv[2];*/
-    /*int sent_data =*/
-    /*    send(client_fd, string_to_parse, strlen(string_to_parse), 0);*/
-    /*if (sent_data == -1) {*/
-    /*    error("send failed");*/
-    /*}*/
-    /*printf("Message sent to server: %s\n", string_to_parse);*/
-    /**/
-    /*char buf[1024];*/
-    /*while (recv(client_fd, buf, sizeof(buf), 0) > 0) {*/
-    /*    printf("\nMessage(s) recevied from server:\n");*/
-    /*    printf("%s\n", buf);*/
-    /*} */
-    // INFO: The while loop won't be interactive. Once the server finishes sending messages,
-    // it will stop and won't run again
 
     /*
      * TODO: Stream messages:
@@ -76,7 +61,7 @@ int main(int argc, char *argv[]) {
 
     char *ptr_str = malloc(128);
     while (1) {
-        printf("\nEnter to send message: \n");
+        printf("\n Press enter to send message: \n");
         scanf("%s", ptr_str);
 
         int bytes_sent = send(client_fd, ptr_str, strlen(ptr_str), 0);
