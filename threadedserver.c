@@ -64,6 +64,7 @@ char *receive_HTTP(int new_connection_fd) {
 void create_HTTP_response_packet(int new_connection_fd) {}
 
 void parse_HTTP_requests(int new_connection_fd) {
+    int malformed = 0;
     char *ptr_http_response_buffer = receive_HTTP(new_connection_fd);
     char *token = strtok(ptr_http_response_buffer, "\r\n");
 
@@ -81,22 +82,23 @@ void parse_HTTP_requests(int new_connection_fd) {
     }
     printf("\n");
 
-    char *ptr_http_method_used = malloc(16);
-    char *ptr_http_version_used = malloc(16);
-    int counter = 0;
-    token = strtok(ptr_status_line, " ");
-    while (token != NULL) {
-        if (counter == 0) {
-            memcpy(ptr_http_method_used, token, strlen(token));
-        } else if (counter == 2) {
-            memcpy(ptr_http_version_used, token, strlen(token));
-        }
-        token = strtok(NULL, " ");
-        counter += 1;
-    }
+    // extract HTTP method and version used from client
+    char *ptr_http_method_used = strtok(ptr_status_line, " ");
+    char *ptr_http_URI = strtok(NULL, " ");
+    char *ptr_http_version_used = strtok(NULL, " ");
     printf("HTTP Method Used (from client packet): %s\n", ptr_http_method_used);
+    printf("HTTP URI (from client packet): %s\n", ptr_http_URI);
     printf("HTTP Version Used (from client packet): %s\n\n",
            ptr_http_version_used);
+
+    if (ptr_http_method_used == NULL) {
+        printf("Missing HTTP Method!\n");
+    } else if (ptr_http_URI == NULL) {
+        printf("Missing URI!\n");
+    } else if (ptr_http_version_used == NULL) {
+        printf("Missing HTTP Version!\n");
+    }
+
     free(ptr_http_response_buffer);
 }
 
