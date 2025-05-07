@@ -27,8 +27,6 @@ typedef struct {
     int sock_fd;
 } thread_config_t;
 
-void send_http_response(int new_connection_fd) {}
-
 void handle_hello(int new_connection_fd) {
     char packet_buffer[BUFFER_SIZE];
     char *ptr_body = "<body>\r\n"
@@ -47,7 +45,7 @@ void handle_hello(int new_connection_fd) {
     send(new_connection_fd, packet_buffer, strlen(packet_buffer), 0);
 }
 
-char *receive_HTTP(int new_connection_fd) {
+char *receive_HTTP_request(int new_connection_fd) {
     int bytes_recv;
     char *ptr_http_request_buffer = malloc(BUFFER_SIZE);
     bytes_recv =
@@ -61,12 +59,26 @@ char *receive_HTTP(int new_connection_fd) {
     return ptr_http_request_buffer;
 }
 
-void create_HTTP_response_packet(int new_connection_fd) {}
+char *create_HTTP_response_packet(int malformed) {
+    char *ptr_packet_buffer = malloc(BUFFER_SIZE);
+
+    if (malformed == 1) {
+        snprintf(ptr_packet_buffer, BUFFER_SIZE,
+                 "HTTP/1.1 400 Bad Request\r\n\r\n");
+    }
+
+    return ptr_packet_buffer;
+}
+
+void send_http_response(int new_connection_fd, char *ptr_packet_buffer) {
+    send(new_connection_fd, ptr_packet_buffer, strlen(ptr_packet_buffer), 0);
+    free(ptr_packet_buffer);
+}
 
 void parse_HTTP_requests(int new_connection_fd) {
     int malformed = 0;
-    char *ptr_http_response_buffer = receive_HTTP(new_connection_fd);
-    char *token = strtok(ptr_http_response_buffer, "\r\n");
+    char *ptr_http_client_buffer = receive_HTTP_request(new_connection_fd);
+    char *token = strtok(ptr_http_client_buffer, "\r\n");
 
     printf("\n");
     printf("HTTP Packet received from browser/client:\n");
@@ -91,16 +103,20 @@ void parse_HTTP_requests(int new_connection_fd) {
     printf("HTTP Version Used (from client packet): %s\n\n",
            ptr_http_version_used);
 
-    // check for presence of required http stuff
-    // just printing sht now
+    // TODO: APPLY FUNCTIONALITY... Respond with valid http packet
+    //  check for presence of required http stuff
+    //  just printing sht now
     if (ptr_http_method_used == NULL) {
         printf("Missing HTTP Method!\n");
+        malformed = 1;
     }
     if (ptr_http_URI == NULL) {
         printf("Missing URI!\n");
+        malformed = 1;
     }
     if (ptr_http_version_used == NULL) {
         printf("Missing HTTP Version!\n");
+        malformed = 1;
     }
 
     // actually validate the request methods if all http stuff is present
@@ -108,17 +124,21 @@ void parse_HTTP_requests(int new_connection_fd) {
           strcmp(ptr_http_method_used, "POST") == 0 ||
           strcmp(ptr_http_method_used, "HEAD") == 0)) {
         printf("Invalid http method!\n");
+        malformed = 1;
     }
     if (!(ptr_http_URI[0] == '/')) {
         printf("Invalid URI!\n");
+        malformed = 1;
     }
     if (!(strcmp(ptr_http_version_used, "HTTP/1.0") == 0 ||
           strcmp(ptr_http_version_used, "HTTP/1.1") == 0)) {
-        printf("Unsupported or Invalid HTTP version!");
+        printf("Unsupported or Invalid HTTP version!\n");
+        malformed = 1;
     }
-    // printf("\n%c\n", ptr_http_URI[0]);
 
-    free(ptr_http_response_buffer);
+    char *ptr_packet_buffer = create_HTTP_response_packet(malformed);
+    send_http_response(new_connection_fd, ptr_packet_buffer);
+    free(ptr_http_client_buffer);
 }
 
 // void* generic pointer, allow return of any type of data
@@ -139,11 +159,7 @@ void *server_thread_to_run(void *args) {
     int delay_seconds = 1 + rand() % 6; // 1-3 seconds
     sleep(delay_seconds);
 
-    // receive the http packet from web browser and 'process' it (in this case
-    // im just printing it out)
     parse_HTTP_requests(new_connection_fd);
-    // send http response!
-    handle_hello(new_connection_fd);
 
     // free mem
     close(new_connection_fd);
