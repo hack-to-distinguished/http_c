@@ -91,13 +91,32 @@ void parse_HTTP_requests(int new_connection_fd) {
     printf("HTTP Version Used (from client packet): %s\n\n",
            ptr_http_version_used);
 
+    // check for presence of required http stuff
+    // just printing sht now
     if (ptr_http_method_used == NULL) {
         printf("Missing HTTP Method!\n");
-    } else if (ptr_http_URI == NULL) {
+    }
+    if (ptr_http_URI == NULL) {
         printf("Missing URI!\n");
-    } else if (ptr_http_version_used == NULL) {
+    }
+    if (ptr_http_version_used == NULL) {
         printf("Missing HTTP Version!\n");
     }
+
+    // actually validate the request methods if all http stuff is present
+    if (!(strcmp(ptr_http_method_used, "GET") == 0 ||
+          strcmp(ptr_http_method_used, "POST") == 0 ||
+          strcmp(ptr_http_method_used, "HEAD") == 0)) {
+        printf("Invalid http method!\n");
+    }
+    if (!(ptr_http_URI[0] == '/')) {
+        printf("Invalid URI!\n");
+    }
+    if (!(strcmp(ptr_http_version_used, "HTTP/1.0") == 0 ||
+          strcmp(ptr_http_version_used, "HTTP/1.1") == 0)) {
+        printf("Unsupported or Invalid HTTP version!");
+    }
+    // printf("\n%c\n", ptr_http_URI[0]);
 
     free(ptr_http_response_buffer);
 }
