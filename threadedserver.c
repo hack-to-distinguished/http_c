@@ -80,7 +80,23 @@ void parse_HTTP_requests(int new_connection_fd) {
         token = strtok(NULL, "\r\n"); // split string by delimitter CRLF
     }
     printf("\n");
-    printf("Status Line: %s\n\n", ptr_status_line);
+
+    char *ptr_http_method_used = malloc(16);
+    char *ptr_http_version_used = malloc(16);
+    int counter = 0;
+    token = strtok(ptr_status_line, " ");
+    while (token != NULL) {
+        if (counter == 0) {
+            memcpy(ptr_http_method_used, token, strlen(token));
+        } else if (counter == 2) {
+            memcpy(ptr_http_version_used, token, strlen(token));
+        }
+        token = strtok(NULL, " ");
+        counter += 1;
+    }
+    printf("HTTP Method Used (from client packet): %s\n", ptr_http_method_used);
+    printf("HTTP Version Used (from client packet): %s\n\n",
+           ptr_http_version_used);
     free(ptr_http_response_buffer);
 }
 
