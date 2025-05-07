@@ -27,24 +27,6 @@ typedef struct {
     int sock_fd;
 } thread_config_t;
 
-void handle_hello(int new_connection_fd) {
-    char packet_buffer[BUFFER_SIZE];
-    char *ptr_body = "<body>\r\n"
-                     "Hello, Response Packet!\r\n"
-                     "</body>\r\n";
-    int body_len = strlen(ptr_body);
-    // format http response, will be stored in packet_buffer
-    snprintf(packet_buffer, sizeof(packet_buffer),
-             "HTTP/1.1 200 OK\r\n"
-             "Content-Length: %d\r\n"
-             "Content-Type: text/html;\r\n\r\n"
-             "%s",
-             body_len, ptr_body);
-    printf("HTTP Response packet sent back to browser/client:\n%s\n",
-           packet_buffer);
-    send(new_connection_fd, packet_buffer, strlen(packet_buffer), 0);
-}
-
 char *receive_HTTP_request(int new_connection_fd) {
     int bytes_recv;
     char *ptr_http_request_buffer = malloc(BUFFER_SIZE);
@@ -61,10 +43,31 @@ char *receive_HTTP_request(int new_connection_fd) {
 
 char *create_HTTP_response_packet(int malformed) {
     char *ptr_packet_buffer = malloc(BUFFER_SIZE);
-
+    char *ptr_body;
+    int body_len;
     if (malformed == 1) {
+        ptr_body = "<body>\r\n"
+                   "Error 404!\r\n"
+                   "</body>\r\n";
+        body_len = strlen(ptr_body);
         snprintf(ptr_packet_buffer, BUFFER_SIZE,
-                 "HTTP/1.1 400 Bad Request\r\n\r\n");
+                 "HTTP/1.1 400 Bad Request\r\n"
+                 "Content-Length: %d\r\n"
+                 "Content-Type: text/html;\r\n\r\n"
+                 "%s",
+                 body_len, ptr_body);
+    } else {
+        ptr_body = "<body>\r\n"
+                   "Hello, Response Packet!\r\n"
+                   "</body>\r\n";
+        body_len = strlen(ptr_body);
+        // format http response, will be stored in packet_buffer
+        snprintf(ptr_packet_buffer, BUFFER_SIZE,
+                 "HTTP/1.1 200 OK\r\n"
+                 "Content-Length: %d\r\n"
+                 "Content-Type: text/html;\r\n\r\n"
+                 "%s",
+                 body_len, ptr_body);
     }
 
     return ptr_packet_buffer;
