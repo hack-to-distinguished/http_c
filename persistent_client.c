@@ -56,6 +56,11 @@ int main(int argc, char *argv[]) {
      * Handle the length of the string send so that the packet don't mess up
      * Handle the hex mapping (unicode, ASCII, etc)
      */
+    char *recv_str = malloc(128);
+    int bytes_recv = recv(client_fd, recv_str, 128, 0);
+    if (bytes_recv != -1) {
+        printf("Messages from the server: %s\n", recv_str);
+    }
 
     puts("Press C-c to quit:");
 
@@ -71,10 +76,18 @@ int main(int argc, char *argv[]) {
             printf("Bytes sent: %d - ", bytes_sent);
             printf("Message sent: %s\n", ptr_str);
         }
+        // TODO: Receive messages from the server
+
+        char *recv_str = malloc(128);
+        int bytes_recv = recv(client_fd, recv_str, 128, 0);
+        if (bytes_recv != -1) {
+            printf("Messages from the server: %s\n", recv_str);
+        }
 
         free(ptr_str);
         ptr_str = malloc(128);
     }
+    free(recv_str);
 
 
     freeaddrinfo(res);

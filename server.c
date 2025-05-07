@@ -74,32 +74,23 @@ int main(int argc, char *argv[]) {
     // [x] Accept connection from a client
     // [x] Wait for the client to send a message
     // [] Save the message
-    // [x] Send the client to the back of the queue
-    // [x] Listen and acception the connection from the next client in line
-    // [] Send him the saved message
-    // [x] Listen to his message, print, and save the message
-    // [x] Send him to the back of the queue
+    // [] Close the previous new_sockfd, open a new_sockfd to the other user
+    // [] Send him the message 
+    // [] Close the new_sockfd, open ...
+
+    new_sockfd = accept(sockfd, (struct sockaddr *)&their_addr, &their_addr_len);
+    char *msg = "You're connected to the server. Wait for another person to connect.\n";
+    int len = strlen(msg);
+    send(new_sockfd, msg, len, 0);
+
+    char *usr_msg_buf = malloc(128);
     while (1) {
         new_sockfd = accept(sockfd, (struct sockaddr *)&their_addr, &their_addr_len);
-
-        char *msg = "You're connected to the server.\n";
-        int len = strlen(msg);
-
+        // TODO: Check if usr_msg_buf empty
+        // if empty send connected to server msg
+        // else send the message
+        char *msg = "You're connected to the server, send message:\n";
         send(new_sockfd, msg, len, 0);
-        send_http_response(new_sockfd, msg);
-
-        struct sockaddr_in peer_addr_in;
-        int peer_addr_in_len = sizeof(peer_addr_in);
-
-        int peer = getpeername(new_sockfd, (struct sockaddr *)&peer_addr_in,
-                               (socklen_t *)&peer_addr_in_len);
-        char *their_ipv4_addr = inet_ntoa(peer_addr_in.sin_addr);
-
-        char *ip_msg = malloc(128);
-        strcat(ip_msg, their_ipv4_addr);
-        strcat(ip_msg, " is the IP address of the user!");
-        printf("%s\n", ip_msg);
-        free(ip_msg);
 
         int bytes_recv;
         char *ptr_str = malloc(256);
@@ -107,18 +98,15 @@ int main(int argc, char *argv[]) {
             printf("Received: %d bytes from client %d\t", bytes_recv, new_sockfd);
             printf("Message received: %s\n", ptr_str);
             fflush(stdout);
+            break;
         }
+
         if (bytes_recv == 0) {
             printf("Client %d disconnected.\n", new_sockfd);
         } else if (bytes_recv == -1) {
             printf("Error receiving message - Client likely disconnected");
         }
 
-        printf("Closing connection for client %d.\n", new_sockfd);
-        int closed = close(new_sockfd);
-        if (closed == 0) {
-            printf("Connection successfully closed. Status: %d.\n", closed);
-        }
     }
     freeaddrinfo(res);
 }
