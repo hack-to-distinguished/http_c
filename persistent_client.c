@@ -48,14 +48,15 @@ int main(int argc, char *argv[]) {
 
     if (connect(client_fd, res->ai_addr, res->ai_addrlen) == -1) {
         error("connection failed");
+    } else {
+        printf("Connected to the server\n\n");
     }
 
 
-    /*
-     * TODO: Stream messages:
-     * Handle the length of the string send so that the packet don't mess up
-     * Handle the hex mapping (unicode, ASCII, etc)
-     */
+    // TODO:
+    // - Receive the message for the previous user before 
+    // sending your message
+
     char *recv_str = malloc(128);
     int bytes_recv = recv(client_fd, recv_str, 128, 0);
     if (bytes_recv != -1) {
@@ -63,10 +64,9 @@ int main(int argc, char *argv[]) {
     }
 
     puts("Press C-c to quit:");
-
     char *ptr_str = malloc(128);
     while (1) {
-        printf("\n Press enter to send message: \n");
+        printf("\nPress enter to send your message: \n");
         scanf("%s", ptr_str);
 
         int bytes_sent = send(client_fd, ptr_str, strlen(ptr_str), 0);
@@ -76,12 +76,11 @@ int main(int argc, char *argv[]) {
             printf("Bytes sent: %d - ", bytes_sent);
             printf("Message sent: %s\n", ptr_str);
         }
-        // TODO: Receive messages from the server
 
         char *recv_str = malloc(128);
         int bytes_recv = recv(client_fd, recv_str, 128, 0);
         if (bytes_recv != -1) {
-            printf("Messages from the server: %s\n", recv_str);
+            printf("Messages from the previous user: %s\n\n", recv_str);
         }
 
         free(ptr_str);

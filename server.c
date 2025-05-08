@@ -71,32 +71,30 @@ int main(int argc, char *argv[]) {
     listen(sockfd, BACKLOG);
 
     // TODO:
-    // [x] Accept connection from a client
-    // [x] Wait for the client to send a message
-    // [] Save the message
-    // [] Close the previous new_sockfd, open a new_sockfd to the other user
-    // [] Send him the message 
-    // [] Close the new_sockfd, open ...
-
-    new_sockfd = accept(sockfd, (struct sockaddr *)&their_addr, &their_addr_len);
-    char *msg = "You're connected to the server. Wait for another person to connect.\n";
-    int len = strlen(msg);
-    send(new_sockfd, msg, len, 0);
+    // [] Send the first connected user back in the queue
 
     char *usr_msg_buf = malloc(128);
     while (1) {
-        new_sockfd = accept(sockfd, (struct sockaddr *)&their_addr, &their_addr_len);
-        // TODO: Check if usr_msg_buf empty
-        // if empty send connected to server msg
-        // else send the message
-        char *msg = "You're connected to the server, send message:\n";
-        send(new_sockfd, msg, len, 0);
-
         int bytes_recv;
         char *ptr_str = malloc(256);
+
+        new_sockfd = accept(sockfd, (struct sockaddr *)&their_addr, &their_addr_len);
+        char *msg = "You're connected to the server,\n";
+        send(new_sockfd, msg, strlen(msg), 0);
+
+        // INFO: Send the stored message to the next user
+        if (usr_msg_buf[0] != '\0' && usr_msg_buf[0] != '\n') {
+            int s_status = send(new_sockfd, usr_msg_buf, bytes_recv, 0);
+            if (s_status != -1) {
+                printf("Sent message: %s to user %d\n\n", usr_msg_buf, new_sockfd);
+                free(usr_msg_buf); // FIX: Only works for one message
+            }
+        }
+
         while ((bytes_recv = recv(new_sockfd, ptr_str, 512, 0)) > 0) {
             printf("Received: %d bytes from client %d\t", bytes_recv, new_sockfd);
             printf("Message received: %s\n", ptr_str);
+            memcpy(usr_msg_buf, ptr_str, bytes_recv);
             fflush(stdout);
             break;
         }
