@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,11 +52,19 @@ int main(int argc, char *argv[]) {
     } else {
         printf("Connected to the server\n\n");
     }
+    // TODO:
+    // Try connecting again if you see that you aren't connected
+    // Find a way to check if you're connected, if not, re-establish connection
 
 
     // TODO:
     // - Receive the message for the previous user before 
     // sending your message
+
+    // INFO: Poll information setup
+    struct pollfd pfds[1]; // we're monitoring just one
+    pfds[0].fd = 0; // standard input
+    pfds[0].events = POLLOUT; // check when ready to send information
 
     char *recv_str = malloc(128);
     int bytes_recv = recv(client_fd, recv_str, 128, 0);
@@ -82,6 +91,21 @@ int main(int argc, char *argv[]) {
         if (bytes_recv != -1) {
             printf("Messages from the previous user: %s\n\n", recv_str);
         }
+
+        // INFO: Check that we're still connected - if not reconnect
+        int num_events = poll(pfds, 1, 2500);
+        if (num_events == 0) {
+            printf("poll timed out %d\n", num_events);
+        } else { // Reconnect
+            int pollout_happened = pfds[0].revents & POLLOUT;
+            if (pollout_happened) {
+                printf("File descriptor %d is ready to read\n", pfds[0].fd);
+                connect(client_fd, res->ai_addr, res->ai_addrlen);
+            } else {
+                printf("Unexpected event occurred: %d\n", pfds[0].revents);
+            }
+        }
+
 
         free(ptr_str);
         ptr_str = malloc(128);

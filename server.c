@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
             int s_status = send(new_sockfd, usr_msg_buf, bytes_recv, 0);
             if (s_status != -1) {
                 printf("Sent message: %s to user %d\n\n", usr_msg_buf, new_sockfd);
-                free(usr_msg_buf); // FIX: Only works for one message
+                /*free(usr_msg_buf); // FIX: Only works for one message*/
             }
         }
 
