@@ -61,11 +61,6 @@ int main(int argc, char *argv[]) {
     // - Receive the message for the previous user before 
     // sending your message
 
-    // INFO: Poll information setup
-    struct pollfd pfds[1]; // we're monitoring just one
-    pfds[0].fd = 0; // standard input
-    pfds[0].events = POLLOUT; // check when ready to send information
-
     char *recv_str = malloc(128);
     int bytes_recv = recv(client_fd, recv_str, 128, 0);
     if (bytes_recv != -1) {
@@ -93,18 +88,18 @@ int main(int argc, char *argv[]) {
         }
 
         // INFO: Check that we're still connected - if not reconnect
-        int num_events = poll(pfds, 1, 2500);
-        if (num_events == 0) {
-            printf("poll timed out %d\n", num_events);
-        } else { // Reconnect
-            int pollout_happened = pfds[0].revents & POLLOUT;
-            if (pollout_happened) {
-                printf("File descriptor %d is ready to read\n", pfds[0].fd);
-                connect(client_fd, res->ai_addr, res->ai_addrlen);
-            } else {
-                printf("Unexpected event occurred: %d\n", pfds[0].revents);
-            }
-        }
+        /*int num_events = poll(pfds, 1, 2500);*/
+        /*if (num_events == 0) {*/
+        /*    printf("poll timed out %d\n", num_events);*/
+        /*} else { // Reconnect*/
+        /*    int pollout_happened = pfds[0].revents & POLLOUT;*/
+        /*    if (pollout_happened) {*/
+        /*        printf("File descriptor %d is ready to read\n", pfds[0].fd);*/
+        /*        connect(client_fd, res->ai_addr, res->ai_addrlen);*/
+        /*    } else {*/
+        /*        printf("Unexpected event occurred: %d\n", pfds[0].revents);*/
+        /*    }*/
+        /*}*/
 
 
         free(ptr_str);
