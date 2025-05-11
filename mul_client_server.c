@@ -93,9 +93,9 @@ int main(int argc, char *argv[]) {
         if (pfd[0].revents & POLLIN || POLLOUT) {
             printf("In c1 space\n");
             if (usr_msg_buf[0] != '\0' && usr_msg_buf[0] != '\n') {
-                bytes_sent = send(c2_socket, usr_msg_buf, bytes_recv, 0);
+                bytes_sent = send(c1_socket, usr_msg_buf, bytes_recv, 0);
                 if (bytes_sent != -1) {
-                    printf("Sent message: %s to user %d\n\n", usr_msg_buf, c2_socket);
+                    printf("Sent message: %s to user %d\n\n", usr_msg_buf, c1_socket);
                 }
             }
 
@@ -110,9 +110,9 @@ int main(int argc, char *argv[]) {
         if (pfd[1].revents & POLLIN || POLLOUT) {
             printf("In c2 space\n");
             if (usr_msg_buf[0] != '\0' && usr_msg_buf[0] != '\n') {
-                bytes_sent = send(c1_socket, usr_msg_buf, bytes_recv, 0);
+                bytes_sent = send(c2_socket, usr_msg_buf, bytes_recv, 0);
                 if (bytes_sent != -1) {
-                    printf("Sent message: %s to user %d\n\n", usr_msg_buf, c1_socket);
+                    printf("Sent message: %s to user %d\n\n", usr_msg_buf, c2_socket);
                 }
             }
 
