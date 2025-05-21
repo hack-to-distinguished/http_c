@@ -30,6 +30,7 @@ typedef struct {
 char *receive_HTTP_request(int new_connection_fd) {
     int bytes_recv;
     char *ptr_http_request_buffer = malloc(BUFFER_SIZE);
+    char *ptr_CRLF = "\r\n\r\n";
     bytes_recv =
         recv(new_connection_fd, ptr_http_request_buffer, BUFFER_SIZE, 0);
     if (bytes_recv <= 0) {
@@ -78,13 +79,40 @@ void send_http_response(int new_connection_fd, char *ptr_packet_buffer) {
     free(ptr_packet_buffer);
 }
 
+void validate_CRLF(char *ptr) {
+    int valid = 0;
+    for (int i = 0; ptr[i] != '\0'; i++) {
+        if (ptr[i + 1] == '\0') {
+            printf("\nNull char reached!");
+        }
+
+        if (ptr[i] == '\r' && ptr[i + 1] == '\n' && ptr[i + 2] == '\r' &&
+            ptr[i + 3] == '\n') {
+            printf("\nDouble CRLF detected!");
+            break;
+        }
+    }
+}
+
 void parse_HTTP_requests(int new_connection_fd) {
     int malformed = 0;
     char *ptr_http_client_buffer = receive_HTTP_request(new_connection_fd);
-    char *token = strtok(ptr_http_client_buffer, "\r\n");
 
-    printf("\n");
-    printf("HTTP Packet received from browser/client:\n");
+    // required as strtok modifies the original ptr data
+    char *dupe_ptr_http_client = malloc(strlen(ptr_http_client_buffer));
+    memcpy(dupe_ptr_http_client, ptr_http_client_buffer,
+           strlen(ptr_http_client_buffer));
+    char *token = strtok(dupe_ptr_http_client, "\r\n");
+
+    // TODO: Need to check for valid CRLF!
+    validate_CRLF(ptr_http_client_buffer);
+    // char *test_ptr = strstr(ptr_http_client_buffer, "\r\n\r\n");
+    // if (test_ptr == NULL) {
+    //     malformed = 1;
+    //     printf("\nMalformed Header no double CRLF!\n");
+    // }
+
+    printf("\nHTTP Packet received from browser/client:\n");
     int status_line_found = 0;
     char *ptr_status_line;
     while (token != NULL) {
@@ -142,6 +170,7 @@ void parse_HTTP_requests(int new_connection_fd) {
     char *ptr_packet_buffer = create_HTTP_response_packet(malformed);
     send_http_response(new_connection_fd, ptr_packet_buffer);
     free(ptr_http_client_buffer);
+    free(dupe_ptr_http_client);
 }
 
 // void* generic pointer, allow return of any type of data
