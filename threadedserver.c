@@ -79,19 +79,20 @@ void send_http_response(int new_connection_fd, char *ptr_packet_buffer) {
     free(ptr_packet_buffer);
 }
 
-void validate_CRLF(char *ptr) {
-    int valid = 0;
-    for (int i = 0; ptr[i] != '\0'; i++) {
-        if (ptr[i + 1] == '\0') {
-            printf("\nNull char reached!");
-        }
-
-        if (ptr[i] == '\r' && ptr[i + 1] == '\n' && ptr[i + 2] == '\r' &&
-            ptr[i + 3] == '\n') {
-            printf("\nDouble CRLF detected!");
-            break;
+int validate_CRLF(char *ptr) {
+    // TODO: need to validate crlf to be at the end of every line in the header,
+    // and i need to make sure that the header actually ends with double crlf
+    int len = strlen(ptr);
+    for (int i = 0; i < len; i++) {
+        if (i + 3 < len) {
+            if (ptr[i] == '\r' && ptr[i + 1] == '\n' && ptr[i + 2] == '\r' &&
+                ptr[i + 3] == '\n') {
+                printf("\nDouble CRLF detected!");
+                return 0;
+            }
         }
     }
+    return 1;
 }
 
 void parse_HTTP_requests(int new_connection_fd) {
@@ -104,13 +105,8 @@ void parse_HTTP_requests(int new_connection_fd) {
            strlen(ptr_http_client_buffer));
     char *token = strtok(dupe_ptr_http_client, "\r\n");
 
-    // TODO: Need to check for valid CRLF!
-    validate_CRLF(ptr_http_client_buffer);
-    // char *test_ptr = strstr(ptr_http_client_buffer, "\r\n\r\n");
-    // if (test_ptr == NULL) {
-    //     malformed = 1;
-    //     printf("\nMalformed Header no double CRLF!\n");
-    // }
+    // checking crlf at end of header
+    malformed = validate_CRLF(ptr_http_client_buffer);
 
     printf("\nHTTP Packet received from browser/client:\n");
     int status_line_found = 0;
@@ -185,9 +181,9 @@ void *server_thread_to_run(void *args) {
     double time_used;
     gettimeofday(&start, NULL);
 
-    // here i made it artificially do work by just adding a random time delay so
-    // it is actually easier to see the concurrency work in action with the
-    // threads
+    // here i made it artificially do work by just adding a random time
+    // delay so it is actually easier to see the concurrency work in action
+    // with the threads
     int delay_seconds = 1 + rand() % 6; // 1-3 seconds
     sleep(delay_seconds);
 
@@ -251,8 +247,8 @@ int main(int argc, char *argv[]) {
         } else {
             // setting up thread
             pthread_t client_thread;
-            // malloc data on the heap to avoid race conditions (stop threads
-            // accessing shared data)
+            // malloc data on the heap to avoid race conditions (stop
+            // threads accessing shared data)
             thread_config_t *ptr_client_config =
                 malloc(sizeof(thread_config_t));
             ptr_client_config->sock_fd = client_fd;
