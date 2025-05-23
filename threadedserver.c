@@ -41,34 +41,21 @@ char *receive_HTTP_request(int new_connection_fd) {
     return ptr_http_request_buffer;
 }
 
-char *create_HTTP_response_packet(int malformed) {
+char *create_HTTP_response_packet() {
     char *ptr_packet_buffer = malloc(BUFFER_SIZE);
     char *ptr_body;
     int body_len;
-    if (malformed == 1) {
-        ptr_body = "<body>\r\n"
-                   "Error 404!\r\n"
-                   "</body>\r\n";
-        body_len = strlen(ptr_body);
-        snprintf(ptr_packet_buffer, BUFFER_SIZE,
-                 "HTTP/1.1 400 Bad Request\r\n"
-                 "Content-Length: %d\r\n"
-                 "Content-Type: text/html;\r\n\r\n"
-                 "%s",
-                 body_len, ptr_body);
-    } else {
-        ptr_body = "<body>\r\n"
-                   "Hello, Response Packet!\r\n"
-                   "</body>\r\n";
-        body_len = strlen(ptr_body);
-        // format http response, will be stored in packet_buffer
-        snprintf(ptr_packet_buffer, BUFFER_SIZE,
-                 "HTTP/1.1 200 OK\r\n"
-                 "Content-Length: %d\r\n"
-                 "Content-Type: text/html;\r\n\r\n"
-                 "%s",
-                 body_len, ptr_body);
-    }
+    ptr_body = "<body>\r\n"
+               "Hello, Response Packet!\r\n"
+               "</body>\r\n";
+    body_len = strlen(ptr_body);
+    // format http response, will be stored in packet_buffer
+    snprintf(ptr_packet_buffer, BUFFER_SIZE,
+             "HTTP/1.1 200 OK\r\n"
+             "Content-Length: %d\r\n"
+             "Content-Type: text/html;\r\n\r\n"
+             "%s",
+             body_len, ptr_body);
 
     return ptr_packet_buffer;
 }
@@ -78,7 +65,28 @@ void send_http_response(int new_connection_fd, char *ptr_packet_buffer) {
     free(ptr_packet_buffer);
 }
 
-int STATUS_LINE_STATE(char **ptr_ptr_http_client_buffer) {
+void ERROR_STATE(int new_connection_fd) {
+    char *ptr_packet_buffer = malloc(BUFFER_SIZE);
+    char *ptr_body;
+    int body_len;
+    ptr_body = "<body>\r\n"
+               "Error 404!\r\n"
+               "</body>\r\n";
+    body_len = strlen(ptr_body);
+    snprintf(ptr_packet_buffer, BUFFER_SIZE,
+             "HTTP/1.1 400 Bad Request\r\n"
+             "Content-Length: %d\r\n"
+             "Content-Type: text/html;\r\n\r\n"
+             "%s",
+             body_len, ptr_body);
+    send_http_response(new_connection_fd, ptr_packet_buffer);
+}
+
+void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer,
+                       int new_connection_fd) {}
+
+void STATUS_LINE_STATE(char **ptr_ptr_http_client_buffer,
+                       int new_connection_fd) {
     char *buffer =
         *ptr_ptr_http_client_buffer; // dereference the pointer pointer to get
                                      // the actual char buffer
@@ -86,82 +94,72 @@ int STATUS_LINE_STATE(char **ptr_ptr_http_client_buffer) {
     char uri[1024];
     char http_version[16];
     int result = sscanf(buffer, "%s %s %s", method, uri, http_version);
-
+    char *crlf_ptr = strstr(buffer, http_version);
+    crlf_ptr += 8;
     // checking if there are 3 arguments detected
     if (result != 3) {
-        error("Not enough arguments detected! Required is 3");
-    }
-
-    // check for valid http version; only gonna allow HTTP/1.1
-    if (strcmp(http_version, "HTTP/1.1") != 0) {
-        error("Invalid http version!");
+        // error("Not enough arguments detected! Required is 3");
+        ERROR_STATE(new_connection_fd);
     }
 
     // check for valid http method
-    if (!(strcmp(method, "GET") == 0 || strcmp(method, "POST") == 0 ||
-          strcmp(method, "HEAD") == 0)) {
-        error("\nInvalid http method used");
+    else if (!(strcmp(method, "GET") == 0 || strcmp(method, "POST") == 0 ||
+               strcmp(method, "HEAD") == 0)) {
+        // error("\nInvalid http method used");
+        ERROR_STATE(new_connection_fd);
     }
 
     // TODO: check valid uri for file retrieval! later...
 
-    // need to check for valid CRLF to end status line
-    char *tmp_ptr = strstr(buffer, http_version);
-    tmp_ptr += 8;
-    printf("\n %c %d", tmp_ptr[0], tmp_ptr[0]);
-    printf("\n %c %d", tmp_ptr[1], tmp_ptr[1]);
-    if (!(tmp_ptr[0] == '\r' && tmp_ptr[1] == '\n')) {
-        error("\nNo crlf ending the status line");
+    // check for valid http version; only gonna allow HTTP/1.1
+    else if (strcmp(http_version, "HTTP/1.1") != 0) {
+        // error("Invalid http version");
+        ERROR_STATE(new_connection_fd);
     }
 
-    return 0;
+    // check for valid CRLF to end status line
+    else if (!(crlf_ptr[0] == '\r' && crlf_ptr[1] == '\n')) {
+        // error("\nNo crlf ending the status line");
+        ERROR_STATE(new_connection_fd);
+    }
+
+    ptr_ptr_http_client_buffer = &crlf_ptr;
+    HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd);
 }
-void HEADER_NAME_STATE() {}
+
 void HEADER_VALUE_STATE() {}
 void END_OF_HEADERS_STATE() {}
-void STATE_PARSER(char *ptr_http_client_buffer) {
-    STATUS_LINE_STATE(&ptr_http_client_buffer);
+void STATE_PARSER(char *ptr_http_client_buffer, int new_connection_fd) {
+    STATUS_LINE_STATE(&ptr_http_client_buffer, new_connection_fd);
 }
 
 void parse_HTTP_requests(int new_connection_fd) {
-    int malformed = 0;
     char *ptr_http_client_buffer = receive_HTTP_request(new_connection_fd);
 
     // required as strtok modifies the original ptr data
-    // char *dupe_ptr_http_client = malloc(strlen(ptr_http_client_buffer));
-    // memcpy(dupe_ptr_http_client, ptr_http_client_buffer,
-    //        strlen(ptr_http_client_buffer));
-    // char *token = strtok(dupe_ptr_http_client, "\r\n");
-    //
-    // printf("\nHTTP Packet received from browser/client:\n");
-    // int status_line_found = 0;
-    // char *ptr_status_line;
-    // while (token != NULL) {
-    //     printf("%s\n", token);
-    //     if (status_line_found == 0) {
-    //         ptr_status_line = token;
-    //         status_line_found = 1;
-    //     }
-    //     token = strtok(NULL, "\r\n"); // split string by delimitter CRLF
-    // }
-    // printf("\n");
-    //
-    // if (validate_CRLF(ptr_http_client_buffer) == 1) {
-    //     malformed = 1;
-    // } else if (validate_status_line(ptr_status_line) == 1) {
-    //     malformed = 1;
-    // }
-    //
-    // for (int i = 0; i < strlen(ptr_status_line); i++) {
-    //     printf("\n %c", ptr_status_line[i]);
-    // }
+    char *dupe_ptr_http_client = malloc(strlen(ptr_http_client_buffer));
+    memcpy(dupe_ptr_http_client, ptr_http_client_buffer,
+           strlen(ptr_http_client_buffer));
+    char *token = strtok(dupe_ptr_http_client, "\r\n");
 
-    STATE_PARSER(ptr_http_client_buffer);
+    printf("\nHTTP Packet received from browser/client:\n");
+    int status_line_found = 0;
+    char *ptr_status_line;
+    while (token != NULL) {
+        printf("%s\n", token);
+        if (status_line_found == 0) {
+            ptr_status_line = token;
+            status_line_found = 1;
+        }
+        token = strtok(NULL, "\r\n"); // split string by delimitter CRLF
+    }
+    printf("\n");
 
-    char *ptr_packet_buffer = create_HTTP_response_packet(malformed);
-    send_http_response(new_connection_fd, ptr_packet_buffer);
+    STATE_PARSER(ptr_http_client_buffer, new_connection_fd);
+
+    // char *ptr_packet_buffer = create_HTTP_response_packet();
+    // send_http_response(new_connection_fd, ptr_packet_buffer);
     free(ptr_http_client_buffer);
-    // free(dupe_ptr_http_client);
 }
 
 // void* generic pointer, allow return of any type of data
