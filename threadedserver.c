@@ -30,7 +30,6 @@ typedef struct {
 char *receive_HTTP_request(int new_connection_fd) {
     int bytes_recv;
     char *ptr_http_request_buffer = malloc(BUFFER_SIZE);
-    char *ptr_CRLF = "\r\n\r\n";
     bytes_recv =
         recv(new_connection_fd, ptr_http_request_buffer, BUFFER_SIZE, 0);
     if (bytes_recv <= 0) {
@@ -79,20 +78,49 @@ void send_http_response(int new_connection_fd, char *ptr_packet_buffer) {
     free(ptr_packet_buffer);
 }
 
-int validate_CRLF(char *ptr) {
-    // TODO: need to validate crlf to be at the end of every line in the header,
-    // and i need to make sure that the header actually ends with double crlf
-    int len = strlen(ptr);
-    for (int i = 0; i < len; i++) {
-        if (i + 3 < len) {
-            if (ptr[i] == '\r' && ptr[i + 1] == '\n' && ptr[i + 2] == '\r' &&
-                ptr[i + 3] == '\n') {
-                printf("\nDouble CRLF detected!");
-                return 0;
-            }
-        }
+int STATUS_LINE_STATE(char **ptr_ptr_http_client_buffer) {
+    char *buffer =
+        *ptr_ptr_http_client_buffer; // dereference the pointer pointer to get
+                                     // the actual char buffer
+    char method[8];
+    char uri[1024];
+    char http_version[16];
+    int result = sscanf(buffer, "%s %s %s", method, uri, http_version);
+
+    // checking if there are 3 arguments detected
+    if (result != 3) {
+        error("Not enough arguments detected! Required is 3");
     }
-    return 1;
+
+    // check for valid http version; only gonna allow HTTP/1.1
+    if (strcmp(http_version, "HTTP/1.1") != 0) {
+        error("Invalid http version!");
+    }
+
+    // check for valid http method
+    if (!(strcmp(method, "GET") == 0 || strcmp(method, "POST") == 0 ||
+          strcmp(method, "HEAD") == 0)) {
+        error("\nInvalid http method used");
+    }
+
+    // TODO: check valid uri for file retrieval! later...
+
+    // need to check for valid CRLF to end status line
+    char *tmp_ptr = strstr(buffer, http_version);
+    tmp_ptr += 8;
+    printf("\n %c %d", tmp_ptr[0], tmp_ptr[0]);
+    printf("\n %c %d", tmp_ptr[1], tmp_ptr[1]);
+    if (!(tmp_ptr[0] == '\r' && tmp_ptr[1] == '\n')) {
+        error("\nNo crlf ending the status line");
+    }
+
+    return 0;
+}
+void HEADER_NAME_STATE() {}
+void HEADER_VALUE_STATE() {}
+void END_OF_HEADERS_STATE() {}
+void STATE_PARSER(char *ptr_http_client_buffer) {
+    STATUS_LINE_STATE(&ptr_http_client_buffer);
 }
 
 void parse_HTTP_requests(int new_connection_fd) {
@@ -100,73 +128,40 @@ void parse_HTTP_requests(int new_connection_fd) {
     char *ptr_http_client_buffer = receive_HTTP_request(new_connection_fd);
 
     // required as strtok modifies the original ptr data
-    char *dupe_ptr_http_client = malloc(strlen(ptr_http_client_buffer));
-    memcpy(dupe_ptr_http_client, ptr_http_client_buffer,
-           strlen(ptr_http_client_buffer));
-    char *token = strtok(dupe_ptr_http_client, "\r\n");
+    // char *dupe_ptr_http_client = malloc(strlen(ptr_http_client_buffer));
+    // memcpy(dupe_ptr_http_client, ptr_http_client_buffer,
+    //        strlen(ptr_http_client_buffer));
+    // char *token = strtok(dupe_ptr_http_client, "\r\n");
+    //
+    // printf("\nHTTP Packet received from browser/client:\n");
+    // int status_line_found = 0;
+    // char *ptr_status_line;
+    // while (token != NULL) {
+    //     printf("%s\n", token);
+    //     if (status_line_found == 0) {
+    //         ptr_status_line = token;
+    //         status_line_found = 1;
+    //     }
+    //     token = strtok(NULL, "\r\n"); // split string by delimitter CRLF
+    // }
+    // printf("\n");
+    //
+    // if (validate_CRLF(ptr_http_client_buffer) == 1) {
+    //     malformed = 1;
+    // } else if (validate_status_line(ptr_status_line) == 1) {
+    //     malformed = 1;
+    // }
+    //
+    // for (int i = 0; i < strlen(ptr_status_line); i++) {
+    //     printf("\n %c", ptr_status_line[i]);
+    // }
 
-    // checking crlf at end of header
-    malformed = validate_CRLF(ptr_http_client_buffer);
-
-    printf("\nHTTP Packet received from browser/client:\n");
-    int status_line_found = 0;
-    char *ptr_status_line;
-    while (token != NULL) {
-        printf("%s\n", token);
-        if (status_line_found == 0) {
-            ptr_status_line = token;
-            status_line_found = 1;
-        }
-        token = strtok(NULL, "\r\n"); // split string by delimitter CRLF
-    }
-    printf("\n");
-
-    // extract HTTP method and version used from client
-    char *ptr_http_method_used = strtok(ptr_status_line, " ");
-    char *ptr_http_URI = strtok(NULL, " ");
-    char *ptr_http_version_used = strtok(NULL, " ");
-    printf("HTTP Method Used (from client packet): %s\n", ptr_http_method_used);
-    printf("HTTP URI (from client packet): %s\n", ptr_http_URI);
-    printf("HTTP Version Used (from client packet): %s\n\n",
-           ptr_http_version_used);
-
-    // TODO: APPLY FUNCTIONALITY... Respond with valid http packet
-    //  check for presence of required http stuff
-    //  just printing sht now
-    if (ptr_http_method_used == NULL) {
-        printf("Missing HTTP Method!\n");
-        malformed = 1;
-    }
-    if (ptr_http_URI == NULL) {
-        printf("Missing URI!\n");
-        malformed = 1;
-    }
-    if (ptr_http_version_used == NULL) {
-        printf("Missing HTTP Version!\n");
-        malformed = 1;
-    }
-
-    // actually validate the request methods if all http stuff is present
-    if (!(strcmp(ptr_http_method_used, "GET") == 0 ||
-          strcmp(ptr_http_method_used, "POST") == 0 ||
-          strcmp(ptr_http_method_used, "HEAD") == 0)) {
-        printf("Invalid http method!\n");
-        malformed = 1;
-    }
-    if (!(ptr_http_URI[0] == '/')) {
-        printf("Invalid URI!\n");
-        malformed = 1;
-    }
-    if (!(strcmp(ptr_http_version_used, "HTTP/1.0") == 0 ||
-          strcmp(ptr_http_version_used, "HTTP/1.1") == 0)) {
-        printf("Unsupported or Invalid HTTP version!\n");
-        malformed = 1;
-    }
+    STATE_PARSER(ptr_http_client_buffer);
 
     char *ptr_packet_buffer = create_HTTP_response_packet(malformed);
     send_http_response(new_connection_fd, ptr_packet_buffer);
     free(ptr_http_client_buffer);
-    free(dupe_ptr_http_client);
+    // free(dupe_ptr_http_client);
 }
 
 // void* generic pointer, allow return of any type of data
@@ -196,8 +191,8 @@ void *server_thread_to_run(void *args) {
     gettimeofday(&end, NULL);
     time_used =
         (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000.0;
-    printf("Time taken: %.4lf seconds to finish thread for fd=%d \n", time_used,
-           new_connection_fd);
+    printf("\nTime taken: %.4lf seconds to finish thread for fd=%d \n",
+           time_used, new_connection_fd);
     printf("\n");
 
     return NULL;
