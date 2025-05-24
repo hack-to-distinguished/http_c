@@ -92,6 +92,7 @@ int main(int argc, char *argv[]) {
     while (1) {
         client_sockfd = accept(sockfd, (struct sockaddr *)&their_addr, &their_addrlen);
         if (client_sockfd > 0) {
+            printf("client sockfd > 0\n");
             if (!is_client_connected(conn_clients, MAX_CLIENTS, client_sockfd)) {
                 conn_clients[client_count] = client_sockfd;
                 pfds[client_count].fd = client_sockfd;
@@ -100,12 +101,14 @@ int main(int argc, char *argv[]) {
 
                 char *msg = "You're connected to the server\n";
                 send(client_sockfd, msg, strlen(msg), 0);
+                printf("SENT MSG TO CLIENT\n");
             } else {
                 char *msg = "Server full\n";
                 send(client_sockfd, msg, strlen(msg), 0);
                 close(client_sockfd);
             }
         }
+        printf("Checking for socket activity\n");
         char *ptr_str = malloc(256);
         char *usr_msg_buf = malloc(128);
         for (int i; i < client_count; i++) {

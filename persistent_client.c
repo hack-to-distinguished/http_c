@@ -52,14 +52,10 @@ int main(int argc, char *argv[]) {
     } else {
         printf("Connected to the server\n\n");
     }
-    // TODO:
-    // Try connecting again if you see that you aren't connected
-    // Find a way to check if you're connected, if not, re-establish connection
-
 
     // TODO:
-    // - Receive the message for the previous user before 
-    // sending your message
+    // - Receive the message for the previous user before sending your message
+    // -> I have to use the pfds to check that the client is ready to recv msg
 
     char *recv_str = malloc(128);
     int bytes_recv = recv(client_fd, recv_str, 128, 0);
@@ -67,40 +63,46 @@ int main(int argc, char *argv[]) {
         printf("Messages from the server: %s\n", recv_str);
     }
 
-    puts("Press C-c to quit:");
+    struct pollfd pfd = {client_fd, POLLIN | POLLOUT, 0};
     char *ptr_str = malloc(128);
+    int bytes_sent;
     while (1) {
-        printf("\nPress enter to send your message: \n");
-        scanf("%s", ptr_str);
 
-        int bytes_sent = send(client_fd, ptr_str, strlen(ptr_str), 0);
-        if (bytes_sent == -1) {
-            error("unable to send entered messaged");
-        } else {
-            printf("Bytes sent: %d - ", bytes_sent);
-            printf("Message sent: %s\n", ptr_str);
+        // FIX: NEW ENTRY
+        // INFO: If think the ordering is wrong - The issue is bigger than that
+        if (pfd.revents & POLLIN) { // server is sending
+            printf("Server sending\n");
+            bytes_recv = recv(pfd.fd, recv_str, 128, 0);
+            printf("MESSAGE RECEIVED: %s\n", recv_str);
         }
-
-        char *recv_str = malloc(128);
-        int bytes_recv = recv(client_fd, recv_str, 128, 0);
-        if (bytes_recv != -1) {
-            printf("Messages from the previous user: %s\n\n", recv_str);
+        if (pfd.revents & POLLOUT) {
+            printf("\nPress enter to send your message:\n");
+            scanf("%s", ptr_str);
+            
+            bytes_sent = send(pfd.fd, ptr_str, strlen(ptr_str), 0);
+            if (bytes_sent > 0) {
+                printf("Message sent: %s\n", ptr_str);
+            }
         }
+        // FIX: NEW ENTRY
 
-        // INFO: Check that we're still connected - if not reconnect
-        /*int num_events = poll(pfds, 1, 2500);*/
-        /*if (num_events == 0) {*/
-        /*    printf("poll timed out %d\n", num_events);*/
-        /*} else { // Reconnect*/
-        /*    int pollout_happened = pfds[0].revents & POLLOUT;*/
-        /*    if (pollout_happened) {*/
-        /*        printf("File descriptor %d is ready to read\n", pfds[0].fd);*/
-        /*        connect(client_fd, res->ai_addr, res->ai_addrlen);*/
-        /*    } else {*/
-        /*        printf("Unexpected event occurred: %d\n", pfds[0].revents);*/
-        /*    }*/
+        // FIX: This is blocking too
+        /*int bytes_sent = send(client_fd, ptr_str, strlen(ptr_str), 0);*/
+        /*if (bytes_sent == -1) {*/
+        /*    error("unable to send entered messaged");*/
+        /*} else {*/
+        /*    printf("Bytes sent: %d - ", bytes_sent);*/
+        /*    printf("Message sent: %s\n", ptr_str);*/
         /*}*/
 
+        // FIX: Blocking
+        /*char *recv_str = malloc(128);*/
+        /*if (pfd[0].revents & POLLOUT || POLLIN) {*/
+        /*    int bytes_recv = recv(client_fd, recv_str, 128, 0);*/
+        /*    if (bytes_recv != -1) {*/
+        /*        printf("Message(s) from the other user: %s\n\n", recv_str);*/
+        /*    }*/
+        /*}*/
 
         free(ptr_str);
         ptr_str = malloc(128);
