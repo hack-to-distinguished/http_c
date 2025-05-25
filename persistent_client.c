@@ -63,23 +63,33 @@ int main(int argc, char *argv[]) {
         printf("Messages from the server: %s\n", recv_str);
     }
 
-    struct pollfd pfd = {client_fd, POLLIN | POLLOUT, 0};
+    struct pollfd pfds[1];//s = {{client_fd, POLLIN | POLLOUT, 0}};
+    pfds[0].fd = client_fd;
+    pfds[0].events = POLLIN | POLLOUT;
+
     char *ptr_str = malloc(128);
-    int bytes_sent;
+    int bytes_sent, fd_count = 1;
     printf("Entering loop\n");
     while (1) {
 
+        int poll_count = poll(pfds, fd_count, -1);
+        if (poll_count == -1) {
+            error("Poll error");
+            exit(1);
+        }
+        /*printf("pfd events: %s\n", pfds[0].revents);*/
+
         // INFO: I think I need to poll a different fd, idk which though
-        if (pfd.revents & POLLIN) { // server is sending
+        if (pfds[0].revents & POLLIN) { // server is sending
             printf("Server sending\n");
-            bytes_recv = recv(pfd.fd, recv_str, 128, 0);
+            bytes_recv = recv(pfds[0].fd, recv_str, 128, 0);
             printf("MESSAGE RECEIVED: %s\n", recv_str);
         }
-        if (pfd.revents & POLLOUT) {
+        if (pfds[0].revents & POLLOUT) {
             printf("\nPress enter to send your message:\n");
             scanf("%s", ptr_str);
 
-            bytes_sent = send(pfd.fd, ptr_str, strlen(ptr_str), 0);
+            bytes_sent = send(pfds[0].fd, ptr_str, strlen(ptr_str), 0);
             if (bytes_sent > 0) {
                 printf("Message sent: %s\n", ptr_str);
             }
