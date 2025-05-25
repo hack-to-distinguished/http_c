@@ -83,10 +83,27 @@ void ERROR_STATE(int new_connection_fd) {
 }
 
 void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer,
-                       int new_connection_fd) {}
-
-void STATUS_LINE_STATE(char **ptr_ptr_http_client_buffer,
                        int new_connection_fd) {
+    // skip the first instance of crlf
+    *ptr_ptr_http_client_buffer += 2;
+    char *buffer = *ptr_ptr_http_client_buffer;
+    // char header_name[32];
+    // char *ptr_header_name = header_name;
+
+    for (int i = 0; i < strlen(buffer); i++) {
+        // TODO: extract header name from header field
+        if (buffer[i] == ':') {
+            printf("\%c %d", buffer[i], buffer[i]);
+        } else {
+            // ptr_header_name = &buffer[i];
+            // ptr_header_name += 1;
+        }
+    }
+    // printf("\nHeader Name Extracted: %s", header_name);
+}
+
+void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
+                        int new_connection_fd) {
     char *buffer =
         *ptr_ptr_http_client_buffer; // dereference the pointer pointer to get
                                      // the actual char buffer
@@ -130,7 +147,7 @@ void STATUS_LINE_STATE(char **ptr_ptr_http_client_buffer,
 void HEADER_VALUE_STATE() {}
 void END_OF_HEADERS_STATE() {}
 void STATE_PARSER(char *ptr_http_client_buffer, int new_connection_fd) {
-    STATUS_LINE_STATE(&ptr_http_client_buffer, new_connection_fd);
+    REQUEST_LINE_STATE(&ptr_http_client_buffer, new_connection_fd);
 }
 
 void parse_HTTP_requests(int new_connection_fd) {
