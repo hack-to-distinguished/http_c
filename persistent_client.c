@@ -11,6 +11,7 @@
 #include <unistd.h>
 #define MYPORT "8080"
 #define MAX_IN 20
+#define BUFFER_SIZE 1024
 
 
 void error(const char *msg) {
@@ -53,23 +54,19 @@ int main(int argc, char *argv[]) {
         printf("Connected to the server\n\n");
     }
 
-    // TODO:
-    // - Receive the message for the previous user before sending your message
-    // -> I have to use the pfds to check that the client is ready to recv msg
-
-    char *recv_str = malloc(128);
-    int bytes_recv = recv(client_fd, recv_str, 128, 0);
-    if (bytes_recv != -1) {
-        printf("Messages from the server: %s\n", recv_str);
-    }
 
     struct pollfd pfds[MAX_IN];
     pfds[0].fd = client_fd;
     pfds[0].events = POLLIN | POLLOUT;
 
-    char *ptr_str = malloc(128);
-    int bytes_sent, fd_count = 1;
-    printf("Entering loop\n");
+    char send_buf[BUFFER_SIZE], recv_buf[BUFFER_SIZE], init_buf[32];
+    int bytes_sent, bytes_recv, fd_count = 1;
+
+    bytes_recv = recv(client_fd, init_buf, 32, 0);
+    if (bytes_recv != -1) {
+        printf("Messages from the server: %s\n", init_buf);
+    }
+
     while (1) {
 
         int poll_count = poll(pfds, fd_count, -1);
@@ -78,26 +75,21 @@ int main(int argc, char *argv[]) {
             exit(1);
         }
 
-        if (pfds[0].revents & POLLIN) { // server is sending
-            printf("Server sending\n");
-            bytes_recv = recv(pfds[0].fd, recv_str, 128, 0);
-            printf("MESSAGE RECEIVED: %s\n", recv_str);
+        if (pfds[0].revents & POLLIN) {
+            printf("\n\n");
+            bytes_recv = recv(pfds[0].fd, recv_buf, BUFFER_SIZE, 0);
+            printf("MESSAGE RECEIVED: %s\n", recv_buf);
         }
         if (pfds[0].revents & POLLOUT) {
             printf("\nPress enter to send your message:\n");
-            scanf("%s", ptr_str);
+            scanf("%s", send_buf);
 
-            bytes_sent = send(pfds[0].fd, ptr_str, strlen(ptr_str), 0);
+            bytes_sent = send(pfds[0].fd, send_buf, BUFFER_SIZE, 0);
             if (bytes_sent > 0) {
-                printf("Message sent: %s\n", ptr_str);
+                printf("Message sent: %s\n", send_buf);
             }
         }
-
-        free(ptr_str);
-        ptr_str = malloc(128);
-    }
-    free(recv_str);
-
+   }
 
     freeaddrinfo(res);
     return 0;

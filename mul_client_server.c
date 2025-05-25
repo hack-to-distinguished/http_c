@@ -122,8 +122,6 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        /*char *ptr_str = malloc(256);*/
-        /*char *usr_msg_buf = malloc(128);*/
         for (int i = 1; i < fd_count; i++) {
             if (pfds[i].revents & POLLIN) {
                 bytes_recv = recv(pfds[i].fd, buffer, BUFFER_SIZE, 0);
@@ -137,8 +135,6 @@ int main(int argc, char *argv[]) {
                 } else {
                     buffer[bytes_recv] = '\0'; // make eof
                     printf("Message received: %s from %d\n", buffer, pfds[i].fd);
-                    /*memcpy(usr_msg_buf, buffer, bytes_recv);*/
-                    /*fflush(stdout);*/
 
                     for (int j = 1; j < fd_count; j++) {
                         bytes_sent = send(pfds[j].fd, buffer, bytes_recv, 0);
