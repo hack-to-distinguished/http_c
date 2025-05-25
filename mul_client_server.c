@@ -144,68 +144,6 @@ int main(int argc, char *argv[]) {
                     }
                 }
             }
-
-
-            /*if (pfds[i].revents & POLLOUT) { // Client is ready to recv*/
-            /*    if (usr_msg_buf[0] != '\0' && usr_msg_buf[0] != '\n') {*/
-            /*        bytes_sent = send(pfds[i].fd, usr_msg_buf, bytes_recv, 0);*/
-            /*    }*/
-            /*}*/
         }
     }
-
-    // FIX: NEW ENTRY
-
-    /*char *usr_msg_buf = malloc(128);*/
-    /*int c1_socket, c2_socket;*/
-    /*char *msg = "You're connected to the server,\n";*/
-    /*c1_socket = accept(sockfd, (struct sockaddr *)&their_addr, &their_addrlen);*/
-    /*send(c1_socket, msg, strlen(msg), 0);*/
-    /**/
-    /*c2_socket = accept(sockfd, (struct sockaddr *)&their_addr, &their_addrlen);*/
-    /*send(c2_socket, msg, strlen(msg), 0);*/
-    /**/
-    /*struct pollfd pfd[]={{c1_socket, POLLIN, 0}, {c1_socket, POLLIN, 0}};*/
-    /**/
-    /*int bytes_recv, bytes_sent;*/
-    /*while (1) {*/
-    /*    char *ptr_str = malloc(256);*/
-    /**/
-    /*    // INFO: Pretty sure this should just be POLLIN*/
-    /*    if (pfd[0].revents & POLLIN || POLLOUT) {*/
-    /*        printf("In c1 space\n");*/
-    /*        if (usr_msg_buf[0] != '\0' && usr_msg_buf[0] != '\n') {*/
-    /*            bytes_sent = send(c1_socket, usr_msg_buf, bytes_recv, 0);*/
-    /*            if (bytes_sent != -1) {*/
-    /*                printf("Sent message: %s to user %d\n\n", usr_msg_buf, c1_socket);*/
-    /*            }*/
-    /*        }*/
-    /**/
-    /*        while ((bytes_recv = recv(c1_socket, ptr_str, 512, 0)) > 0) {*/
-    /*            printf("Received: %d bytes from client %d\t", bytes_recv, c2_socket);*/
-    /*            printf("Message received: %s\n", ptr_str);*/
-    /*            memcpy(usr_msg_buf, ptr_str, bytes_recv);*/
-    /*            fflush(stdout);*/
-    /*            break;*/
-    /*        }*/
-    /*    }*/
-    /*    if (pfd[1].revents & POLLIN || POLLOUT) {*/
-    /*        printf("In c2 space\n");*/
-    /*        if (usr_msg_buf[0] != '\0' && usr_msg_buf[0] != '\n') {*/
-    /*            bytes_sent = send(c2_socket, usr_msg_buf, bytes_recv, 0);*/
-    /*            if (bytes_sent != -1) {*/
-    /*                printf("Sent message: %s to user %d\n\n", usr_msg_buf, c2_socket);*/
-    /*            }*/
-    /*        }*/
-    /**/
-    /*        while ((bytes_recv = recv(c2_socket, ptr_str, 512, 0)) > 0) {*/
-    /*            printf("Received: %d bytes from client %d\t", bytes_recv, c2_socket);*/
-    /*            printf("Message received: %s\n", ptr_str);*/
-    /*            memcpy(usr_msg_buf, ptr_str, bytes_recv);*/
-    /*            fflush(stdout);*/
-    /*            break;*/
-    /*        }*/
-    /*    }*/
-    /*}*/
-    /*freeaddrinfo(res);*/
 }

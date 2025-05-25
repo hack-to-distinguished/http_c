@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
         if (pfd.revents & POLLOUT) {
             printf("\nPress enter to send your message:\n");
             scanf("%s", ptr_str);
-            
+
             bytes_sent = send(pfd.fd, ptr_str, strlen(ptr_str), 0);
             if (bytes_sent > 0) {
                 printf("Message sent: %s\n", ptr_str);
