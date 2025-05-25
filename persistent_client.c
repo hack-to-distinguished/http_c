@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
         printf("Messages from the server: %s\n", recv_str);
     }
 
-    struct pollfd pfds[1];//s = {{client_fd, POLLIN | POLLOUT, 0}};
+    struct pollfd pfds[MAX_IN];
     pfds[0].fd = client_fd;
     pfds[0].events = POLLIN | POLLOUT;
 
@@ -77,9 +77,7 @@ int main(int argc, char *argv[]) {
             error("Poll error");
             exit(1);
         }
-        /*printf("pfd events: %s\n", pfds[0].revents);*/
 
-        // INFO: I think I need to poll a different fd, idk which though
         if (pfds[0].revents & POLLIN) { // server is sending
             printf("Server sending\n");
             bytes_recv = recv(pfds[0].fd, recv_str, 128, 0);

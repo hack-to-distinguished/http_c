@@ -85,6 +85,7 @@ int main(int argc, char *argv[]) {
     int client_sockfd, conn_clients[BACKLOG], fd_count = 1;
     int bytes_recv, bytes_sent;
     struct pollfd pfds[BACKLOG + 1]; 
+    char buffer[BUFFER_SIZE];
     // INFO: +1 bc I'm adding the server to pfds so I can do .revents
 
     pfds[0].fd = server_fd;
@@ -121,26 +122,26 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        char *ptr_str = malloc(256);
-        char *usr_msg_buf = malloc(128);
-        // FIX: Creates a never ending loop when the client disconnects
+        /*char *ptr_str = malloc(256);*/
+        /*char *usr_msg_buf = malloc(128);*/
         for (int i = 1; i < fd_count; i++) {
             if (pfds[i].revents & POLLIN) {
-                bytes_recv = recv(pfds[i].fd, ptr_str, 512, 0);
+                bytes_recv = recv(pfds[i].fd, buffer, BUFFER_SIZE, 0);
                 if (bytes_recv < 0) {
                     printf("Client disconnected\n");
                     close(pfds[i].fd);
                     pfds[i] = pfds[fd_count - 1];
-                    // This works because outside of pos 0 we don't care about the order
+                    // This works bc outside of pos 0 we don't care about the order
                     fd_count--;
                     i--;
                 } else {
-                    printf("Message received: %s from client %d\n", ptr_str, pfds[i].fd);
-                    memcpy(usr_msg_buf, ptr_str, bytes_recv);
-                    fflush(stdout);
+                    buffer[bytes_recv] = '\0'; // make eof
+                    printf("Message received: %s from %d\n", buffer, pfds[i].fd);
+                    /*memcpy(usr_msg_buf, buffer, bytes_recv);*/
+                    /*fflush(stdout);*/
 
                     for (int j = 1; j < fd_count; j++) {
-                        bytes_sent = send(pfds[j].fd, usr_msg_buf, bytes_recv, 0);
+                        bytes_sent = send(pfds[j].fd, buffer, bytes_recv, 0);
                     }
                 }
             }
