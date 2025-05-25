@@ -14,7 +14,6 @@
 #define MYPORT "8080"
 #define BACKLOG 10 // how many pending connections queue will hold
 #define BUFFER_SIZE 1024
-#define MAX_CLIENTS 2
 
 void error(const char *msg) {
     perror(msg);
@@ -56,7 +55,7 @@ int main(int argc, char *argv[]) {
     struct addrinfo hints, *res;
     struct sockaddr_storage their_addr;
     socklen_t their_addrlen = sizeof(their_addr);
-    int sockfd, new_sockfd;
+    int server_fd;
     int reuse_addr_flag = 1;
     int *ptr_reuse_addr_flag = &reuse_addr_flag;
 
@@ -69,35 +68,49 @@ int main(int argc, char *argv[]) {
         error("error getaddrinfo");
     }
 
-    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, ptr_reuse_addr_flag,
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, ptr_reuse_addr_flag,
                sizeof(reuse_addr_flag));
 
-    sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    server_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 
-    int bind_conn = bind(sockfd, res->ai_addr, res->ai_addrlen);
+    int bind_conn = bind(server_fd, res->ai_addr, res->ai_addrlen);
     if (bind_conn == -1) {
         error("Unable to start the server");
     }
     printf("starting server: %d\n", bind_conn);
 
-    listen(sockfd, BACKLOG);
+    listen(server_fd, BACKLOG);
 
-    // TODO:
-    // [] Send the first connected user back in the queue
 
     // FIX: NEW ENTRY
-    int client_sockfd, conn_clients[MAX_CLIENTS], client_count = 0;
+    int client_sockfd, conn_clients[BACKLOG], fd_count = 1;
     int bytes_recv, bytes_sent;
-    struct pollfd pfds[MAX_CLIENTS];
+    struct pollfd pfds[BACKLOG + 1]; 
+    // INFO: +1 bc I'm adding the server to pfds so I can do .revents
+
+    pfds[0].fd = server_fd;
+    pfds[0].events = POLLIN;
+
     while (1) {
-        client_sockfd = accept(sockfd, (struct sockaddr *)&their_addr, &their_addrlen);
-        if (client_sockfd > 0) {
-            printf("client sockfd > 0\n");
-            if (!is_client_connected(conn_clients, MAX_CLIENTS, client_sockfd)) {
-                conn_clients[client_count] = client_sockfd;
-                pfds[client_count].fd = client_sockfd;
-                pfds[client_count].events = POLLIN | POLLOUT;
-                client_count += 1;
+
+        int poll_count = poll(pfds, fd_count, -1);
+        if (poll_count == -1) {
+            error("Poll error");
+            exit(1);
+        }
+
+        if (pfds[0].revents & POLLIN) {
+            client_sockfd = accept(server_fd, (struct sockaddr *)&their_addr, &their_addrlen);
+
+            if (client_sockfd == -1) {
+                error("client can't connect");
+            }
+
+            if (!is_client_connected(conn_clients, BACKLOG, client_sockfd)) {
+                conn_clients[fd_count] = client_sockfd;
+                pfds[fd_count].fd = client_sockfd;
+                pfds[fd_count].events = POLLIN | POLLOUT;
+                fd_count += 1;
 
                 char *msg = "You're connected to the server\n";
                 send(client_sockfd, msg, strlen(msg), 0);
@@ -108,23 +121,36 @@ int main(int argc, char *argv[]) {
                 close(client_sockfd);
             }
         }
-        printf("Checking for socket activity\n");
+
         char *ptr_str = malloc(256);
         char *usr_msg_buf = malloc(128);
-        for (int i; i < client_count; i++) {
-            if (pfds[i].revents & POLLIN) { // Client is sending
+        for (int i = 1; i < fd_count; i++) {
+            if (pfds[i].revents & POLLIN) {
                 bytes_recv = recv(pfds[i].fd, ptr_str, 512, 0);
-                printf("Message received: %s from client %d\n", ptr_str, pfds[i].fd);
-                memcpy(usr_msg_buf, ptr_str, bytes_recv);
-                fflush(stdout);
+                if (bytes_recv < 0) {
+                    printf("Client disconnected\n");
+                    close(pfds[i].fd);
+                    pfds[i] = pfds[fd_count - 1];
+                    // This works because outside of pos 0 we don't care about the order
+                    fd_count--;
+                    i--;
+                } else {
+                    printf("Message received: %s from client %d\n", ptr_str, pfds[i].fd);
+                    memcpy(usr_msg_buf, ptr_str, bytes_recv);
+                    fflush(stdout);
+
+                    for (int j = 1; j < fd_count; j++) {
+                        bytes_sent = send(pfds[j].fd, usr_msg_buf, bytes_recv, 0);
+                    }
+                }
             }
 
-            if (pfds[i].revents & POLLOUT) { // Client is ready to recv
-                if (usr_msg_buf[0] != '\0' && usr_msg_buf[0] != '\n') {
-                    bytes_sent = send(pfds[i].fd, usr_msg_buf, bytes_recv, 0);
-                }
-                // Will I be stuck here or do I continue?
-            }
+
+            /*if (pfds[i].revents & POLLOUT) { // Client is ready to recv*/
+            /*    if (usr_msg_buf[0] != '\0' && usr_msg_buf[0] != '\n') {*/
+            /*        bytes_sent = send(pfds[i].fd, usr_msg_buf, bytes_recv, 0);*/
+            /*    }*/
+            /*}*/
         }
     }
 

@@ -69,12 +69,14 @@ int main(int argc, char *argv[]) {
     while (1) {
 
         // FIX: NEW ENTRY
-        // INFO: If think the ordering is wrong - The issue is bigger than that
+        // INFO: maybe use poll here first
+        printf("Checking for POLLIN\n");
         if (pfd.revents & POLLIN) { // server is sending
             printf("Server sending\n");
             bytes_recv = recv(pfd.fd, recv_str, 128, 0);
             printf("MESSAGE RECEIVED: %s\n", recv_str);
         }
+        printf("Checking for POLLOUT\n");
         if (pfd.revents & POLLOUT) {
             printf("\nPress enter to send your message:\n");
             scanf("%s", ptr_str);
