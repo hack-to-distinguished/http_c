@@ -82,7 +82,6 @@ int main(int argc, char *argv[]) {
     listen(server_fd, BACKLOG);
 
 
-    // FIX: NEW ENTRY
     int client_sockfd, conn_clients[BACKLOG], fd_count = 1;
     int bytes_recv, bytes_sent;
     struct pollfd pfds[BACKLOG + 1]; 
@@ -124,6 +123,7 @@ int main(int argc, char *argv[]) {
 
         char *ptr_str = malloc(256);
         char *usr_msg_buf = malloc(128);
+        // FIX: Creates a never ending loop when the client disconnects
         for (int i = 1; i < fd_count; i++) {
             if (pfds[i].revents & POLLIN) {
                 bytes_recv = recv(pfds[i].fd, ptr_str, 512, 0);

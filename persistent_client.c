@@ -66,17 +66,15 @@ int main(int argc, char *argv[]) {
     struct pollfd pfd = {client_fd, POLLIN | POLLOUT, 0};
     char *ptr_str = malloc(128);
     int bytes_sent;
+    printf("Entering loop\n");
     while (1) {
 
-        // FIX: NEW ENTRY
-        // INFO: maybe use poll here first
-        printf("Checking for POLLIN\n");
+        // INFO: I think I need to poll a different fd, idk which though
         if (pfd.revents & POLLIN) { // server is sending
             printf("Server sending\n");
             bytes_recv = recv(pfd.fd, recv_str, 128, 0);
             printf("MESSAGE RECEIVED: %s\n", recv_str);
         }
-        printf("Checking for POLLOUT\n");
         if (pfd.revents & POLLOUT) {
             printf("\nPress enter to send your message:\n");
             scanf("%s", ptr_str);
@@ -86,25 +84,6 @@ int main(int argc, char *argv[]) {
                 printf("Message sent: %s\n", ptr_str);
             }
         }
-        // FIX: NEW ENTRY
-
-        // FIX: This is blocking too
-        /*int bytes_sent = send(client_fd, ptr_str, strlen(ptr_str), 0);*/
-        /*if (bytes_sent == -1) {*/
-        /*    error("unable to send entered messaged");*/
-        /*} else {*/
-        /*    printf("Bytes sent: %d - ", bytes_sent);*/
-        /*    printf("Message sent: %s\n", ptr_str);*/
-        /*}*/
-
-        // FIX: Blocking
-        /*char *recv_str = malloc(128);*/
-        /*if (pfd[0].revents & POLLOUT || POLLIN) {*/
-        /*    int bytes_recv = recv(client_fd, recv_str, 128, 0);*/
-        /*    if (bytes_recv != -1) {*/
-        /*        printf("Message(s) from the other user: %s\n\n", recv_str);*/
-        /*    }*/
-        /*}*/
 
         free(ptr_str);
         ptr_str = malloc(128);
