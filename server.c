@@ -127,9 +127,10 @@ int main(int argc, char *argv[]) {
         for (int i = 1; i < fd_count; i++) {
             if (pfds[i].revents & POLLIN) {
                 bytes_recv = recv(pfds[i].fd, buffer, BUFFER_SIZE, 0);
-                if (bytes_recv <= 0) {
+                if (bytes_recv <= 0) { // FIX: The disconnect is wrong
                     printf("Client %d disconnected\n", pfds[i].fd);
                     close(pfds[i].fd);
+                    conn_clients[i] = conn_clients[fd_count - 1];
                     pfds[i] = pfds[fd_count - 1];
                     // Other than pos 0 we don't care about the order
                     fd_count--;
