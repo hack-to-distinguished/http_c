@@ -67,6 +67,12 @@ int main(int argc, char *argv[]) {
         printf("Messages from the server: %s\n", init_buf);
     }
 
+    // TODO: Next steps:
+    // - 2nd message onwards, users receive their own messages instead of those 
+    // from the other client
+    // - Add a pollin mechanism that checks the server for any new messages at 
+    // a regular interval so that users don't only receive messages after they've
+    // sent one.
     while (1) {
 
         int poll_count = poll(pfds, fd_count, -1);
