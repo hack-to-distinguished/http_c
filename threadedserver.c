@@ -23,6 +23,14 @@ void error(const char *msg) {
     exit(0);
 }
 
+// prototypes to ensure that there are no undeclared errors and conflicting
+// types
+void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer,
+                       int new_connection_fd);
+void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
+                        int new_connection_fd);
+void ERROR_STATE(int new_connection_fd);
+
 // custom struct to pass values
 typedef struct {
     int sock_fd;
@@ -83,33 +91,85 @@ void ERROR_STATE(int new_connection_fd) {
     send_http_response(new_connection_fd, ptr_packet_buffer);
 }
 
-void HEADER_VALUE_STATE() {}
+void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
+                        int new_connection_fd) {
+    // skip colon and space
+    *ptr_ptr_http_client_buffer += 2;
+
+    bool header_value_found = false;
+    bool single_crlf_found = false;
+    char *buffer = *ptr_ptr_http_client_buffer;
+    char header_value[32];
+    char *ptr_header_value = header_value;
+
+    for (int i = 0; i < strlen(buffer); i++) {
+        printf("\n%c %d %p", buffer[i], buffer[i], &buffer[i]);
+    }
+
+    for (int i = 0; i < strlen(buffer); i++) {
+        // check header value
+        if (buffer[i] != '\r' && buffer[i] != '\n' && !header_value_found) {
+            ptr_header_value[i] = buffer[i];
+        } else {
+            ptr_header_value[i] = '\0';
+            header_value_found = true;
+        }
+        // check single crlf
+        if (i < strlen(buffer) - 1 && buffer[i] == '\r' &&
+            buffer[i + 1] == '\n') {
+            single_crlf_found = true;
+            if (i + 2 <= strlen(buffer)) {
+                *ptr_ptr_http_client_buffer = &buffer[i + 2];
+                printf("\n addr: %p", &buffer[i + 2]);
+            }
+            i = strlen(buffer);
+        }
+    }
+
+    if (single_crlf_found) {
+        printf("\nHeader Value Extracted: %s\n", header_value);
+        HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd);
+    } else {
+        ERROR_STATE(new_connection_fd);
+    }
+}
 
 void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer,
                        int new_connection_fd) {
-    // skip the first instance of crlf
-    *ptr_ptr_http_client_buffer += 2;
 
     char *buffer = *ptr_ptr_http_client_buffer;
     char header_name[32];
     char *ptr_header_name = header_name;
     bool colon_found = false;
+    bool single_crlf_found = false;
 
     // extract the header name from the header field
     for (int i = 0; i < strlen(buffer); i++) {
-        // TODO: extract header name from header field
+        if (i + 1 < strlen(buffer) && buffer[i] == '\r' &&
+            buffer[i + 1] == '\n') {
+            single_crlf_found = true;
+        }
         if (buffer[i] == ':') {
             colon_found = true;
-            // printf("\%c %d", buffer[i], buffer[i]);
+            *ptr_ptr_http_client_buffer = &buffer[i];
         } else {
-            ptr_header_name[i] = buffer[i];
+            if (!single_crlf_found) {
+                ptr_header_name[i] = buffer[i];
+            }
         }
     }
 
+    printf("\nPointer is pointing to %c %d at %p",
+           (*ptr_ptr_http_client_buffer)[0], (*ptr_ptr_http_client_buffer)[0],
+           &(*ptr_ptr_http_client_buffer)[0]);
+
     if (colon_found) {
         printf("\nHeader Name Extracted: %s", header_name);
-        HEADER_VALUE_STATE();
+        HEADER_VALUE_STATE(ptr_ptr_http_client_buffer, new_connection_fd);
+    } else if (single_crlf_found) {
+        printf("\ncrlf found at header name state!");
     } else {
+        printf("\nerror at header name state");
         ERROR_STATE(new_connection_fd);
     }
 }
@@ -152,6 +212,7 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
         ERROR_STATE(new_connection_fd);
     }
 
+    crlf_ptr += 2;
     ptr_ptr_http_client_buffer = &crlf_ptr;
     HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd);
 }
