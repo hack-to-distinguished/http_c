@@ -3,6 +3,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,24 +83,32 @@ void ERROR_STATE(int new_connection_fd) {
     send_http_response(new_connection_fd, ptr_packet_buffer);
 }
 
+void HEADER_VALUE_STATE() {}
+
 void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer,
                        int new_connection_fd) {
     // skip the first instance of crlf
     *ptr_ptr_http_client_buffer += 2;
-    char *buffer = *ptr_ptr_http_client_buffer;
-    // char header_name[32];
-    // char *ptr_header_name = header_name;
 
+    char *buffer = *ptr_ptr_http_client_buffer;
+    char header_name[32];
+    char *ptr_header_name = header_name;
+    bool colon_found = false;
+
+    // extract the header name from the header field
     for (int i = 0; i < strlen(buffer); i++) {
         // TODO: extract header name from header field
         if (buffer[i] == ':') {
-            printf("\%c %d", buffer[i], buffer[i]);
+            colon_found = true;
+            // printf("\%c %d", buffer[i], buffer[i]);
         } else {
-            // ptr_header_name = &buffer[i];
-            // ptr_header_name += 1;
+            ptr_header_name[i] = buffer[i];
         }
     }
-    // printf("\nHeader Name Extracted: %s", header_name);
+    printf("\nHeader Name Extracted: %s", header_name);
+    if (colon_found) {
+        HEADER_VALUE_STATE();
+    }
 }
 
 void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
@@ -144,7 +153,6 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
     HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd);
 }
 
-void HEADER_VALUE_STATE() {}
 void END_OF_HEADERS_STATE() {}
 void STATE_PARSER(char *ptr_http_client_buffer, int new_connection_fd) {
     REQUEST_LINE_STATE(&ptr_http_client_buffer, new_connection_fd);
