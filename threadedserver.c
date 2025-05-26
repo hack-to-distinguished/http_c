@@ -105,9 +105,12 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer,
             ptr_header_name[i] = buffer[i];
         }
     }
-    printf("\nHeader Name Extracted: %s", header_name);
+
     if (colon_found) {
+        printf("\nHeader Name Extracted: %s", header_name);
         HEADER_VALUE_STATE();
+    } else {
+        ERROR_STATE(new_connection_fd);
     }
 }
 
