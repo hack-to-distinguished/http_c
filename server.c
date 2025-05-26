@@ -2,6 +2,8 @@
 #include <errno.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <poll.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,6 +18,15 @@
 void error(const char *msg) {
     perror(msg);
     exit(0);
+}
+
+bool is_client_connected(int arr[], int size, int k) {
+    for (int i; i < size; i++) {
+        if (arr[i] == k) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void send_http_response(int sock, const char *body) {
@@ -43,8 +54,8 @@ void send_http_response(int sock, const char *body) {
 int main(int argc, char *argv[]) {
     struct addrinfo hints, *res;
     struct sockaddr_storage their_addr;
-    socklen_t their_addr_len = sizeof(their_addr);
-    int sockfd, new_sockfd;
+    socklen_t their_addrlen = sizeof(their_addr);
+    int server_fd;
     int reuse_addr_flag = 1;
     int *ptr_reuse_addr_flag = &reuse_addr_flag;
 
@@ -57,54 +68,79 @@ int main(int argc, char *argv[]) {
         error("error getaddrinfo");
     }
 
-    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, ptr_reuse_addr_flag,
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, ptr_reuse_addr_flag,
                sizeof(reuse_addr_flag));
 
-    sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    server_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 
-    int bind_conn = bind(sockfd, res->ai_addr, res->ai_addrlen);
+    int bind_conn = bind(server_fd, res->ai_addr, res->ai_addrlen);
     if (bind_conn == -1) {
         error("Unable to start the server");
     }
     printf("starting server: %d\n", bind_conn);
 
-    listen(sockfd, BACKLOG);
+    listen(server_fd, BACKLOG);
 
-    // TODO:
-    // [] Send the first connected user back in the queue
 
-    char *usr_msg_buf = malloc(128);
+    int client_sockfd, conn_clients[BACKLOG], fd_count = 1;
+    int bytes_recv, bytes_sent;
+    struct pollfd pfds[BACKLOG + 1]; 
+    char buffer[BUFFER_SIZE];
+    // INFO: +1 bc I'm adding the server to pfds so I can do .revents
+
+    pfds[0].fd = server_fd;
+    pfds[0].events = POLLIN;
+
     while (1) {
-        int bytes_recv;
-        char *ptr_str = malloc(256);
 
-        new_sockfd = accept(sockfd, (struct sockaddr *)&their_addr, &their_addr_len);
-        char *msg = "You're connected to the server,\n";
-        send(new_sockfd, msg, strlen(msg), 0);
+        int poll_count = poll(pfds, fd_count, -1);
+        if (poll_count == -1) {
+            error("Poll error");
+            exit(1);
+        }
 
-        // INFO: Send the stored message to the next user
-        if (usr_msg_buf[0] != '\0' && usr_msg_buf[0] != '\n') {
-            int s_status = send(new_sockfd, usr_msg_buf, bytes_recv, 0);
-            if (s_status != -1) {
-                printf("Sent message: %s to user %d\n\n", usr_msg_buf, new_sockfd);
-                /*free(usr_msg_buf); // FIX: Only works for one message*/
+        if (pfds[0].revents & POLLIN) {
+            client_sockfd = accept(server_fd, (struct sockaddr *)&their_addr, &their_addrlen);
+
+            if (client_sockfd == -1) {
+                error("client can't connect");
+            }
+
+            if (!is_client_connected(conn_clients, BACKLOG, client_sockfd)) {
+                conn_clients[fd_count] = client_sockfd;
+                pfds[fd_count].fd = client_sockfd;
+                pfds[fd_count].events = POLLIN | POLLOUT;
+                fd_count += 1;
+
+                char *msg = "You're connected to the server\n";
+                send(client_sockfd, msg, strlen(msg), 0);
+                printf("SENT MSG TO CLIENT\n");
+            } else {
+                char *msg = "Server full\n";
+                send(client_sockfd, msg, strlen(msg), 0);
+                close(client_sockfd);
             }
         }
 
-        while ((bytes_recv = recv(new_sockfd, ptr_str, 512, 0)) > 0) {
-            printf("Received: %d bytes from client %d\t", bytes_recv, new_sockfd);
-            printf("Message received: %s\n", ptr_str);
-            memcpy(usr_msg_buf, ptr_str, bytes_recv);
-            fflush(stdout);
-            break;
-        }
+        for (int i = 1; i < fd_count; i++) {
+            if (pfds[i].revents & POLLIN) {
+                bytes_recv = recv(pfds[i].fd, buffer, BUFFER_SIZE, 0);
+                if (bytes_recv < 0) {
+                    printf("Client disconnected\n");
+                    close(pfds[i].fd);
+                    pfds[i] = pfds[fd_count - 1];
+                    // This works bc outside of pos 0 we don't care about the order
+                    fd_count--;
+                    i--;
+                } else {
+                    buffer[bytes_recv] = '\0'; // make eof
+                    printf("Message received: %s from %d\n", buffer, pfds[i].fd);
 
-        if (bytes_recv == 0) {
-            printf("Client %d disconnected.\n", new_sockfd);
-        } else if (bytes_recv == -1) {
-            printf("Error receiving message - Client likely disconnected");
+                    for (int j = 1; j < fd_count; j++) {
+                        bytes_sent = send(pfds[j].fd, buffer, bytes_recv, 0);
+                    }
+                }
+            }
         }
-
     }
-    freeaddrinfo(res);
 }
