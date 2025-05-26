@@ -107,15 +107,17 @@ int main(int argc, char *argv[]) {
             }
 
             if (!is_client_connected(conn_clients, BACKLOG, client_sockfd)) {
+                printf("%d successfully connected to the server\n", client_sockfd);
                 conn_clients[fd_count] = client_sockfd;
                 pfds[fd_count].fd = client_sockfd;
                 pfds[fd_count].events = POLLIN | POLLOUT;
                 fd_count += 1;
 
-                char *msg = "You're connected to the server\n";
+                char *msg = "Connected to the server\n";
                 send(client_sockfd, msg, strlen(msg), 0);
-                printf("SENT MSG TO CLIENT\n");
+                printf("SENT MSG TO THE CLIENT\n");
             } else {
+                printf("Connection to full server attempted\n");
                 char *msg = "Server full\n";
                 send(client_sockfd, msg, strlen(msg), 0);
                 close(client_sockfd);
@@ -125,11 +127,11 @@ int main(int argc, char *argv[]) {
         for (int i = 1; i < fd_count; i++) {
             if (pfds[i].revents & POLLIN) {
                 bytes_recv = recv(pfds[i].fd, buffer, BUFFER_SIZE, 0);
-                if (bytes_recv < 0) {
-                    printf("Client disconnected\n");
+                if (bytes_recv <= 0) {
+                    printf("Client %d disconnected\n", pfds[i].fd);
                     close(pfds[i].fd);
                     pfds[i] = pfds[fd_count - 1];
-                    // This works bc outside of pos 0 we don't care about the order
+                    // Other than pos 0 we don't care about the order
                     fd_count--;
                     i--;
                 } else {

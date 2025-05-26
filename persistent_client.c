@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
     if (connect(client_fd, res->ai_addr, res->ai_addrlen) == -1) {
         error("connection failed");
     } else {
-        printf("Connected to the server\n\n");
+        printf("Waiting on the server\n\n");
     }
 
 
@@ -62,9 +62,11 @@ int main(int argc, char *argv[]) {
     char send_buf[BUFFER_SIZE], recv_buf[BUFFER_SIZE], init_buf[32];
     int bytes_sent, bytes_recv, fd_count = 1;
 
-    bytes_recv = recv(client_fd, init_buf, 32, 0);
-    if (bytes_recv != -1) {
-        printf("Messages from the server: %s\n", init_buf);
+    if (pfds[0].revents & POLLIN) {
+        bytes_recv = recv(client_fd, init_buf, 32, 0);
+        if (bytes_recv != -1) {
+            printf("Messages from the server: %s\n", init_buf);
+        }
     }
 
     // TODO: Next steps:
@@ -73,6 +75,8 @@ int main(int argc, char *argv[]) {
     // - Add a pollin mechanism that checks the server for any new messages at 
     // a regular interval so that users don't only receive messages after they've
     // sent one.
+    // - Allow users to disconnect after they've sent a message and still 
+    // reconnect
     while (1) {
 
         int poll_count = poll(pfds, fd_count, -1);
