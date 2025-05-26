@@ -62,11 +62,9 @@ int main(int argc, char *argv[]) {
     char send_buf[BUFFER_SIZE], recv_buf[BUFFER_SIZE], init_buf[32];
     int bytes_sent, bytes_recv, fd_count = 1;
 
-    if (pfds[0].revents & POLLIN) {
-        bytes_recv = recv(client_fd, init_buf, 32, 0);
-        if (bytes_recv != -1) {
-            printf("Messages from the server: %s\n", init_buf);
-        }
+    bytes_recv = recv(client_fd, init_buf, 32, 0);
+    if (bytes_recv != -1) {
+        printf("Messages from the server: %s\n", init_buf);
     }
 
     // TODO: Next steps:
