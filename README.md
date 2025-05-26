@@ -8,25 +8,25 @@ A bare-bones HTTP server written in C from scratch using low-level socket progra
 
 ### ✅ Phase 1: TCP Echo Server
 
--[x] Create a socket
--[x] Bind to a port
--[x] Listen and accept connections
--[x] Receive data and send it back (echo)
+- [x] Create a socket
+- [x] Bind to a port
+- [x] Listen and accept connections
+- [x] Receive data and send it back (echo)
 
 ---
 
 ### ✅ Phase 2: HTTP Server
 
--[x] Listen on TCP port
--[ ] Apply HTTP protocol to incoming and outgoing data (Ongoing - NJ)
+- [x] Listen on TCP port
+- [ ] Apply HTTP protocol to incoming and outgoing data (Ongoing - NJ)
 
 ---
 
 ### Phase 3: Messaging
 
--[x] Enable users to send messages to the server
--[ ] Create end to end messaging without using the server as a middle man
--[ ] Create group chat style messaging by messaging the server and it redirect the message to all clients (Ongoing - Christian)
+- [x] Enable users to send messages to the server
+- [ ] Create end to end messaging without using the server as a middle man
+- [ ] Create group chat style messaging by messaging the server and it redirect the message to all clients (Ongoing - Christian)
 
 ---
 
