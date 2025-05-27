@@ -112,6 +112,7 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
     }
 
     for (j = j; j < strlen(buffer); j++) {
+        // getting the header value
         if (!(buffer[j] == ':' || buffer[j] == ' ' || buffer[j] == '\r' ||
               buffer[j] == '\n') &&
             !header_value_found) {
@@ -132,7 +133,6 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
         }
     }
 
-    // printf("\nPosition of pointer: %p", &(*ptr_ptr_http_client_buffer)[0]);
     if (single_crlf_found) {
         printf("\nHeader Value Extracted: %s\n", header_value);
         HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd);
@@ -140,6 +140,11 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
         printf("\nerror at header value state");
         ERROR_STATE(new_connection_fd);
     }
+}
+
+void END_OF_HEADERS_STATE(int new_connection_fd) {
+    char *ptr_packet_buffer = create_HTTP_response_packet();
+    send_http_response(new_connection_fd, ptr_packet_buffer);
 }
 
 void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer,
@@ -172,6 +177,7 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer,
         printf("\nHeader Name Extracted: %s", header_name);
         HEADER_VALUE_STATE(ptr_ptr_http_client_buffer, new_connection_fd);
     } else if (single_crlf_found) {
+        END_OF_HEADERS_STATE(new_connection_fd);
         printf("\ncrlf found at header name state!");
     } else {
         printf("\nerror at header name state");
@@ -224,7 +230,6 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
     HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd);
 }
 
-void END_OF_HEADERS_STATE() {}
 void STATE_PARSER(char *ptr_http_client_buffer, int new_connection_fd) {
     REQUEST_LINE_STATE(&ptr_http_client_buffer, new_connection_fd);
 }
