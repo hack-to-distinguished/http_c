@@ -94,83 +94,66 @@ void ERROR_STATE(int new_connection_fd) {
 
 void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
                         int new_connection_fd) {
-    // // skip colon and space
-    // *ptr_ptr_http_client_buffer += 2;
-
     bool header_value_found = false;
     bool single_crlf_found = false;
     char *buffer = *ptr_ptr_http_client_buffer;
     char header_value[32];
     char *ptr_header_value = header_value;
     int counter = 0;
+    int j = 0;
 
-    // for (int i = 0; i < strlen(buffer); i++) {
-    //     printf("\n%c %d %p", buffer[i], buffer[i], &buffer[i]);
-    // }
-
+    // this for loop is used to skip redundant characters
     for (int i = 0; i < strlen(buffer); i++) {
-        if (!(buffer[i] == ':' || buffer[i] == ' ' || buffer[i] == '\r' ||
-              buffer[i] == '\n')) {
-            printf("\n%c %d %p", buffer[i], buffer[i], &buffer[i]);
-            ptr_header_value[counter] = buffer[i];
+        if (buffer[i] == ':' || buffer[i] == ' ' || buffer[i] == '\r' ||
+            buffer[i] == '\n') {
+            j += 1;
+        } else {
+            i = strlen(buffer);
+        }
+    }
+
+    for (j = j; j < strlen(buffer); j++) {
+        if (!(buffer[j] == ':' || buffer[j] == ' ' || buffer[j] == '\r' ||
+              buffer[j] == '\n') &&
+            !header_value_found) {
+            ptr_header_value[counter] = buffer[j];
             counter += 1;
         } else {
             ptr_header_value[counter] = '\0';
             header_value_found = true;
         }
+
         // check single crlf
-        if (i < (strlen(buffer) - 1)) {
-            if (buffer[i] == '\r' && buffer[i + 1] == '\n' &&
+        if (j < (strlen(buffer) - 1)) {
+            if (buffer[j] == '\r' && buffer[j + 1] == '\n' &&
                 !single_crlf_found) {
-                printf("\n crlf detection");
-                printf("\n%c %d %p", buffer[i], buffer[i], &buffer[i]);
-                printf("\n%c %d %p", buffer[i + 1], buffer[i + 1],
-                       &buffer[i + 1]);
                 single_crlf_found = true;
-                *ptr_ptr_http_client_buffer = &buffer[i + 2];
-                // printf("\nPosition of pointer: %p",
-                //        &(*ptr_ptr_http_client_buffer)[0]);
+                *ptr_ptr_http_client_buffer = &buffer[j + 2];
             }
         }
     }
 
-    // printf("\nHeader Value Extracted: %s\n", header_value);
-    printf("\nPosition of pointer: %p", &(*ptr_ptr_http_client_buffer)[0]);
+    // printf("\nPosition of pointer: %p", &(*ptr_ptr_http_client_buffer)[0]);
     if (single_crlf_found) {
         printf("\nHeader Value Extracted: %s\n", header_value);
         HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd);
     } else {
+        printf("\nerror at header value state");
         ERROR_STATE(new_connection_fd);
     }
 }
 
 void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer,
                        int new_connection_fd) {
-    // printf("\nPointer (header name state) is pointing to %c %d at %p",
-    //        (*ptr_ptr_http_client_buffer)[0],
-    //        (*ptr_ptr_http_client_buffer)[0],
-    //        &(*ptr_ptr_http_client_buffer)[0]);
-    //
     char *buffer = *ptr_ptr_http_client_buffer;
     char header_name[32];
     char *ptr_header_name = header_name;
     bool colon_found = false;
     bool single_crlf_found = false;
 
-    printf("\nASDF");
-    printf("\n%c %d %p", (*ptr_ptr_http_client_buffer)[0],
-           (*ptr_ptr_http_client_buffer)[0], &(*ptr_ptr_http_client_buffer)[0]);
-    printf("\n%c %d %p", (*ptr_ptr_http_client_buffer)[1],
-           (*ptr_ptr_http_client_buffer)[1], &(*ptr_ptr_http_client_buffer)[1]);
-    printf("\n%c %d %p", (*ptr_ptr_http_client_buffer)[2],
-           (*ptr_ptr_http_client_buffer)[2], &(*ptr_ptr_http_client_buffer)[2]);
-    printf("\n%c %d %p", (*ptr_ptr_http_client_buffer)[3],
-           (*ptr_ptr_http_client_buffer)[3], &(*ptr_ptr_http_client_buffer)[3]);
-
-    printf("\nASDF");
     // extract the header name from the header field
     for (int i = 0; i < strlen(buffer); i++) {
-        printf("\n%c %d %p", buffer[i], buffer[i], &buffer[i]);
+        // printf("\n%c %d %p", buffer[i], buffer[i], &buffer[i]);
         if (i + 1 < strlen(buffer) && buffer[i] == '\r' &&
             buffer[i + 1] == '\n' && !single_crlf_found) {
             single_crlf_found = true;
