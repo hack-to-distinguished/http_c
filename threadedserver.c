@@ -1,5 +1,6 @@
 #include <arpa/inet.h>
 #include <errno.h>
+#include <math.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <pthread.h>
@@ -93,39 +94,48 @@ void ERROR_STATE(int new_connection_fd) {
 
 void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
                         int new_connection_fd) {
-    // skip colon and space
-    *ptr_ptr_http_client_buffer += 2;
+    // // skip colon and space
+    // *ptr_ptr_http_client_buffer += 2;
 
     bool header_value_found = false;
     bool single_crlf_found = false;
     char *buffer = *ptr_ptr_http_client_buffer;
     char header_value[32];
     char *ptr_header_value = header_value;
+    int counter = 0;
+
+    // for (int i = 0; i < strlen(buffer); i++) {
+    //     printf("\n%c %d %p", buffer[i], buffer[i], &buffer[i]);
+    // }
 
     for (int i = 0; i < strlen(buffer); i++) {
-        printf("\n%c %d %p", buffer[i], buffer[i], &buffer[i]);
-    }
-
-    for (int i = 0; i < strlen(buffer); i++) {
-        // check header value
-        if (buffer[i] != '\r' && buffer[i] != '\n' && !header_value_found) {
-            ptr_header_value[i] = buffer[i];
+        if (!(buffer[i] == ':' || buffer[i] == ' ' || buffer[i] == '\r' ||
+              buffer[i] == '\n')) {
+            printf("\n%c %d %p", buffer[i], buffer[i], &buffer[i]);
+            ptr_header_value[counter] = buffer[i];
+            counter += 1;
         } else {
-            ptr_header_value[i] = '\0';
+            ptr_header_value[counter] = '\0';
             header_value_found = true;
         }
         // check single crlf
-        if (i < strlen(buffer) - 1 && buffer[i] == '\r' &&
-            buffer[i + 1] == '\n') {
-            single_crlf_found = true;
-            if (i + 2 <= strlen(buffer)) {
+        if (i < (strlen(buffer) - 1)) {
+            if (buffer[i] == '\r' && buffer[i + 1] == '\n' &&
+                !single_crlf_found) {
+                printf("\n crlf detection");
+                printf("\n%c %d %p", buffer[i], buffer[i], &buffer[i]);
+                printf("\n%c %d %p", buffer[i + 1], buffer[i + 1],
+                       &buffer[i + 1]);
+                single_crlf_found = true;
                 *ptr_ptr_http_client_buffer = &buffer[i + 2];
-                printf("\n addr: %p", &buffer[i + 2]);
+                // printf("\nPosition of pointer: %p",
+                //        &(*ptr_ptr_http_client_buffer)[0]);
             }
-            i = strlen(buffer);
         }
     }
 
+    // printf("\nHeader Value Extracted: %s\n", header_value);
+    printf("\nPosition of pointer: %p", &(*ptr_ptr_http_client_buffer)[0]);
     if (single_crlf_found) {
         printf("\nHeader Value Extracted: %s\n", header_value);
         HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd);
@@ -136,32 +146,45 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
 
 void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer,
                        int new_connection_fd) {
-
+    // printf("\nPointer (header name state) is pointing to %c %d at %p",
+    //        (*ptr_ptr_http_client_buffer)[0],
+    //        (*ptr_ptr_http_client_buffer)[0],
+    //        &(*ptr_ptr_http_client_buffer)[0]);
+    //
     char *buffer = *ptr_ptr_http_client_buffer;
     char header_name[32];
     char *ptr_header_name = header_name;
     bool colon_found = false;
     bool single_crlf_found = false;
 
+    printf("\nASDF");
+    printf("\n%c %d %p", (*ptr_ptr_http_client_buffer)[0],
+           (*ptr_ptr_http_client_buffer)[0], &(*ptr_ptr_http_client_buffer)[0]);
+    printf("\n%c %d %p", (*ptr_ptr_http_client_buffer)[1],
+           (*ptr_ptr_http_client_buffer)[1], &(*ptr_ptr_http_client_buffer)[1]);
+    printf("\n%c %d %p", (*ptr_ptr_http_client_buffer)[2],
+           (*ptr_ptr_http_client_buffer)[2], &(*ptr_ptr_http_client_buffer)[2]);
+    printf("\n%c %d %p", (*ptr_ptr_http_client_buffer)[3],
+           (*ptr_ptr_http_client_buffer)[3], &(*ptr_ptr_http_client_buffer)[3]);
+
+    printf("\nASDF");
     // extract the header name from the header field
     for (int i = 0; i < strlen(buffer); i++) {
+        printf("\n%c %d %p", buffer[i], buffer[i], &buffer[i]);
         if (i + 1 < strlen(buffer) && buffer[i] == '\r' &&
-            buffer[i + 1] == '\n') {
+            buffer[i + 1] == '\n' && !single_crlf_found) {
             single_crlf_found = true;
         }
         if (buffer[i] == ':') {
             colon_found = true;
             *ptr_ptr_http_client_buffer = &buffer[i];
+            i = strlen(buffer);
         } else {
             if (!single_crlf_found) {
                 ptr_header_name[i] = buffer[i];
             }
         }
     }
-
-    printf("\nPointer is pointing to %c %d at %p",
-           (*ptr_ptr_http_client_buffer)[0], (*ptr_ptr_http_client_buffer)[0],
-           &(*ptr_ptr_http_client_buffer)[0]);
 
     if (colon_found) {
         printf("\nHeader Name Extracted: %s", header_name);
@@ -212,6 +235,8 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
         ERROR_STATE(new_connection_fd);
     }
 
+    // incrementing pointer so that it skips the first crlf from the request
+    // status line
     crlf_ptr += 2;
     ptr_ptr_http_client_buffer = &crlf_ptr;
     HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd);
@@ -224,6 +249,11 @@ void STATE_PARSER(char *ptr_http_client_buffer, int new_connection_fd) {
 
 void parse_HTTP_requests(int new_connection_fd) {
     char *ptr_http_client_buffer = receive_HTTP_request(new_connection_fd);
+    // this line is required to avoid extra \n char at the end of the packet, i
+    // have no idea why it add that extra \n char
+    if (ptr_http_client_buffer[strlen(ptr_http_client_buffer) - 1] == '\n') {
+        ptr_http_client_buffer[strlen(ptr_http_client_buffer) - 1] = '\0';
+    }
 
     // required as strtok modifies the original ptr data
     char *dupe_ptr_http_client = malloc(strlen(ptr_http_client_buffer));
