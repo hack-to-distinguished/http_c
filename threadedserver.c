@@ -96,7 +96,7 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
     bool header_value_found = false;
     bool single_crlf_found = false;
     char *buffer = *ptr_ptr_http_client_buffer;
-    char header_value[32];
+    char header_value[128];
     char *ptr_header_value = header_value;
     int counter = 0;
     int j = 0;
@@ -112,6 +112,7 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
     }
 
     for (j = j; j < strlen(buffer); j++) {
+        // printf("\n%c %d %p", buffer[j], buffer[j], &buffer[j]);
         // getting the header value
         if (!(buffer[j] == '\r' || buffer[j] == '\n') && !header_value_found) {
             ptr_header_value[counter] = buffer[j];
@@ -134,9 +135,11 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
     if (single_crlf_found) {
         printf("\nHeader Value Extracted: %s\n", header_value);
         HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd);
+        return;
     } else {
         printf("\nerror at header value state");
         ERROR_STATE(new_connection_fd);
+        return;
     }
 }
 
@@ -148,19 +151,21 @@ void END_OF_HEADERS_STATE(int new_connection_fd) {
 void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer,
                        int new_connection_fd) {
     char *buffer = *ptr_ptr_http_client_buffer;
-    char header_name[32];
+    char header_name[128];
     char *ptr_header_name = header_name;
     bool colon_found = false;
     bool single_crlf_found = false;
+    int asdf = strlen(buffer) - 2;
+    int asdfasdf = strlen(buffer);
 
     // extract the header name from the header field
     for (int i = 0; i < strlen(buffer); i++) {
-        // printf("\n%c %d %p", buffer[i], buffer[i], &buffer[i]);
-        if (i + 1 < strlen(buffer) && buffer[i] == '\r' &&
-            buffer[i + 1] == '\n' && !single_crlf_found) {
+        printf("\n size of buffer: %d", asdfasdf);
+
+        if (strlen(buffer) == 2 && buffer[i] == '\r' && buffer[i + 1] == '\n') {
             single_crlf_found = true;
-        }
-        if (buffer[i] == ':') {
+            printf("\ncrlf found at header name state!");
+        } else if (buffer[i] == ':') {
             colon_found = true;
             *ptr_ptr_http_client_buffer = &buffer[i];
             i = strlen(buffer);
@@ -171,15 +176,19 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer,
         }
     }
 
+    if (single_crlf_found) {
+        END_OF_HEADERS_STATE(new_connection_fd);
+        return;
+    }
+
     if (colon_found) {
         printf("\nHeader Name Extracted: %s", header_name);
         HEADER_VALUE_STATE(ptr_ptr_http_client_buffer, new_connection_fd);
-    } else if (single_crlf_found) {
-        END_OF_HEADERS_STATE(new_connection_fd);
-        printf("\ncrlf found at header name state!");
+        return;
     } else {
         printf("\nerror at header name state");
         ERROR_STATE(new_connection_fd);
+        return;
     }
 }
 
@@ -198,6 +207,7 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
     if (result != 3) {
         // error("Not enough arguments detected! Required is 3");
         ERROR_STATE(new_connection_fd);
+        return;
     }
 
     // check for valid http method
@@ -205,6 +215,7 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
                strcmp(method, "HEAD") == 0)) {
         // error("\nInvalid http method used");
         ERROR_STATE(new_connection_fd);
+        return;
     }
 
     // TODO: check valid uri for file retrieval! later...
@@ -213,12 +224,14 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
     else if (strcmp(http_version, "HTTP/1.1") != 0) {
         // error("Invalid http version");
         ERROR_STATE(new_connection_fd);
+        return;
     }
 
     // check for valid CRLF to end status line
     else if (!(crlf_ptr[0] == '\r' && crlf_ptr[1] == '\n')) {
         // error("\nNo crlf ending the status line");
         ERROR_STATE(new_connection_fd);
+        return;
     }
 
     // incrementing pointer so that it skips the first crlf from the request
@@ -234,16 +247,16 @@ void STATE_PARSER(char *ptr_http_client_buffer, int new_connection_fd) {
 
 void parse_HTTP_requests(int new_connection_fd) {
     char *ptr_http_client_buffer = receive_HTTP_request(new_connection_fd);
-    // this line is required to avoid extra \n char at the end of the packet, i
-    // have no idea why it add that extra \n char
-    if (ptr_http_client_buffer[strlen(ptr_http_client_buffer) - 1] == '\n') {
-        ptr_http_client_buffer[strlen(ptr_http_client_buffer) - 1] = '\0';
+
+    for (int i = 0; i < strlen(ptr_http_client_buffer); i++) {
+        printf("\n%c %d %p", ptr_http_client_buffer[i],
+               ptr_http_client_buffer[i], &ptr_http_client_buffer[i]);
     }
 
     // required as strtok modifies the original ptr data
-    char *dupe_ptr_http_client = malloc(strlen(ptr_http_client_buffer));
+    char *dupe_ptr_http_client = malloc(strlen(ptr_http_client_buffer) + 1);
     memcpy(dupe_ptr_http_client, ptr_http_client_buffer,
-           strlen(ptr_http_client_buffer));
+           strlen(ptr_http_client_buffer) + 1);
     char *token = strtok(dupe_ptr_http_client, "\r\n");
 
     printf("\nHTTP Packet received from browser/client:\n");
