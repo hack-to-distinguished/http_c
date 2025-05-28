@@ -113,9 +113,7 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
 
     for (j = j; j < strlen(buffer); j++) {
         // getting the header value
-        if (!(buffer[j] == ':' || buffer[j] == ' ' || buffer[j] == '\r' ||
-              buffer[j] == '\n') &&
-            !header_value_found) {
+        if (!(buffer[j] == '\r' || buffer[j] == '\n') && !header_value_found) {
             ptr_header_value[counter] = buffer[j];
             counter += 1;
         } else {
