@@ -155,13 +155,11 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer,
     char *ptr_header_name = header_name;
     bool colon_found = false;
     bool single_crlf_found = false;
-    int asdf = strlen(buffer) - 2;
-    int asdfasdf = strlen(buffer);
+    int buffer_len = strlen(buffer);
 
+    printf("\n size of buffer: %d", buffer_len);
     // extract the header name from the header field
     for (int i = 0; i < strlen(buffer); i++) {
-        printf("\n size of buffer: %d", asdfasdf);
-
         if (strlen(buffer) == 2 && buffer[i] == '\r' && buffer[i + 1] == '\n') {
             single_crlf_found = true;
             printf("\ncrlf found at header name state!");
@@ -247,11 +245,6 @@ void STATE_PARSER(char *ptr_http_client_buffer, int new_connection_fd) {
 
 void parse_HTTP_requests(int new_connection_fd) {
     char *ptr_http_client_buffer = receive_HTTP_request(new_connection_fd);
-
-    for (int i = 0; i < strlen(ptr_http_client_buffer); i++) {
-        printf("\n%c %d %p", ptr_http_client_buffer[i],
-               ptr_http_client_buffer[i], &ptr_http_client_buffer[i]);
-    }
 
     // required as strtok modifies the original ptr data
     char *dupe_ptr_http_client = malloc(strlen(ptr_http_client_buffer) + 1);
