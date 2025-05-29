@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
                 bytes_recv = recv(pfds[i].fd, buffer, BUFFER_SIZE, 0);
                 if (bytes_recv <= 0) {
                     if (bytes_recv == 0) {
-                        printf("Socket disconnected\n", pfds[i].fd);
+                        printf("User %d disconnected\n", pfds[i].fd);
                     } else {
                         perror("Recv error");
                     }
