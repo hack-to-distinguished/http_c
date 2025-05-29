@@ -4,43 +4,41 @@ A bare-bones HTTP server written in C from scratch using low-level socket progra
 
 ---
 
-## 📦 What This Project Does
-
-- Creates a **TCP server** on a specified port (default `8080`)
-- Accepts incoming connections
-- Parses **basic HTTP GET requests**
-- Sends back **hardcoded HTML content**
-- Can be accessed from any device on the same network
-
----
-
-## 🧱 Project Structure & Learning Milestones
+## 🧱 Project Structure
 
 ### ✅ Phase 1: TCP Echo Server
 
-- Create a socket
-- Bind to a port
-- Listen and accept connections
-- Receive data and send it back (echo)
-
-> 💡 Used to get familiar with sockets, ports, TCP connection lifecycle
+- [x] Create a socket
+- [x] Bind to a port
+- [x] Listen and accept connections
+- [x] Receive data and send it back (echo)
 
 ---
 
 ### ✅ Phase 2: HTTP Server
 
-- Listen on TCP port
-- Read and parse **incoming HTTP requests**
+- [x] Listen on TCP port
+- [ ] Apply HTTP protocol to incoming and outgoing data (Ongoing - NJ)
 
 ---
 
-### ✅ Phase 3: Messaging
+### Phase 3: Messaging
 
-- Enable users to send messages to the server
-- Create end to end messaging without using the server as a middle man
-- Create group chat style messaging by messaging the server and it redirect the message to all clients
+- [x] Enable users to send messages to the server
+- [ ] Create end to end messaging without using the server as a middle man
+- [ ] Create group chat style messaging by messaging the server and it redirect the message to all clients (Ongoing - Christian)
 
 ---
+
+
+### Phase 4: Integration & Expansion
+
+- [ ] Use the messaging system created here to enable chat in Tank Square (other project)
+- [ ] Self host the messaging software
+- [ ] Use blockchain technology to create decentralized messaging system
+
+---
+
 
 ### ⚙️ How to Compile and Run
 
@@ -50,3 +48,4 @@ gcc Server.c -o http_server
 
 # Run (on default port 8080)
 ./http_server
+```
