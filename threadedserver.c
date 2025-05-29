@@ -48,6 +48,11 @@ char *receive_HTTP_request(int new_connection_fd) {
         printf("\nBytes received: %d", bytes_recv);
     }
 
+    // for (int i = 0; i < strlen(ptr_http_request_buffer); i++) {
+    //     printf("\n%c %d %p", ptr_http_request_buffer[i],
+    //            ptr_http_request_buffer[i], &ptr_http_request_buffer[i]);
+    // }
+
     return ptr_http_request_buffer;
 }
 
@@ -316,7 +321,7 @@ void *server_thread_to_run(void *args) {
     // here i made it artificially do work by just adding a random time
     // delay so it is actually easier to see the concurrency work in action
     // with the threads
-    int delay_seconds = 1 + rand() % 6; // 1-3 seconds
+    int delay_seconds = 1 + rand() % 3; // 1-3 seconds
     sleep(delay_seconds);
 
     parse_HTTP_requests(new_connection_fd);
