@@ -99,7 +99,7 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
     bool header_value_found = false;
     bool single_crlf_found = false;
     char *buffer = *ptr_ptr_http_client_buffer;
-    char header_value[128];
+    char header_value[256];
     char *ptr_header_value = header_value;
     int counter = 0;
     int j = 0;
@@ -155,7 +155,7 @@ void END_OF_HEADERS_STATE(int new_connection_fd) {
 void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
                        bool host_header_present) {
     char *buffer = *ptr_ptr_http_client_buffer;
-    char header_name[128];
+    char header_name[256];
     char *ptr_header_name = header_name;
     bool colon_found = false;
     bool single_crlf_found = false;
