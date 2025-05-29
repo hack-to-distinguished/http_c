@@ -26,10 +26,10 @@ void error(const char *msg) {
 
 // prototypes to ensure that there are no undeclared errors and conflicting
 // types
-void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer,
-                       int new_connection_fd);
+void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
+                       bool host_header_present);
 void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
-                        int new_connection_fd);
+                        int new_connection_fd, bool host_header_present);
 void ERROR_STATE(int new_connection_fd);
 
 // custom struct to pass values
@@ -95,7 +95,7 @@ void ERROR_STATE(int new_connection_fd) {
 }
 
 void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
-                        int new_connection_fd) {
+                        int new_connection_fd, bool host_header_present) {
     bool header_value_found = false;
     bool single_crlf_found = false;
     char *buffer = *ptr_ptr_http_client_buffer;
@@ -137,7 +137,8 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
 
     if (single_crlf_found) {
         printf("\nHeader Value Extracted: %s\n", header_value);
-        HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd);
+        HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd,
+                          host_header_present);
         return;
     } else {
         printf("\nerror at header value state");
@@ -151,8 +152,8 @@ void END_OF_HEADERS_STATE(int new_connection_fd) {
     send_http_response(new_connection_fd, ptr_packet_buffer);
 }
 
-void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer,
-                       int new_connection_fd) {
+void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
+                       bool host_header_present) {
     char *buffer = *ptr_ptr_http_client_buffer;
     char header_name[128];
     char *ptr_header_name = header_name;
@@ -177,14 +178,18 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer,
         }
     }
 
-    if (single_crlf_found) {
+    if (single_crlf_found && host_header_present) {
         END_OF_HEADERS_STATE(new_connection_fd);
         return;
     }
 
     if (colon_found) {
         printf("\nHeader Name Extracted: %s", header_name);
-        HEADER_VALUE_STATE(ptr_ptr_http_client_buffer, new_connection_fd);
+        if (strcmp(header_name, "Host") == 0) {
+            host_header_present = true;
+        }
+        HEADER_VALUE_STATE(ptr_ptr_http_client_buffer, new_connection_fd,
+                           host_header_present);
         return;
     } else {
         printf("\nerror at header name state");
@@ -202,6 +207,7 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
     char uri[1024];
     char http_version[16];
     bool valid_spacing = false;
+    bool host_header_present = false;
     int result = sscanf(buffer, "%s %s %s", method, uri, http_version);
     char *crlf_ptr = strstr(buffer, http_version);
     crlf_ptr += 8;
@@ -255,7 +261,8 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
     printf("\nHTTP Method: %s", method);
     printf("\nURI: %s", uri);
     printf("\nHTTP Version: %s\n", http_version);
-    HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd);
+    HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd,
+                      host_header_present);
     return;
 }
 
