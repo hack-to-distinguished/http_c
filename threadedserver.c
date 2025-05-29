@@ -213,7 +213,13 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
     char http_version[16];
     bool valid_spacing = false;
     bool host_header_present = false;
-    int result = sscanf(buffer, "%s %s %s", method, uri, http_version);
+    int result = sscanf(buffer, "%s %s %s", method, uri,
+                        http_version); // could be link to crlf bug thingy
+
+    printf("\nHTTP Method: %s", method);
+    printf("\nURI: %s", uri);
+    printf("\nHTTP Version: %s\n", http_version);
+
     char *crlf_ptr = strstr(buffer, http_version);
     crlf_ptr += 8;
     // checking if there are 3 arguments detected
