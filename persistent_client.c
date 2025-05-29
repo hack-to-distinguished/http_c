@@ -81,24 +81,24 @@ int main(int argc, char *argv[]) {
         if (poll_count == -1) {
             error("Poll error");
             exit(1);
-        }
+        } else {
 
-        if (pfds[0].revents & POLLIN) {
-            printf("\n\n");
-            bytes_recv = recv(pfds[0].fd, recv_buf, BUFFER_SIZE, 0);
-            printf("MESSAGE RECEIVED: %s\n", recv_buf);
-        }
-        if (pfds[0].revents & POLLOUT) {
-            printf("\nPress enter to send your message:\n");
-            scanf("%s", send_buf);
+            if (pfds[0].revents & POLLIN) {
+                printf("\n\n");
+                bytes_recv = recv(pfds[0].fd, recv_buf, BUFFER_SIZE, 0);
+                printf("MESSAGE RECEIVED: %s\n", recv_buf);
+            }
+            if (pfds[0].revents & POLLOUT) {
+                printf("\nPress enter to send your message:\n");
+                fgets(send_buf, BUFFER_SIZE, stdin);
 
-            bytes_sent = send(pfds[0].fd, send_buf, BUFFER_SIZE, 0);
-            if (bytes_sent > 0) {
-                printf("Message sent: %s\n", send_buf);
+                bytes_sent = send(pfds[0].fd, send_buf, strlen(send_buf), 0);
+                if (bytes_sent > 0) {
+                    printf("Message sent: %s\n", send_buf);
+                }
             }
         }
+
    }
 
-    freeaddrinfo(res);
-    return 0;
 }

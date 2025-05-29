@@ -21,7 +21,7 @@ void error(const char *msg) {
 }
 
 bool is_client_connected(int arr[], int size, int k) {
-    for (int i; i < size; i++) {
+    for (int i = 0; i < size; i++) {
         if (arr[i] == k) {
             return true;
         }
@@ -68,10 +68,10 @@ int main(int argc, char *argv[]) {
         error("error getaddrinfo");
     }
 
+    server_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
     setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, ptr_reuse_addr_flag,
                sizeof(reuse_addr_flag));
-
-    server_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 
     int bind_conn = bind(server_fd, res->ai_addr, res->ai_addrlen);
     if (bind_conn == -1) {
@@ -84,12 +84,11 @@ int main(int argc, char *argv[]) {
 
     int client_sockfd, conn_clients[BACKLOG], fd_count = 1;
     int bytes_recv, bytes_sent;
-    struct pollfd pfds[BACKLOG + 1]; 
+    struct pollfd pfds[BACKLOG + 1]; // +1 bc adding the server to pfds
     char buffer[BUFFER_SIZE];
-    // INFO: +1 bc I'm adding the server to pfds so I can do .revents
 
     pfds[0].fd = server_fd;
-    pfds[0].events = POLLIN;
+    pfds[0].events = POLLIN | POLLOUT;
 
     while (1) {
 
@@ -101,34 +100,37 @@ int main(int argc, char *argv[]) {
 
         if (pfds[0].revents & POLLIN) {
             client_sockfd = accept(server_fd, (struct sockaddr *)&their_addr, &their_addrlen);
-
             if (client_sockfd == -1) {
                 error("client can't connect");
             }
 
-            if (!is_client_connected(conn_clients, BACKLOG, client_sockfd)) {
+            if (fd_count >= BACKLOG + 1) {
+                printf("Connection to full server attempted\n");
+                char *msg = "Server full\n";
+                send(client_sockfd, msg, strlen(msg), 0);
+                close(client_sockfd);
+            } else {
                 printf("%d successfully connected to the server\n", client_sockfd);
-                conn_clients[fd_count] = client_sockfd;
+                conn_clients[fd_count - 1] = client_sockfd;
                 pfds[fd_count].fd = client_sockfd;
-                pfds[fd_count].events = POLLIN | POLLOUT;
+                pfds[fd_count].events = POLLIN;
                 fd_count += 1;
 
                 char *msg = "Connected to the server\n";
                 send(client_sockfd, msg, strlen(msg), 0);
                 printf("SENT MSG TO THE CLIENT\n");
-            } else {
-                printf("Connection to full server attempted\n");
-                char *msg = "Server full\n";
-                send(client_sockfd, msg, strlen(msg), 0);
-                close(client_sockfd);
             }
         }
 
         for (int i = 1; i < fd_count; i++) {
             if (pfds[i].revents & POLLIN) {
                 bytes_recv = recv(pfds[i].fd, buffer, BUFFER_SIZE, 0);
-                if (bytes_recv <= 0) { // FIX: The disconnect is wrong
-                    printf("Client %d disconnected\n", pfds[i].fd);
+                if (bytes_recv <= 0) {
+                    if (bytes_recv == 0) {
+                        printf("Socket disconnected\n", pfds[i].fd);
+                    } else {
+                        perror("Recv error");
+                    }
                     close(pfds[i].fd);
                     conn_clients[i] = conn_clients[fd_count - 1];
                     pfds[i] = pfds[fd_count - 1];
@@ -140,7 +142,9 @@ int main(int argc, char *argv[]) {
                     printf("Message received: %s from %d\n", buffer, pfds[i].fd);
 
                     for (int j = 1; j < fd_count; j++) {
-                        bytes_sent = send(pfds[j].fd, buffer, bytes_recv, 0);
+                        if (pfds[j].fd != pfds[i].fd) {
+                            bytes_sent = send(pfds[j].fd, buffer, bytes_recv, 0);
+                        }
                     }
                 }
             }
