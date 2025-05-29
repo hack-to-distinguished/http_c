@@ -21,6 +21,7 @@
 void error(const char *msg) {
     perror(msg);
     exit(0);
+    return;
 }
 
 // prototypes to ensure that there are no undeclared errors and conflicting
@@ -72,6 +73,7 @@ char *create_HTTP_response_packet() {
 void send_http_response(int new_connection_fd, char *ptr_packet_buffer) {
     send(new_connection_fd, ptr_packet_buffer, strlen(ptr_packet_buffer), 0);
     free(ptr_packet_buffer);
+    return;
 }
 
 void ERROR_STATE(int new_connection_fd) {
@@ -89,6 +91,7 @@ void ERROR_STATE(int new_connection_fd) {
              "%s",
              body_len, ptr_body);
     send_http_response(new_connection_fd, ptr_packet_buffer);
+    return;
 }
 
 void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
@@ -198,6 +201,7 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
     char method[8];
     char uri[1024];
     char http_version[16];
+    bool valid_spacing = false;
     int result = sscanf(buffer, "%s %s %s", method, uri, http_version);
     char *crlf_ptr = strstr(buffer, http_version);
     crlf_ptr += 8;
@@ -209,8 +213,8 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
     }
 
     // check for valid http method
-    else if (!(strcmp(method, "GET") == 0 || strcmp(method, "POST") == 0 ||
-               strcmp(method, "HEAD") == 0)) {
+    if (!(strcmp(method, "GET") == 0 || strcmp(method, "POST") == 0 ||
+          strcmp(method, "HEAD") == 0)) {
         // error("\nInvalid http method used");
         ERROR_STATE(new_connection_fd);
         return;
@@ -219,28 +223,45 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
     // TODO: check valid uri for file retrieval! later...
 
     // check for valid http version; only gonna allow HTTP/1.1
-    else if (strcmp(http_version, "HTTP/1.1") != 0) {
+    if (strcmp(http_version, "HTTP/1.1") != 0) {
         // error("Invalid http version");
         ERROR_STATE(new_connection_fd);
         return;
     }
 
     // check for valid CRLF to end status line
-    else if (!(crlf_ptr[0] == '\r' && crlf_ptr[1] == '\n')) {
+    if (!(crlf_ptr[0] == '\r' && crlf_ptr[1] == '\n')) {
         // error("\nNo crlf ending the status line");
         ERROR_STATE(new_connection_fd);
         return;
     }
 
-    // incrementing pointer so that it skips the first crlf from the request
-    // status line
+    // check for spacing error
+    int len_method = strlen(method);
+    int len_uri = strlen(uri);
+
+    if (!(buffer[len_method - 1] != ' ' && buffer[len_method] == ' ' &&
+          buffer[len_method + 1] == '/' &&
+          buffer[len_method + len_uri + 1] == ' ' &&
+          buffer[len_method + len_uri + 2] != ' ')) {
+        ERROR_STATE(new_connection_fd);
+        return;
+    }
+
+    // incrementing pointer so that it skips the first crlf from the
+    // request status line
     crlf_ptr += 2;
     ptr_ptr_http_client_buffer = &crlf_ptr;
+    printf("\nHTTP Method: %s", method);
+    printf("\nURI: %s", uri);
+    printf("\nHTTP Version: %s\n", http_version);
     HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd);
+    return;
 }
 
 void STATE_PARSER(char *ptr_http_client_buffer, int new_connection_fd) {
     REQUEST_LINE_STATE(&ptr_http_client_buffer, new_connection_fd);
+    return;
 }
 
 void parse_HTTP_requests(int new_connection_fd) {
@@ -270,6 +291,7 @@ void parse_HTTP_requests(int new_connection_fd) {
     // char *ptr_packet_buffer = create_HTTP_response_packet();
     // send_http_response(new_connection_fd, ptr_packet_buffer);
     free(ptr_http_client_buffer);
+    return;
 }
 
 // void* generic pointer, allow return of any type of data
