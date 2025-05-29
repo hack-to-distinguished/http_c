@@ -20,15 +20,6 @@ void error(const char *msg) {
     exit(0);
 }
 
-bool is_client_connected(int arr[], int size, int k) {
-    for (int i = 0; i < size; i++) {
-        if (arr[i] == k) {
-            return true;
-        }
-    }
-    return false;
-}
-
 void send_http_response(int sock, const char *body) {
     char response[BUFFER_SIZE];
     printf("sizeof response: %ld\n", sizeof(response));
