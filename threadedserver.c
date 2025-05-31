@@ -20,8 +20,7 @@
 
 void error(const char *msg) {
     perror(msg);
-    exit(0);
-    return;
+    exit(1);
 }
 
 // prototypes to ensure that there are no undeclared errors and conflicting
@@ -47,6 +46,8 @@ char *receive_HTTP_request(int new_connection_fd) {
     } else {
         printf("\nBytes received: %d", bytes_recv);
     }
+
+    // ptr_http_request_buffer[strlen(ptr_http_request_buffer) + 1] = '\0';
 
     // for (int i = 0; i < strlen(ptr_http_request_buffer); i++) {
     //     printf("\n%c %d %p", ptr_http_request_buffer[i],
@@ -105,7 +106,6 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
     bool single_crlf_found = false;
     char *buffer = *ptr_ptr_http_client_buffer;
     char header_value[256];
-    char *ptr_header_value = header_value;
     int counter = 0;
     int j = 0;
 
@@ -123,10 +123,10 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
         // printf("\n%c %d %p", buffer[j], buffer[j], &buffer[j]);
         // getting the header value
         if (!(buffer[j] == '\r' || buffer[j] == '\n') && !header_value_found) {
-            ptr_header_value[counter] = buffer[j];
+            header_value[counter] = buffer[j];
             counter += 1;
         } else {
-            ptr_header_value[counter] = '\0';
+            header_value[counter] = '\0';
             header_value_found = true;
         }
 
@@ -161,7 +161,6 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
                        bool host_header_present) {
     char *buffer = *ptr_ptr_http_client_buffer;
     char header_name[256];
-    char *ptr_header_name = header_name;
     bool colon_found = false;
     bool single_crlf_found = false;
     int buffer_len = strlen(buffer);
@@ -178,7 +177,7 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
             i = strlen(buffer);
         } else {
             if (!single_crlf_found) {
-                ptr_header_name[i] = buffer[i];
+                header_name[i] = buffer[i];
             }
         }
     }
@@ -221,15 +220,17 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
     printf("\nHTTP Version: %s\n", http_version);
 
     char *crlf_ptr = strstr(buffer, http_version);
+    if (crlf_ptr == NULL) {
+        ERROR_STATE(new_connection_fd);
+        return;
+    }
     crlf_ptr += 8;
-    // checking if there are 3 arguments detected
     if (result != 3) {
         // error("Not enough arguments detected! Required is 3");
         ERROR_STATE(new_connection_fd);
         return;
     }
 
-    // check for valid http method
     if (!(strcmp(method, "GET") == 0 || strcmp(method, "POST") == 0 ||
           strcmp(method, "HEAD") == 0)) {
         // error("\nInvalid http method used");
@@ -239,21 +240,18 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
 
     // TODO: check valid uri for file retrieval! later...
 
-    // check for valid http version; only gonna allow HTTP/1.1
     if (strcmp(http_version, "HTTP/1.1") != 0) {
         // error("Invalid http version");
         ERROR_STATE(new_connection_fd);
         return;
     }
 
-    // check for valid CRLF to end status line
     if (!(crlf_ptr[0] == '\r' && crlf_ptr[1] == '\n')) {
         // error("\nNo crlf ending the status line");
         ERROR_STATE(new_connection_fd);
         return;
     }
 
-    // check for spacing error
     int len_method = strlen(method);
     int len_uri = strlen(uri);
 
@@ -265,8 +263,6 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
         return;
     }
 
-    // incrementing pointer so that it skips the first crlf from the
-    // request status line
     crlf_ptr += 2;
     ptr_ptr_http_client_buffer = &crlf_ptr;
     printf("\nHTTP Method: %s", method);
@@ -328,7 +324,7 @@ void *server_thread_to_run(void *args) {
     // delay so it is actually easier to see the concurrency work in action
     // with the threads
     int delay_seconds = 1 + rand() % 3; // 1-3 seconds
-    sleep(delay_seconds);
+    // sleep(delay_seconds);
 
     parse_HTTP_requests(new_connection_fd);
 
