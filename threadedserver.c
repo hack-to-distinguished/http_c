@@ -23,7 +23,7 @@ void error(const char *msg) {
     exit(1);
 }
 
-
+// linux arch
 // prototypes to ensure that there are no undeclared errors and conflicting
 // types
 void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
