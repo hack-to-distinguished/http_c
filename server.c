@@ -12,7 +12,7 @@
 #include <unistd.h>
 
 #define MYPORT "8080"
-#define BACKLOG 10 // how many pending connections queue will hold
+#define BACKLOG 10
 #define BUFFER_SIZE 1024
 
 void error(const char *msg) {
@@ -25,12 +25,6 @@ void send_http_response(int sock, const char *body) {
     printf("sizeof response: %ld\n", sizeof(response));
     int body_len = strlen(body);
 
-    /*
-     * response is the pointer to character buffer where the formatted string
-     * will be written.
-     * \r\n terminates the header
-     * %s placeholder for body
-     */
     snprintf(response, sizeof(response),
          "HTTP/1.1 200 OK\r\n"
          "Content-Type: text/plain\r\n"
@@ -50,7 +44,7 @@ int main(int argc, char *argv[]) {
     int reuse_addr_flag = 1;
     int *ptr_reuse_addr_flag = &reuse_addr_flag;
 
-    memset(&hints, 0, sizeof hints); /* will just copy 0s*/
+    memset(&hints, 0, sizeof hints); // will just copy 0s
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
