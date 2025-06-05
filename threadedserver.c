@@ -23,6 +23,8 @@ void error(const char *msg) {
     exit(1);
 }
 
+// test change
+
 // prototypes to ensure that there are no undeclared errors and conflicting
 // types
 void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
@@ -205,8 +207,8 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
 void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
                         int new_connection_fd) {
     char *buffer =
-        *ptr_ptr_http_client_buffer; // dereference the pointer pointer to get
-                                     // the actual char buffer
+        *ptr_ptr_http_client_buffer; // dereference the pointer pointer
+                                     // to get the actual char buffer
     char method[8];
     char uri[1024];
     char http_version[16];
