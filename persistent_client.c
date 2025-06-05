@@ -78,9 +78,9 @@ int main(int argc, char *argv[]) {
         } else {
 
             if (pfds[0].revents & POLLIN) {
-                printf("\n\n");
+                printf("\n");
                 bytes_recv = recv(pfds[0].fd, recv_buf, BUFFER_SIZE, 0);
-                printf("MESSAGE RECEIVED: %s\n", recv_buf);
+                printf("MESSAGE RECEIVED:\n%s\n", recv_buf);
             }
             if (pfds[1].revents & POLLIN) {
                 printf("\nPress enter to send your message:\n");
