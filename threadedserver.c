@@ -23,6 +23,8 @@ void error(const char *msg) {
     exit(1);
 }
 
+// another test change on linux machine
+
 // prototypes to ensure that there are no undeclared errors and conflicting
 // types
 void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
