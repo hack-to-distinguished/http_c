@@ -167,10 +167,11 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
             i = strlen(buffer);
         }
 
-        header_name[counter] = '\0';
         if (!single_crlf_found) {
             header_name[counter] = buffer[i];
             counter += 1;
+        } else {
+            header_name[counter] = '\0';
         }
 
         if (strlen(buffer) == 2 && buffer[i] == '\r' && buffer[i + 1] == '\n') {
@@ -217,43 +218,39 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
     char http_version[16];
     bool valid_spacing = false;
     bool host_header_present = false;
-    int result = sscanf(buffer, "%s %s %s", method, uri,
-                        http_version); // could be link to crlf bug thingy
-
-    printf("\nHTTP Method: %s", method);
-    printf("\nURI: %s", uri);
-    printf("\nHTTP Version: %s\n", http_version);
+    int result = sscanf(buffer, "%s %s %s", method, uri, http_version);
 
     char *crlf_ptr = strstr(buffer, http_version);
     if (crlf_ptr == NULL) {
         ERROR_STATE(new_connection_fd);
+        printf("\nerror at request line state");
         return;
     }
     crlf_ptr += 8;
     if (result != 3) {
-        // error("Not enough arguments detected! Required is 3");
         ERROR_STATE(new_connection_fd);
+        printf("\nerror at request line state");
         return;
     }
 
     if (!(strcmp(method, "GET") == 0 || strcmp(method, "POST") == 0 ||
           strcmp(method, "HEAD") == 0)) {
-        // error("\nInvalid http method used");
         ERROR_STATE(new_connection_fd);
+        printf("\nerror at request line state");
         return;
     }
 
     // TODO: check valid uri for file retrieval! later...
 
     if (strcmp(http_version, "HTTP/1.1") != 0) {
-        // error("Invalid http version");
         ERROR_STATE(new_connection_fd);
+        printf("\nerror at request line state");
         return;
     }
 
     if (!(crlf_ptr[0] == '\r' && crlf_ptr[1] == '\n')) {
-        // error("\nNo crlf ending the status line");
         ERROR_STATE(new_connection_fd);
+        printf("\nerror at request line state");
         return;
     }
 
@@ -265,6 +262,7 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
           buffer[len_method + len_uri + 1] == ' ' &&
           buffer[len_method + len_uri + 2] != ' ')) {
         ERROR_STATE(new_connection_fd);
+        printf("\nerror at request line state");
         return;
     }
 
