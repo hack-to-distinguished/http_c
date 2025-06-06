@@ -47,13 +47,6 @@ char *receive_HTTP_request(int new_connection_fd) {
         printf("\nBytes received: %d", bytes_recv);
     }
 
-    // ptr_http_request_buffer[strlen(ptr_http_request_buffer) + 1] = '\0';
-
-    for (int i = 0; i < strlen(ptr_http_request_buffer); i++) {
-        printf("\n%c %d %p", ptr_http_request_buffer[i],
-               ptr_http_request_buffer[i], &ptr_http_request_buffer[i]);
-    }
-
     return ptr_http_request_buffer;
 }
 
@@ -120,7 +113,6 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
     }
 
     for (j = j; j < strlen(buffer); j++) {
-        // printf("\n%c %d %p", buffer[j], buffer[j], &buffer[j]);
         // getting the header value
         if (!(buffer[j] == '\r' || buffer[j] == '\n') && !header_value_found) {
             header_value[counter] = buffer[j];
@@ -169,8 +161,6 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
     printf("\n size of buffer: %d", buffer_len);
     // extract the header name from the header field
     for (int i = 0; i < strlen(buffer); i++) {
-        printf("\n%c", buffer[i]);
-
         if (buffer[i] == ':') {
             colon_found = true;
             *ptr_ptr_http_client_buffer = &buffer[i];
@@ -189,7 +179,6 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
         }
     }
 
-    header_name[strlen(header_name)] = '\0';
     int len_header = strlen(header_name);
     printf("\nlen header: %d", len_header);
 
