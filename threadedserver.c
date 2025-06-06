@@ -167,6 +167,8 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
             i = strlen(buffer);
         }
 
+        // extract the actual header name + put null terminating characters when
+        // necessary
         if (!single_crlf_found) {
             header_name[counter] = buffer[i];
             counter += 1;
