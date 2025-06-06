@@ -14,7 +14,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define MYPORT "80"
+#define MYPORT "8080"
 #define BACKLOG 50 // how many pending connections queue will hold
 #define BUFFER_SIZE 1024
 
@@ -49,10 +49,10 @@ char *receive_HTTP_request(int new_connection_fd) {
 
     // ptr_http_request_buffer[strlen(ptr_http_request_buffer) + 1] = '\0';
 
-    // for (int i = 0; i < strlen(ptr_http_request_buffer); i++) {
-    //     printf("\n%c %d %p", ptr_http_request_buffer[i],
-    //            ptr_http_request_buffer[i], &ptr_http_request_buffer[i]);
-    // }
+    for (int i = 0; i < strlen(ptr_http_request_buffer); i++) {
+        printf("\n%c %d %p", ptr_http_request_buffer[i],
+               ptr_http_request_buffer[i], &ptr_http_request_buffer[i]);
+    }
 
     return ptr_http_request_buffer;
 }
@@ -164,23 +164,34 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
     bool colon_found = false;
     bool single_crlf_found = false;
     int buffer_len = strlen(buffer);
+    int counter = 0;
 
     printf("\n size of buffer: %d", buffer_len);
     // extract the header name from the header field
     for (int i = 0; i < strlen(buffer); i++) {
-        if (strlen(buffer) == 2 && buffer[i] == '\r' && buffer[i + 1] == '\n') {
-            single_crlf_found = true;
-            printf("\ncrlf found at header name state!");
-        } else if (buffer[i] == ':') {
+        printf("\n%c", buffer[i]);
+
+        if (buffer[i] == ':') {
             colon_found = true;
             *ptr_ptr_http_client_buffer = &buffer[i];
             i = strlen(buffer);
-        } else {
-            if (!single_crlf_found) {
-                header_name[i] = buffer[i];
-            }
+        }
+
+        header_name[counter] = '\0';
+        if (!single_crlf_found) {
+            header_name[counter] = buffer[i];
+            counter += 1;
+        }
+
+        if (strlen(buffer) == 2 && buffer[i] == '\r' && buffer[i + 1] == '\n') {
+            single_crlf_found = true;
+            printf("\ncrlf found at header name state!");
         }
     }
+
+    header_name[strlen(header_name)] = '\0';
+    int len_header = strlen(header_name);
+    printf("\nlen header: %d", len_header);
 
     if (single_crlf_found && host_header_present) {
         END_OF_HEADERS_STATE(new_connection_fd);
@@ -197,6 +208,11 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
         return;
     } else {
         printf("\nerror at header name state");
+        if (host_header_present) {
+            printf("\nhost header present");
+        } else {
+            printf("\nhost header not present");
+        }
         ERROR_STATE(new_connection_fd);
         return;
     }
