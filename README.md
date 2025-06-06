@@ -29,7 +29,7 @@ A bare-bones HTTP server written in C from scratch using low-level socket progra
 - [ ] Create end to end messaging without using the server as a middle man
 - [x] Create group chat style messaging by messaging the server and it redirect the message to all clients
 - [ ] Create ability to select the client you want to message
-- [ ] UI to make messaging easier (ongoing - Christian)
+- [ ] GUI to make messaging easier (ongoing - Christian)
 - [ ] Host the group chat service online and let people share their deepest darkest secrets for all to see (6hrs timeout between messages)
 
 ---
