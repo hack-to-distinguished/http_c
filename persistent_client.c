@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +10,8 @@
 #include <time.h>
 #include <unistd.h>
 #define MYPORT "8080"
-#define MAX_IN 20
+#define MAX_IN 2
+#define BUFFER_SIZE 1024
 
 
 void error(const char *msg) {
@@ -25,7 +27,7 @@ int main(int argc, char *argv[]) {
 
     const char *server = argv[1];
     struct addrinfo hints, *res;
-    int client_fd;
+    int server_fd;
     int reuse_addr_flag = 1;
 
     printf("Connecting to server: %s\n", server);
@@ -38,60 +40,57 @@ int main(int argc, char *argv[]) {
         error("getaddrinfo failed");
     }
 
-    client_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    if (client_fd == -1) {
+    server_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    if (server_fd == -1) {
         error("socket failed");
     }
 
-    setsockopt(client_fd, SOL_SOCKET, SO_REUSEADDR, &reuse_addr_flag,
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse_addr_flag,
                sizeof(reuse_addr_flag));
 
-    if (connect(client_fd, res->ai_addr, res->ai_addrlen) == -1) {
-        error("connection failed");
+    if (connect(server_fd, res->ai_addr, res->ai_addrlen) == -1) {
+        error("connection failed\n");
+    } else {
+        printf("Connected to the server\n\n");
     }
 
-    /*const char *string_to_parse = argv[2];*/
-    /*int sent_data =*/
-    /*    send(client_fd, string_to_parse, strlen(string_to_parse), 0);*/
-    /*if (sent_data == -1) {*/
-    /*    error("send failed");*/
-    /*}*/
-    /*printf("Message sent to server: %s\n", string_to_parse);*/
-    /**/
-    /*char buf[1024];*/
-    /*while (recv(client_fd, buf, sizeof(buf), 0) > 0) {*/
-    /*    printf("\nMessage(s) recevied from server:\n");*/
-    /*    printf("%s\n", buf);*/
-    /*} */
-    // INFO: The while loop won't be interactive. Once the server finishes sending messages,
-    // it will stop and won't run again
 
-    /*
-     * TODO: Stream messages:
-     * Handle the length of the string send so that the packet don't mess up
-     * Handle the hex mapping (unicode, ASCII, etc)
-     */
+    struct pollfd pfds[MAX_IN];
+    pfds[0].fd = server_fd;
+    pfds[0].events = POLLIN;
 
-    puts("Press C-c to quit:");
+    pfds[1].fd = STDIN_FILENO;
+    pfds[1].events = POLLIN;
 
-    char *ptr_str = malloc(128);
+    char send_buf[BUFFER_SIZE], recv_buf[BUFFER_SIZE], init_buf[32];
+    int bytes_sent, bytes_recv, fd_count = 2;
+
+    bytes_recv = recv(server_fd, init_buf, 32, 0);
+    if (bytes_recv != -1) {
+        printf("Messages from the server: %s\n", init_buf);
+    }
+
     while (1) {
-        printf("\nEnter String to send: \n");
-        scanf("%s", ptr_str);
-
-        int bytes_sent = send(client_fd, ptr_str, strlen(ptr_str), 0);
-        if (bytes_sent == -1) {
-            error("unable to send entered messaged");
+        int poll_count = poll(pfds, fd_count, -1);
+        if (poll_count == -1) {
+            error("Poll error");
+            exit(1);
         } else {
-            printf("Bytes sent: %d - ", bytes_sent);
-            printf("Message sent: %s\n", ptr_str);
+
+            if (pfds[0].revents & POLLIN) {
+                printf("\n");
+                bytes_recv = recv(pfds[0].fd, recv_buf, BUFFER_SIZE, 0);
+                printf("MESSAGE RECEIVED:\n%s\n", recv_buf);
+            }
+            if (pfds[1].revents & POLLIN) {
+                printf("\nPress enter to send your message:\n");
+                fgets(send_buf, BUFFER_SIZE, stdin);
+
+                bytes_sent = send(pfds[0].fd, send_buf, strlen(send_buf), 0);
+                if (bytes_sent > 0) {
+                    printf("Message sent: %s\n", send_buf);
+                }
+            }
         }
-
-        free(ptr_str);
-        ptr_str = malloc(128);
     }
-
-
-    freeaddrinfo(res);
-    return 0;
 }
