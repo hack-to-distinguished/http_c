@@ -46,6 +46,7 @@ char *receive_HTTP_request(int new_connection_fd) {
         error("Error receiving message from client!");
     } else {
         printf("\nBytes received: %d", bytes_recv);
+        ptr_http_request_buffer[bytes_recv] = '\0';
     }
 
     return ptr_http_request_buffer;
@@ -81,7 +82,7 @@ void ERROR_STATE(int new_connection_fd) {
     char *ptr_body;
     int body_len;
     ptr_body = "<body>\r\n"
-               "Error 404!\r\n"
+               "Error 404! File does not exist!\r\n"
                "</body>\r\n";
     body_len = strlen(ptr_body);
     snprintf(ptr_packet_buffer, BUFFER_SIZE,
@@ -147,7 +148,6 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
 }
 
 void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri) {
-    char *ptr_packet_buffer = create_HTTP_response_packet();
     // make it so that the pointer skips '/'
     ptr_uri[0] = '\0';
     ptr_uri += 1;
@@ -158,9 +158,22 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri) {
     for (int i = 0; i < strlen(ptr_uri); i++) {
         printf("\n%c %p", ptr_uri[i], &ptr_uri[i]);
     }
-
-    free(ptr_uri - 1);
-    send_http_response(new_connection_fd, ptr_packet_buffer);
+    //
+    // check if file exists
+    if (access(ptr_uri, F_OK) != -1) {
+        printf("\nFile exists!");
+        free(ptr_uri - 1);
+        char *ptr_packet_buffer = create_HTTP_response_packet();
+        send_http_response(new_connection_fd, ptr_packet_buffer);
+        return;
+    } else {
+        printf("\nFile does not exist!");
+        ERROR_STATE(new_connection_fd);
+        free(ptr_uri - 1);
+        return;
+    }
+    // char *ptr_packet_buffer = create_HTTP_response_packet();
+    // send_http_response(new_connection_fd, ptr_packet_buffer);
 }
 
 void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
