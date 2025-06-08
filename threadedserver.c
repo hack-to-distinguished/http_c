@@ -270,9 +270,15 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
 
     crlf_ptr += 2;
     ptr_ptr_http_client_buffer = &crlf_ptr;
+
+    // gets rid of the first '/' in the uri
+    uri[0] = '\0';
+    *uri += 1;
+
     printf("\nHTTP Method: %s", method);
     printf("\nURI: %s", uri);
     printf("\nHTTP Version: %s\n", http_version);
+
     HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd,
                       host_header_present);
     return;
