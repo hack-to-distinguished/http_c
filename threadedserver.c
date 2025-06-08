@@ -147,6 +147,11 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
     }
 }
 
+void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
+    // TODO: get the file type, and depending on the file type construct a
+    // corresponding http response packet that can be sent back to the user...
+}
+
 void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri) {
     // make it so that the pointer skips '/'
     ptr_uri[0] = '\0';
@@ -165,6 +170,7 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri) {
         free(ptr_uri - 1);
         char *ptr_packet_buffer = create_HTTP_response_packet();
         send_http_response(new_connection_fd, ptr_packet_buffer);
+        send_requested_file_back(new_connection_fd, ptr_uri);
         return;
     } else {
         printf("\nFile does not exist!");
