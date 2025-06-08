@@ -26,9 +26,10 @@ void error(const char *msg) {
 // prototypes to ensure that there are no undeclared errors and conflicting
 // types
 void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
-                       bool host_header_present);
+                       bool host_header_present, char *ptr_uri);
 void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
-                        int new_connection_fd, bool host_header_present);
+                        int new_connection_fd, bool host_header_present,
+                        char *ptr_uri);
 void ERROR_STATE(int new_connection_fd);
 
 // custom struct to pass values
@@ -94,7 +95,8 @@ void ERROR_STATE(int new_connection_fd) {
 }
 
 void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
-                        int new_connection_fd, bool host_header_present) {
+                        int new_connection_fd, bool host_header_present,
+                        char *ptr_uri) {
     bool header_value_found = false;
     bool single_crlf_found = false;
     char *buffer = *ptr_ptr_http_client_buffer;
@@ -135,7 +137,7 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
     if (single_crlf_found) {
         printf("\nHeader Value Extracted: %s\n", header_value);
         HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd,
-                          host_header_present);
+                          host_header_present, ptr_uri);
         return;
     } else {
         printf("\nerror at header value state");
@@ -144,13 +146,25 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
     }
 }
 
-void END_OF_HEADERS_STATE(int new_connection_fd) {
+void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri) {
     char *ptr_packet_buffer = create_HTTP_response_packet();
+    // make it so that the pointer skips '/'
+    ptr_uri[0] = '\0';
+    ptr_uri += 1;
+    printf("\nURI at end of headers state: %s", ptr_uri);
+
+    int len_uri = strlen(ptr_uri);
+    printf("\nlen of uri value: %d", len_uri);
+    for (int i = 0; i < strlen(ptr_uri); i++) {
+        printf("\n%c %p", ptr_uri[i], &ptr_uri[i]);
+    }
+
+    free(ptr_uri - 1);
     send_http_response(new_connection_fd, ptr_packet_buffer);
 }
 
 void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
-                       bool host_header_present) {
+                       bool host_header_present, char *ptr_uri) {
     char *buffer = *ptr_ptr_http_client_buffer;
     char header_name[256];
     bool colon_found = false;
@@ -186,7 +200,7 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
     printf("\nlen header: %d", len_header);
 
     if (single_crlf_found && host_header_present) {
-        END_OF_HEADERS_STATE(new_connection_fd);
+        END_OF_HEADERS_STATE(new_connection_fd, ptr_uri);
         return;
     }
 
@@ -196,7 +210,7 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
             host_header_present = true;
         }
         HEADER_VALUE_STATE(ptr_ptr_http_client_buffer, new_connection_fd,
-                           host_header_present);
+                           host_header_present, ptr_uri);
         return;
     } else {
         printf("\nerror at header name state");
@@ -217,10 +231,11 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
                                      // to get the actual char buffer
     char method[8];
     char uri[1024];
+    char *ptr_uri = malloc(sizeof(char) * 1025);
     char http_version[16];
     bool valid_spacing = false;
     bool host_header_present = false;
-    int result = sscanf(buffer, "%s %s %s", method, uri, http_version);
+    int result = sscanf(buffer, "%s %s %s", method, ptr_uri, http_version);
 
     char *crlf_ptr = strstr(buffer, http_version);
     if (crlf_ptr == NULL) {
@@ -257,7 +272,7 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
     }
 
     int len_method = strlen(method);
-    int len_uri = strlen(uri);
+    int len_uri = strlen(ptr_uri);
 
     if (!(buffer[len_method - 1] != ' ' && buffer[len_method] == ' ' &&
           buffer[len_method + 1] == '/' &&
@@ -271,16 +286,12 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
     crlf_ptr += 2;
     ptr_ptr_http_client_buffer = &crlf_ptr;
 
-    // gets rid of the first '/' in the uri
-    uri[0] = '\0';
-    *uri += 1;
-
     printf("\nHTTP Method: %s", method);
-    printf("\nURI: %s", uri);
+    printf("\nURI: %s", ptr_uri);
     printf("\nHTTP Version: %s\n", http_version);
 
     HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd,
-                      host_header_present);
+                      host_header_present, ptr_uri);
     return;
 }
 
