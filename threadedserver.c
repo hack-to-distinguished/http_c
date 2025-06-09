@@ -151,17 +151,20 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
     // TODO: get the file type, and depending on the file type construct a
     // corresponding http response packet that can be sent back to the
     // user...going to just focus on text files right now
-    char text_file_single_line_buffer[128];
     char text_file_contents[1024];
     char ch;
-    FILE *ptr_file = fopen(ptr_uri, "r");
+    FILE *file_ptr = fopen(ptr_uri, "r");
+    int counter = 0;
 
-    printf("\nFile Contents of '%s':\n", ptr_uri);
-    while ((ch = fgetc(ptr_file)) != EOF) {
-        printf("%c", ch);
+    printf("\nFile Contents of '%s':", ptr_uri);
+    while ((ch = fgetc(file_ptr)) != EOF) {
+        text_file_contents[counter] = ch;
+        counter += 1;
     }
 
-    fclose(ptr_file);
+    printf("\n%s", text_file_contents);
+
+    fclose(file_ptr);
     return;
 }
 
