@@ -52,24 +52,24 @@ char *receive_HTTP_request(int new_connection_fd) {
     return ptr_http_request_buffer;
 }
 
-char *create_HTTP_response_packet() {
-    char *ptr_packet_buffer = malloc(BUFFER_SIZE);
-    char *ptr_body;
-    int body_len;
-    ptr_body = "<body>\r\n"
-               "Hello, Response Packet!\r\n"
-               "</body>\r\n";
-    body_len = strlen(ptr_body);
-    // format http response, will be stored in packet_buffer
-    snprintf(ptr_packet_buffer, BUFFER_SIZE,
-             "HTTP/1.1 200 OK\r\n"
-             "Content-Length: %d\r\n"
-             "Content-Type: text/html;\r\n\r\n"
-             "%s",
-             body_len, ptr_body);
-
-    return ptr_packet_buffer;
-}
+// char *create_HTTP_response_packet() {
+//     char *ptr_packet_buffer = malloc(BUFFER_SIZE);
+//     char *ptr_body;
+//     int body_len;
+//     ptr_body = "<body>\r\n"
+//                "Hello, Response Packet!\r\n"
+//                "</body>\r\n";
+//     body_len = strlen(ptr_body);
+//     // format http response, will be stored in packet_buffer
+//     snprintf(ptr_packet_buffer, BUFFER_SIZE,
+//              "HTTP/1.1 200 OK\r\n"
+//              "Content-Length: %d\r\n"
+//              "Content-Type: text/html;\r\n\r\n"
+//              "%s",
+//              body_len, ptr_body);
+//
+//     return ptr_packet_buffer;
+// }
 
 void send_http_response(int new_connection_fd, char *ptr_packet_buffer) {
     send(new_connection_fd, ptr_packet_buffer, strlen(ptr_packet_buffer), 0);
@@ -155,6 +155,8 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
     char ch;
     FILE *file_ptr = fopen(ptr_uri, "r");
     int counter = 0;
+    char *ptr_packet_buffer = malloc(BUFFER_SIZE);
+    int text_file_contents_len;
 
     printf("\nFile Contents of '%s':", ptr_uri);
     while ((ch = fgetc(file_ptr)) != EOF) {
@@ -162,9 +164,18 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
         counter += 1;
     }
 
-    printf("\n%s", text_file_contents);
-
     fclose(file_ptr);
+
+    text_file_contents_len = strlen(text_file_contents);
+    // format http response, will be stored in packet_buffer
+    snprintf(ptr_packet_buffer, BUFFER_SIZE,
+             "HTTP/1.1 200 OK\r\n"
+             "Content-Length: %d\r\n"
+             "Content-Type: text/plain;\r\n\r\n"
+             "%s",
+             text_file_contents_len, text_file_contents);
+
+    send_http_response(new_connection_fd, ptr_packet_buffer);
     return;
 }
 
@@ -175,16 +186,10 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri) {
     printf("\nURI at end of headers state: %s", ptr_uri);
 
     int len_uri = strlen(ptr_uri);
-    // printf("\nlen of uri value: %d", len_uri);
-    // for (int i = 0; i < strlen(ptr_uri); i++) {
-    //     printf("\n%c %p", ptr_uri[i], &ptr_uri[i]);
-    // }
 
     // check if file exists
     if (access(ptr_uri, F_OK) != -1) {
         printf("\nFile exists!");
-        char *ptr_packet_buffer = create_HTTP_response_packet();
-        send_http_response(new_connection_fd, ptr_packet_buffer);
         send_requested_file_back(new_connection_fd, ptr_uri);
         free(ptr_uri - 1);
         return;
@@ -194,8 +199,6 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri) {
         free(ptr_uri - 1);
         return;
     }
-    // char *ptr_packet_buffer = create_HTTP_response_packet();
-    // send_http_response(new_connection_fd, ptr_packet_buffer);
 }
 
 void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
@@ -359,8 +362,6 @@ void parse_HTTP_requests(int new_connection_fd) {
 
     STATE_PARSER(ptr_http_client_buffer, new_connection_fd);
 
-    // char *ptr_packet_buffer = create_HTTP_response_packet();
-    // send_http_response(new_connection_fd, ptr_packet_buffer);
     free(ptr_http_client_buffer);
     return;
 }
