@@ -149,7 +149,20 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
 
 void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
     // TODO: get the file type, and depending on the file type construct a
-    // corresponding http response packet that can be sent back to the user...
+    // corresponding http response packet that can be sent back to the
+    // user...going to just focus on text files right now
+    char text_file_single_line_buffer[128];
+    char text_file_contents[1024];
+    char ch;
+    FILE *ptr_file = fopen(ptr_uri, "r");
+
+    printf("\nFile Contents of '%s':\n", ptr_uri);
+    while ((ch = fgetc(ptr_file)) != EOF) {
+        printf("%c", ch);
+    }
+
+    fclose(ptr_file);
+    return;
 }
 
 void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri) {
@@ -159,18 +172,18 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri) {
     printf("\nURI at end of headers state: %s", ptr_uri);
 
     int len_uri = strlen(ptr_uri);
-    printf("\nlen of uri value: %d", len_uri);
-    for (int i = 0; i < strlen(ptr_uri); i++) {
-        printf("\n%c %p", ptr_uri[i], &ptr_uri[i]);
-    }
-    //
+    // printf("\nlen of uri value: %d", len_uri);
+    // for (int i = 0; i < strlen(ptr_uri); i++) {
+    //     printf("\n%c %p", ptr_uri[i], &ptr_uri[i]);
+    // }
+
     // check if file exists
     if (access(ptr_uri, F_OK) != -1) {
         printf("\nFile exists!");
-        free(ptr_uri - 1);
         char *ptr_packet_buffer = create_HTTP_response_packet();
         send_http_response(new_connection_fd, ptr_packet_buffer);
         send_requested_file_back(new_connection_fd, ptr_uri);
+        free(ptr_uri - 1);
         return;
     } else {
         printf("\nFile does not exist!");
