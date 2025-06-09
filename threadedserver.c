@@ -158,7 +158,6 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
     char *ptr_packet_buffer = malloc(BUFFER_SIZE);
     int text_file_contents_len;
 
-    printf("\nFile Contents of '%s':", ptr_uri);
     while ((ch = fgetc(file_ptr)) != EOF) {
         text_file_contents[counter] = ch;
         counter += 1;
