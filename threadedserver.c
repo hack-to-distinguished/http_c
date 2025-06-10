@@ -23,8 +23,6 @@ void error(const char *msg) {
     exit(1);
 }
 
-// prototypes to ensure that there are no undeclared errors and conflicting
-// types
 void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
                        bool host_header_present, char *ptr_uri);
 void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
@@ -32,7 +30,6 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
                         char *ptr_uri);
 void ERROR_STATE(int new_connection_fd);
 
-// custom struct to pass values
 typedef struct {
     int sock_fd;
 } thread_config_t;
@@ -116,7 +113,6 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
     }
 
     for (j = j; j < strlen(buffer); j++) {
-        // getting the header value
         if (!(buffer[j] == '\r' || buffer[j] == '\n') && !header_value_found) {
             header_value[counter] = buffer[j];
             counter += 1;
@@ -125,7 +121,6 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
             header_value_found = true;
         }
 
-        // check single crlf
         if (j < (strlen(buffer) - 1)) {
             if (buffer[j] == '\r' && buffer[j + 1] == '\n' &&
                 !single_crlf_found) {
@@ -186,7 +181,6 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri) {
 
     int len_uri = strlen(ptr_uri);
 
-    // check if file exists
     if (access(ptr_uri, F_OK) != -1) {
         printf("\nFile exists!");
         send_requested_file_back(new_connection_fd, ptr_uri);
@@ -231,8 +225,6 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
             i = strlen(buffer);
         }
 
-        // extract the actual header name + put null terminating characters when
-        // necessary
         if (!single_crlf_found) {
             header_name[counter] = buffer[i];
             counter += 1;
