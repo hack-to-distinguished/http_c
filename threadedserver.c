@@ -82,7 +82,7 @@ void ERROR_STATE(int new_connection_fd) {
     char *ptr_body;
     int body_len;
     ptr_body = "<body>\r\n"
-               "Error 404! File does not exist!\r\n"
+               "Error 400! Bad Request\r\n"
                "</body>\r\n";
     body_len = strlen(ptr_body);
     snprintf(ptr_packet_buffer, BUFFER_SIZE,
@@ -194,7 +194,20 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri) {
         return;
     } else {
         printf("\nFile does not exist!");
-        ERROR_STATE(new_connection_fd);
+        char *ptr_packet_buffer = malloc(BUFFER_SIZE);
+        char *ptr_body;
+        int body_len;
+        ptr_body = "<body>\r\n"
+                   "Error 404! File does not exist\r\n"
+                   "</body>\r\n";
+        body_len = strlen(ptr_body);
+        snprintf(ptr_packet_buffer, BUFFER_SIZE,
+                 "HTTP/1.1 404 Not Found\r\n"
+                 "Content-Length: %d\r\n"
+                 "Content-Type: text/html;\r\n\r\n"
+                 "%s",
+                 body_len, ptr_body);
+        send_http_response(new_connection_fd, ptr_packet_buffer);
         free(ptr_uri - 1);
         return;
     }
