@@ -150,18 +150,21 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
     // get file type
     char file_type[8];
     int counter = 0;
-    for (int i = strlen(ptr_uri) - 1; i > 0; i--) {
-        // printf("\n%c", ptr_uri[i]);
+    bool past_period = false;
+    for (int i = 0; i < strlen(ptr_uri); i++) {
+
         if (ptr_uri[i] == '.') {
-            i = 0;
-            file_type[counter] = '\0';
-        } else {
-            printf("\ndean");
+            past_period = true;
+            i += 1;
+        }
+
+        if (past_period && ptr_uri[i] != '\0') {
             file_type[counter] = ptr_uri[i];
             counter += 1;
         }
     }
 
+    file_type[counter] = '\0';
     printf("\nFile Type: %s", file_type);
 
     if (strcmp(file_type, "txt") == 0) {
@@ -189,7 +192,7 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
                  text_file_contents_len, text_file_contents);
         send_http_response(new_connection_fd, ptr_packet_buffer);
         return;
-    } else if (strcmp(file_type, "jpg")) {
+    } else if (strcmp(file_type, "jpg") == 0) {
         printf("\ndean");
     }
     return;
