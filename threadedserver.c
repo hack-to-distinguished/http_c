@@ -143,33 +143,55 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
 }
 
 void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
-    // TODO: get the file type, and depending on the file type construct a
-    // corresponding http response packet that can be sent back to the
-    // user...going to just focus on text files right now
-    char text_file_contents[1024];
-    char ch;
-    FILE *file_ptr = fopen(ptr_uri, "r");
-    int counter = 0;
-    char *ptr_packet_buffer = malloc(BUFFER_SIZE);
-    int text_file_contents_len;
 
-    while ((ch = fgetc(file_ptr)) != EOF) {
-        text_file_contents[counter] = ch;
-        counter += 1;
+    // TODO: get .jpg and .jpeg file transfers to work -> also detect type of
+    // file and send the file correspondingly (depending on type)
+
+    // get file type
+    char file_type[8];
+    int counter = 0;
+    for (int i = strlen(ptr_uri) - 1; i > 0; i--) {
+        // printf("\n%c", ptr_uri[i]);
+        if (ptr_uri[i] == '.') {
+            i = 0;
+            file_type[counter] = '\0';
+        } else {
+            printf("\ndean");
+            file_type[counter] = ptr_uri[i];
+            counter += 1;
+        }
     }
 
-    fclose(file_ptr);
+    printf("\nFile Type: %s", file_type);
 
-    text_file_contents_len = strlen(text_file_contents);
-    // format http response, will be stored in packet_buffer
-    snprintf(ptr_packet_buffer, BUFFER_SIZE,
-             "HTTP/1.1 200 OK\r\n"
-             "Content-Length: %d\r\n"
-             "Content-Type: text/plain;\r\n\r\n"
-             "%s",
-             text_file_contents_len, text_file_contents);
+    if (strcmp(file_type, "txt") == 0) {
+        char text_file_contents[1024];
+        char ch;
+        FILE *file_ptr = fopen(ptr_uri, "r");
+        counter = 0;
+        char *ptr_packet_buffer = malloc(BUFFER_SIZE);
+        int text_file_contents_len;
 
-    send_http_response(new_connection_fd, ptr_packet_buffer);
+        while ((ch = fgetc(file_ptr)) != EOF) {
+            text_file_contents[counter] = ch;
+            counter += 1;
+        }
+
+        fclose(file_ptr);
+
+        text_file_contents_len = strlen(text_file_contents);
+        // format http response, will be stored in packet_buffer
+        snprintf(ptr_packet_buffer, BUFFER_SIZE,
+                 "HTTP/1.1 200 OK\r\n"
+                 "Content-Length: %d\r\n"
+                 "Content-Type: text/plain;\r\n\r\n"
+                 "%s",
+                 text_file_contents_len, text_file_contents);
+        send_http_response(new_connection_fd, ptr_packet_buffer);
+        return;
+    } else if (strcmp(file_type, "jpg")) {
+        printf("\ndean");
+    }
     return;
 }
 
