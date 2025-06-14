@@ -142,10 +142,18 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
     }
 }
 
+long get_size_of_file(FILE *fp) {
+    fseek(fp, 0, SEEK_END);
+    long size_of_file = ftell(fp);
+    return size_of_file;
+}
+
 void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
 
     // TODO: get .jpg and .jpeg file transfers to work -> also detect type of
     // file and send the file correspondingly (depending on type)
+
+    FILE *file_ptr;
 
     // get file type
     char file_type[8];
@@ -168,17 +176,30 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
     printf("\nFile Type: %s", file_type);
 
     if (strcmp(file_type, "txt") == 0) {
-        char text_file_contents[1024];
+
+        file_ptr = fopen(ptr_uri, "r");
+        long size = get_size_of_file(file_ptr);
+        fseek(file_ptr, 0, SEEK_SET);
+
         char ch;
-        FILE *file_ptr = fopen(ptr_uri, "r");
-        counter = 0;
+        char text_file_contents[size];
         char *ptr_packet_buffer = malloc(BUFFER_SIZE);
-        int text_file_contents_len;
+        counter = 0;
+        long text_file_contents_len;
+
+        if (file_ptr == NULL) {
+            fprintf(stderr, "\t Can't open file : %s", ptr_uri);
+            fclose(file_ptr);
+            exit(-1);
+            return;
+        }
 
         while ((ch = fgetc(file_ptr)) != EOF) {
             text_file_contents[counter] = ch;
             counter += 1;
         }
+
+        printf("\nsize of file: %ld", size);
 
         fclose(file_ptr);
 
@@ -186,14 +207,34 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
         // format http response, will be stored in packet_buffer
         snprintf(ptr_packet_buffer, BUFFER_SIZE,
                  "HTTP/1.1 200 OK\r\n"
-                 "Content-Length: %d\r\n"
+                 "Content-Length: %ld\r\n"
                  "Content-Type: text/plain;\r\n\r\n"
                  "%s",
                  text_file_contents_len, text_file_contents);
         send_http_response(new_connection_fd, ptr_packet_buffer);
         return;
     } else if (strcmp(file_type, "jpg") == 0) {
-        printf("\ndean");
+        file_ptr = fopen(ptr_uri, "rb");
+
+        if (file_ptr == NULL) {
+            fprintf(stderr, "\t Can't open file : %s", ptr_uri);
+            fclose(file_ptr);
+            exit(-1);
+            return;
+        }
+
+        long size = get_size_of_file(file_ptr);
+        printf("\nsize of file: %ld", size);
+
+        // printf("\ndean");
+        // char *ptr_packet_buffer = malloc(BUFFER_SIZE);
+        // snprintf(ptr_packet_buffer, BUFFER_SIZE,
+        //          "HTTP/1.1 200 OK\r\n"
+        //          "Content-Length: %d\r\n"
+        //          "Content-Type: text/plain;\r\n\r\n"
+        //          "%s",
+        //          text_file_contents_len, text_file_contents);
+        // send_http_response(new_connection_fd, ptr_packet_buffer);
     }
     return;
 }
