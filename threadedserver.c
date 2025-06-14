@@ -252,9 +252,10 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri) {
     ptr_uri += 1;
     printf("\nURI at end of headers state: %s", ptr_uri);
 
+    // TODO: need to fix error if it is just directory
     int len_uri = strlen(ptr_uri);
 
-    if (access(ptr_uri, F_OK) != -1) {
+    if (access(ptr_uri, F_OK) != -1 && access(ptr_uri, F_OK) != 0) {
         printf("\nFile exists!");
         send_requested_file_back(new_connection_fd, ptr_uri);
         free(ptr_uri - 1);
