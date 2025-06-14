@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -142,9 +143,11 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
     }
 }
 
-long get_size_of_file(FILE *fp) {
+size_t get_size_of_file(FILE *fp) {
     fseek(fp, 0, SEEK_END);
-    long size_of_file = ftell(fp);
+    size_t size_of_file = ftell(fp);
+    // reset file pointer to point back to beginning of the file
+    fseek(fp, 0, SEEK_SET);
     return size_of_file;
 }
 
@@ -178,14 +181,13 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
     if (strcmp(file_type, "txt") == 0) {
 
         file_ptr = fopen(ptr_uri, "r");
-        long size = get_size_of_file(file_ptr);
-        fseek(file_ptr, 0, SEEK_SET);
+        size_t size = get_size_of_file(file_ptr);
 
         char ch;
         char text_file_contents[size];
-        char *ptr_packet_buffer = malloc(BUFFER_SIZE);
+        char *ptr_packet_buffer = malloc(BUFFER_SIZE + size);
         counter = 0;
-        long text_file_contents_len;
+        size_t text_file_contents_len;
 
         if (file_ptr == NULL) {
             fprintf(stderr, "\t Can't open file : %s", ptr_uri);
@@ -223,18 +225,23 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
             return;
         }
 
-        long size = get_size_of_file(file_ptr);
-        printf("\nsize of file: %ld", size);
+        size_t size = get_size_of_file(file_ptr);
+        unsigned char img_file_contents[size];
+        size_t bytes_read =
+            fread(img_file_contents, sizeof(unsigned char), size, file_ptr);
 
-        // printf("\ndean");
-        // char *ptr_packet_buffer = malloc(BUFFER_SIZE);
-        // snprintf(ptr_packet_buffer, BUFFER_SIZE,
-        //          "HTTP/1.1 200 OK\r\n"
-        //          "Content-Length: %d\r\n"
-        //          "Content-Type: text/plain;\r\n\r\n"
-        //          "%s",
-        //          text_file_contents_len, text_file_contents);
-        // send_http_response(new_connection_fd, ptr_packet_buffer);
+        printf("\nsize of file: %ld\n", size);
+        printf("\nbytes read: %ld\n", bytes_read);
+
+        fclose(file_ptr);
+        char *ptr_packet_buffer = malloc(BUFFER_SIZE + size);
+        snprintf(ptr_packet_buffer, BUFFER_SIZE + size,
+                 "HTTP/1.1 200 OK\r\n"
+                 "Content-Length: %ld\r\n"
+                 "Content-Type: image/jpeg;\r\n\r\n",
+                 size);
+        send_http_response(new_connection_fd, ptr_packet_buffer);
+        send(new_connection_fd, img_file_contents, size, 0);
     }
     return;
 }
