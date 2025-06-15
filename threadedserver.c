@@ -154,9 +154,6 @@ size_t get_size_of_file(FILE *fp) {
 
 void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
 
-    // TODO: get .jpg and .jpeg file transfers to work -> also detect type of
-    // file and send the file correspondingly (depending on type)
-
     FILE *file_ptr;
 
     // get file type
