@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <time.h>
@@ -251,11 +252,14 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri) {
     ptr_uri[0] = '\0';
     ptr_uri += 1;
     printf("\nURI at end of headers state: %s", ptr_uri);
+    FILE *file_ptr = fopen(ptr_uri, "r");
 
-    // TODO: need to fix error if it is just directory
     int len_uri = strlen(ptr_uri);
 
-    if (access(ptr_uri, F_OK) != -1 && access(ptr_uri, F_OK) != 0) {
+    struct stat sb;
+    stat(ptr_uri, &sb);
+
+    if (access(ptr_uri, F_OK) == 0 && !S_ISDIR(sb.st_mode)) {
         printf("\nFile exists!");
         send_requested_file_back(new_connection_fd, ptr_uri);
         free(ptr_uri - 1);
