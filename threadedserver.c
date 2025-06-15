@@ -215,7 +215,8 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
         return;
     } else if (strcmp(file_type, "jpg") == 0 || strcmp(file_type, "png") == 0 ||
                strcmp(file_type, "gif") == 0 ||
-               strcmp(file_type, "webp") == 0) {
+               strcmp(file_type, "webp") == 0 ||
+               strcmp(file_type, "svg") == 0) {
         file_ptr = fopen(ptr_uri, "rb");
 
         if (file_ptr == NULL) {
@@ -258,6 +259,12 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
                      "HTTP/1.1 200 OK\r\n"
                      "Content-Length: %ld\r\n"
                      "Content-Type: image/webp;\r\n\r\n",
+                     size);
+        } else if (strcmp(file_type, "svg") == 0) {
+            snprintf(ptr_packet_buffer, BUFFER_SIZE + size,
+                     "HTTP/1.1 200 OK\r\n"
+                     "Content-Length: %ld\r\n"
+                     "Content-Type: image/svg+xml;\r\n\r\n",
                      size);
         }
 
