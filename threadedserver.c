@@ -213,7 +213,7 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
                  text_file_contents_len, text_file_contents);
         send_http_response(new_connection_fd, ptr_packet_buffer);
         return;
-    } else if (strcmp(file_type, "jpg") == 0) {
+    } else if (strcmp(file_type, "jpg") == 0 || strcmp(file_type, "png") == 0) {
         file_ptr = fopen(ptr_uri, "rb");
 
         if (file_ptr == NULL) {
@@ -233,11 +233,20 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
 
         fclose(file_ptr);
         char *ptr_packet_buffer = malloc(BUFFER_SIZE + size);
-        snprintf(ptr_packet_buffer, BUFFER_SIZE + size,
-                 "HTTP/1.1 200 OK\r\n"
-                 "Content-Length: %ld\r\n"
-                 "Content-Type: image/jpeg;\r\n\r\n",
-                 size);
+        if (strcmp(file_type, "jpg") == 0) {
+            snprintf(ptr_packet_buffer, BUFFER_SIZE + size,
+                     "HTTP/1.1 200 OK\r\n"
+                     "Content-Length: %ld\r\n"
+                     "Content-Type: image/jpeg;\r\n\r\n",
+                     size);
+        } else if (strcmp(file_type, "png") == 0) {
+            snprintf(ptr_packet_buffer, BUFFER_SIZE + size,
+                     "HTTP/1.1 200 OK\r\n"
+                     "Content-Length: %ld\r\n"
+                     "Content-Type: image/png;\r\n\r\n",
+                     size);
+        }
+
         send_http_response(new_connection_fd, ptr_packet_buffer);
         send(new_connection_fd, img_file_contents, size, 0);
     }
