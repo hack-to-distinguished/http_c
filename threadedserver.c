@@ -176,16 +176,16 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
     file_type[counter] = '\0';
     printf("\nFile Type: %s", file_type);
 
-    if (strcmp(file_type, "txt") == 0) {
+    if (strcmp(file_type, "txt") == 0 || strcmp(file_type, "html") == 0) {
 
         file_ptr = fopen(ptr_uri, "r");
         size_t size = get_size_of_file(file_ptr);
 
         char ch;
-        char text_file_contents[size];
+        char file_contents[size];
         char *ptr_packet_buffer = malloc(BUFFER_SIZE + size);
         counter = 0;
-        size_t text_file_contents_len;
+        size_t file_contents_len;
 
         if (file_ptr == NULL) {
             fprintf(stderr, "\t Can't open file : %s", ptr_uri);
@@ -195,7 +195,7 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
         }
 
         while ((ch = fgetc(file_ptr)) != EOF) {
-            text_file_contents[counter] = ch;
+            file_contents[counter] = ch;
             counter += 1;
         }
 
@@ -203,14 +203,24 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
 
         fclose(file_ptr);
 
-        text_file_contents_len = strlen(text_file_contents);
+        file_contents_len = strlen(file_contents);
         // format http response, will be stored in packet_buffer
-        snprintf(ptr_packet_buffer, BUFFER_SIZE,
-                 "HTTP/1.1 200 OK\r\n"
-                 "Content-Length: %ld\r\n"
-                 "Content-Type: text/plain;\r\n\r\n"
-                 "%s",
-                 text_file_contents_len, text_file_contents);
+        if (strcmp(file_type, "txt") == 0) {
+            snprintf(ptr_packet_buffer, BUFFER_SIZE,
+                     "HTTP/1.1 200 OK\r\n"
+                     "Content-Length: %ld\r\n"
+                     "Content-Type: text/plain;\r\n\r\n"
+                     "%s",
+                     file_contents_len, file_contents);
+        } else if (strcmp(file_type, "html") == 0) {
+            snprintf(ptr_packet_buffer, BUFFER_SIZE,
+                     "HTTP/1.1 200 OK\r\n"
+                     "Content-Length: %ld\r\n"
+                     "Content-Type: text/html;\r\n\r\n"
+                     "%s",
+                     file_contents_len, file_contents);
+        }
+
         send_http_response(new_connection_fd, ptr_packet_buffer);
         return;
     } else if (strcmp(file_type, "jpg") == 0 || strcmp(file_type, "png") == 0 ||
