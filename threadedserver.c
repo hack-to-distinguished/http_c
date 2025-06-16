@@ -199,6 +199,8 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
             counter += 1;
         }
 
+        file_contents[counter] = '\0';
+
         printf("\nsize of file: %ld", size);
 
         fclose(file_ptr);
