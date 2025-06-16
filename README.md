@@ -19,6 +19,7 @@ A bare-bones HTTP server written in C from scratch using low-level socket progra
 
 - [x] Listen on TCP port
 - [ ] Apply HTTP protocol to incoming and outgoing data (Ongoing - NJ)
+- [ ] Large data streaming
 
 ---
 
@@ -27,15 +28,18 @@ A bare-bones HTTP server written in C from scratch using low-level socket progra
 - [x] Enable users to send messages to the server
 - [ ] Create end to end messaging without using the server as a middle man
 - [x] Create group chat style messaging by messaging the server and it redirect the message to all clients
+- [ ] Create ability to select the client you want to message
+- [ ] GUI to make messaging easier (ongoing - Christian)
+- [ ] Host the group chat service online and let people share their deepest darkest secrets for all to see (6hrs timeout between messages)
 
 ---
 
-
 ### Phase 4: Integration & Expansion
 
-- [ ] Use the messaging system created here to enable chat in Tank Square (other project)
+- [ ] Use the messaging system created here to enable chat in Tank Squared (other project)
 - [ ] Self host the messaging software
 - [ ] Use blockchain technology to create decentralized messaging system
+- [ ] Integrating our packet streaming service into Tank Squared to enable multiplayer
 
 ---
 
