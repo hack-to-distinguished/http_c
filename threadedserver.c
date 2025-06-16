@@ -1,5 +1,5 @@
 #include <arpa/inet.h>
-#include <errno.h>
+// #include <errno.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <pthread.h>
@@ -176,16 +176,16 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
     file_type[counter] = '\0';
     printf("\nFile Type: %s", file_type);
 
-    if (strcmp(file_type, "txt") == 0) {
+    if (strcmp(file_type, "txt") == 0 || strcmp(file_type, "html") == 0) {
 
         file_ptr = fopen(ptr_uri, "r");
         size_t size = get_size_of_file(file_ptr);
 
         char ch;
-        char text_file_contents[size];
+        char *ptr_file_contents = malloc(sizeof(char) * size);
         char *ptr_packet_buffer = malloc(BUFFER_SIZE + size);
         counter = 0;
-        size_t text_file_contents_len;
+        size_t file_contents_len;
 
         if (file_ptr == NULL) {
             fprintf(stderr, "\t Can't open file : %s", ptr_uri);
@@ -195,22 +195,34 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
         }
 
         while ((ch = fgetc(file_ptr)) != EOF) {
-            text_file_contents[counter] = ch;
+            ptr_file_contents[counter] = ch;
             counter += 1;
         }
+
+        ptr_file_contents[counter] = '\0';
 
         printf("\nsize of file: %ld", size);
 
         fclose(file_ptr);
 
-        text_file_contents_len = strlen(text_file_contents);
+        file_contents_len = strlen(ptr_file_contents);
         // format http response, will be stored in packet_buffer
-        snprintf(ptr_packet_buffer, BUFFER_SIZE,
-                 "HTTP/1.1 200 OK\r\n"
-                 "Content-Length: %ld\r\n"
-                 "Content-Type: text/plain;\r\n\r\n"
-                 "%s",
-                 text_file_contents_len, text_file_contents);
+        if (strcmp(file_type, "txt") == 0) {
+            snprintf(ptr_packet_buffer, BUFFER_SIZE,
+                     "HTTP/1.1 200 OK\r\n"
+                     "Content-Length: %ld\r\n"
+                     "Content-Type: text/plain;\r\n\r\n"
+                     "%s",
+                     file_contents_len, ptr_file_contents);
+        } else if (strcmp(file_type, "html") == 0) {
+            snprintf(ptr_packet_buffer, BUFFER_SIZE,
+                     "HTTP/1.1 200 OK\r\n"
+                     "Content-Length: %ld\r\n"
+                     "Content-Type: text/html;\r\n\r\n"
+                     "%s",
+                     file_contents_len, ptr_file_contents);
+        }
+
         send_http_response(new_connection_fd, ptr_packet_buffer);
         return;
     } else if (strcmp(file_type, "jpg") == 0 || strcmp(file_type, "png") == 0 ||
@@ -227,9 +239,11 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
         }
 
         size_t size = get_size_of_file(file_ptr);
-        unsigned char img_file_contents[size];
+        // unsigned char img_file_contents[size];
+        unsigned char *ptr_img_file_contents =
+            malloc(sizeof(unsigned char) * size);
         size_t bytes_read =
-            fread(img_file_contents, sizeof(unsigned char), size, file_ptr);
+            fread(ptr_img_file_contents, sizeof(unsigned char), size, file_ptr);
 
         printf("\nsize of file: %ld\n", size);
         printf("\nbytes read: %ld\n", bytes_read);
@@ -275,7 +289,9 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
         }
 
         send_http_response(new_connection_fd, ptr_packet_buffer);
-        send(new_connection_fd, img_file_contents, size, 0);
+        send(new_connection_fd, ptr_img_file_contents, size, 0);
+        free(ptr_img_file_contents);
+        return;
     }
     return;
 }
