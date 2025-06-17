@@ -15,7 +15,7 @@ function MessageDisplay() {
 
   return (
     <>
-      <div class="div_messages_view">
+      <div className="div_messages_view">
       </div>
     </>
   )

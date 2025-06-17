@@ -5,3 +5,6 @@ server
 persistent_client
 .clang-format
 mul_client_server
+
+# Front end development
+frontend_httpc/.vite/
