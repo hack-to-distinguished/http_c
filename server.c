@@ -20,7 +20,7 @@ void error(const char *msg) {
     exit(0);
 }
 
-void send_http_response(int sock, const char *body) {
+void send_http_response(int sock, char *body) {
     char response[BUFFER_SIZE];
     printf("sizeof response: %ld\n", sizeof(response));
     int body_len = strlen(body);
@@ -28,6 +28,7 @@ void send_http_response(int sock, const char *body) {
     snprintf(response, sizeof(response),
          "HTTP/1.1 200 OK\r\n"
          "Content-Type: text/plain\r\n"
+         "Access-Control-Allow-Origin: *\r\n"
          "Content-Length: %d\r\n"
          "Connection: close\r\n"
          "\r\n"
@@ -68,7 +69,7 @@ int main(int argc, char *argv[]) {
 
 
     int client_sockfd, conn_clients[BACKLOG], fd_count = 1;
-    int bytes_recv, bytes_sent;
+    int bytes_recv;
     struct pollfd pfds[BACKLOG + 1]; // +1 bc adding the server to pfds
     char buffer[BUFFER_SIZE];
 
@@ -92,7 +93,7 @@ int main(int argc, char *argv[]) {
             if (fd_count >= BACKLOG + 1) {
                 printf("Connection to full server attempted\n");
                 char *msg = "Server full\n";
-                send(client_sockfd, msg, strlen(msg), 0);
+                send_http_response(client_sockfd, msg);
                 close(client_sockfd);
             } else {
                 printf("%d successfully connected to the server\n", client_sockfd);
@@ -102,7 +103,7 @@ int main(int argc, char *argv[]) {
                 fd_count += 1;
 
                 char *msg = "Connected to the server\n";
-                send(client_sockfd, msg, strlen(msg), 0);
+                send_http_response(client_sockfd, msg);
                 printf("SENT MSG TO THE CLIENT\n");
             }
         }
@@ -128,7 +129,7 @@ int main(int argc, char *argv[]) {
 
                     for (int j = 1; j < fd_count; j++) {
                         if (pfds[j].fd != pfds[i].fd) {
-                            bytes_sent = send(pfds[j].fd, buffer, bytes_recv, 0);
+                            send_http_response(pfds[j].fd, buffer);
                         }
                     }
                 }
