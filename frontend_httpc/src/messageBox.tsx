@@ -9,17 +9,17 @@ function MessageBox() {
     setMsg(event.target.value);
   }
 
-  function handleFormSubmit(event) {
+  async function handleFormSubmit(event) {
     event.preventDefault();
-    console.log("Message sent:", event.currentTarget.elements.messageInput.value);
+    console.log("Message sent:", msg);
 
-    // fetch('http://127.0.0.0:8080', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'text/plain' },
-    //   body: 'Hello from browser'
-    // })
-    //   .then(res => res.text())
-    //   .then(console.log);
+    await fetch('http://127.0.0.0:8080', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: msg
+    })
+      .then(res => res.text())
+      .then(console.log);
     setMsg("");
   }
 
