@@ -26,10 +26,11 @@ void error(const char *msg) {
 }
 
 void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
-                       bool host_header_present, char *ptr_uri);
+                       bool host_header_present, char *ptr_uri,
+                       char *ptr_method);
 void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
                         int new_connection_fd, bool host_header_present,
-                        char *ptr_uri);
+                        char *ptr_uri, char *ptr_method);
 void ERROR_STATE(int new_connection_fd);
 
 typedef struct {
@@ -50,25 +51,6 @@ char *receive_HTTP_request(int new_connection_fd) {
 
     return ptr_http_request_buffer;
 }
-
-// char *create_HTTP_response_packet() {
-//     char *ptr_packet_buffer = malloc(BUFFER_SIZE);
-//     char *ptr_body;
-//     int body_len;
-//     ptr_body = "<body>\r\n"
-//                "Hello, Response Packet!\r\n"
-//                "</body>\r\n";
-//     body_len = strlen(ptr_body);
-//     // format http response, will be stored in packet_buffer
-//     snprintf(ptr_packet_buffer, BUFFER_SIZE,
-//              "HTTP/1.1 200 OK\r\n"
-//              "Content-Length: %d\r\n"
-//              "Content-Type: text/html;\r\n\r\n"
-//              "%s",
-//              body_len, ptr_body);
-//
-//     return ptr_packet_buffer;
-// }
 
 void send_http_response(int new_connection_fd, char *ptr_packet_buffer) {
     send(new_connection_fd, ptr_packet_buffer, strlen(ptr_packet_buffer), 0);
@@ -96,7 +78,7 @@ void ERROR_STATE(int new_connection_fd) {
 
 void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
                         int new_connection_fd, bool host_header_present,
-                        char *ptr_uri) {
+                        char *ptr_uri, char *ptr_method) {
     bool header_value_found = false;
     bool single_crlf_found = false;
     char *buffer = *ptr_ptr_http_client_buffer;
@@ -135,7 +117,7 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
     if (single_crlf_found) {
         printf("\nHeader Value Extracted: %s\n", header_value);
         HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd,
-                          host_header_present, ptr_uri);
+                          host_header_present, ptr_uri, ptr_method);
         return;
     } else {
         printf("\nerror at header value state");
@@ -153,7 +135,6 @@ size_t get_size_of_file(FILE *fp) {
 }
 
 void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
-
     FILE *file_ptr;
 
     // get file type
@@ -296,7 +277,8 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri) {
     return;
 }
 
-void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri) {
+void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
+                          char *ptr_method) {
     // make it so that the pointer skips '/'
     ptr_uri[0] = '\0';
     ptr_uri += 1;
@@ -311,6 +293,28 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri) {
     if (access(ptr_uri, F_OK) == 0 && !S_ISDIR(sb.st_mode)) {
         printf("\nFile exists!");
         send_requested_file_back(new_connection_fd, ptr_uri);
+        free(ptr_uri - 1);
+        return;
+    } else if (strcmp(ptr_method, "HEAD") == 0) {
+        // TODO: Make it so that i can use HEAD method on anything -> any file
+        // should be able to get the metadata about that specific file. If URI
+        // is nothing then just send default packet back with generic metadata
+        // about the web server
+        printf("\nHEAD Method!");
+        char *ptr_packet_buffer = malloc(BUFFER_SIZE);
+        char *ptr_body;
+        int body_len;
+        ptr_body = "<body>\r\n"
+                   "HEAD Method!\r\n"
+                   "</body>\r\n";
+        body_len = strlen(ptr_body);
+        snprintf(ptr_packet_buffer, BUFFER_SIZE,
+                 "HTTP/1.1 200 OK\r\n"
+                 "Content-Length: %d\r\n"
+                 "Content-Type: text/html;\r\n\r\n"
+                 "%s",
+                 body_len, ptr_body);
+        send_http_response(new_connection_fd, ptr_packet_buffer);
         free(ptr_uri - 1);
         return;
     } else {
@@ -335,7 +339,8 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri) {
 }
 
 void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
-                       bool host_header_present, char *ptr_uri) {
+                       bool host_header_present, char *ptr_uri,
+                       char *ptr_method) {
     char *buffer = *ptr_ptr_http_client_buffer;
     char header_name[256];
     bool colon_found = false;
@@ -369,7 +374,7 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
     printf("\nlen header: %d", len_header);
 
     if (single_crlf_found && host_header_present) {
-        END_OF_HEADERS_STATE(new_connection_fd, ptr_uri);
+        END_OF_HEADERS_STATE(new_connection_fd, ptr_uri, ptr_method);
         return;
     }
 
@@ -379,7 +384,7 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
             host_header_present = true;
         }
         HEADER_VALUE_STATE(ptr_ptr_http_client_buffer, new_connection_fd,
-                           host_header_present, ptr_uri);
+                           host_header_present, ptr_uri, ptr_method);
         return;
     } else {
         printf("\nerror at header name state");
@@ -398,49 +403,52 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
     char *buffer =
         *ptr_ptr_http_client_buffer; // dereference the pointer pointer
                                      // to get the actual char buffer
-    char method[8];
+    char *ptr_method = malloc(sizeof(char) * 8);
     char uri[1024];
     char *ptr_uri = malloc(sizeof(char) * 1025);
     char http_version[16];
     bool valid_spacing = false;
     bool host_header_present = false;
-    int result = sscanf(buffer, "%s %s %s", method, ptr_uri, http_version);
+    int result = sscanf(buffer, "%s %s %s", ptr_method, ptr_uri, http_version);
 
     char *crlf_ptr = strstr(buffer, http_version);
     if (crlf_ptr == NULL) {
         ERROR_STATE(new_connection_fd);
         printf("\nerror at request line state");
+        free(ptr_method);
         return;
     }
     crlf_ptr += 8;
     if (result != 3) {
         ERROR_STATE(new_connection_fd);
         printf("\nerror at request line state");
+        free(ptr_method);
         return;
     }
 
-    if (!(strcmp(method, "GET") == 0 || strcmp(method, "POST") == 0 ||
-          strcmp(method, "HEAD") == 0)) {
+    if (!(strcmp(ptr_method, "GET") == 0 || strcmp(ptr_method, "POST") == 0 ||
+          strcmp(ptr_method, "HEAD") == 0)) {
         ERROR_STATE(new_connection_fd);
         printf("\nerror at request line state");
+        free(ptr_method);
         return;
     }
-
-    // TODO: check valid uri for file retrieval! later...
 
     if (strcmp(http_version, "HTTP/1.1") != 0) {
         ERROR_STATE(new_connection_fd);
         printf("\nerror at request line state");
+        free(ptr_method);
         return;
     }
 
     if (!(crlf_ptr[0] == '\r' && crlf_ptr[1] == '\n')) {
         ERROR_STATE(new_connection_fd);
         printf("\nerror at request line state");
+        free(ptr_method);
         return;
     }
 
-    int len_method = strlen(method);
+    int len_method = strlen(ptr_method);
     int len_uri = strlen(ptr_uri);
 
     if (!(buffer[len_method - 1] != ' ' && buffer[len_method] == ' ' &&
@@ -449,18 +457,19 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
           buffer[len_method + len_uri + 2] != ' ')) {
         ERROR_STATE(new_connection_fd);
         printf("\nerror at request line state");
+        free(ptr_method);
         return;
     }
 
     crlf_ptr += 2;
     ptr_ptr_http_client_buffer = &crlf_ptr;
 
-    printf("\nHTTP Method: %s", method);
+    printf("\nHTTP Method: %s", ptr_method);
     printf("\nURI: %s", ptr_uri);
     printf("\nHTTP Version: %s\n", http_version);
 
     HEADER_NAME_STATE(ptr_ptr_http_client_buffer, new_connection_fd,
-                      host_header_present, ptr_uri);
+                      host_header_present, ptr_uri, ptr_method);
     return;
 }
 
@@ -532,7 +541,6 @@ void *server_thread_to_run(void *args) {
 }
 
 int main(int argc, char *argv[]) {
-
     struct addrinfo hints, *res;
     int server_fd;
     int reuse_addr_flag = 1;
