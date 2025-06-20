@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import './components.css'
+import React, { useState } from "react";
+import "./components.css"
 
 function MessageBox() {
   // Somehow call the C function, API or whatever from here
@@ -13,9 +13,9 @@ function MessageBox() {
     event.preventDefault();
     console.log("Message sent:", msg);
 
-    await fetch('http://127.0.0.0:8080', {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
+    await fetch("http://127.0.0.0:8080", {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
       body: msg
     })
       .then(res => res.text())

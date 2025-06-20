@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import './App.css'
-import MessageBox from './messageBox.tsx'
+import { useState } from "react"
+import "./App.css"
+import MessageBox from "./messageBox.tsx"
+import MessageDisplay from "./messageDisplay.tsx"
 
 function App() {
 
@@ -10,6 +11,7 @@ function App() {
       {/* The div below should contain the chat feed of floating messages */}
       {/*Should also contain the enter message chat box */}
       <div>
+        <MessageDisplay/>
         <MessageBox/>
       </div>
     </>
