@@ -17,6 +17,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#define QUEUE_SIZE 2048
+#define NUM_OF_THREADS 8
 #define MYPORT "8080"
 #define BACKLOG 50 // how many pending connections queue will hold
 #define BUFFER_SIZE 1024
@@ -36,8 +38,18 @@ void ERROR_STATE(int new_connection_fd);
 
 typedef struct {
     int sock_fd;
-    pthread_mutex_t mutex;
 } thread_config_t;
+
+typedef struct {
+    thread_config_t queue[QUEUE_SIZE];
+    size_t front_pointer;
+    size_t rear_pointer;
+    size_t queue_size;
+    pthread_mutex_t thread_pool_mutex_t;
+    pthread_cond_t thread_pool_cond_t;
+} thread_pool_t;
+
+thread_pool_t *thread_pool;
 
 char *receive_HTTP_request(int new_connection_fd) {
     int bytes_recv;
@@ -46,11 +58,11 @@ char *receive_HTTP_request(int new_connection_fd) {
         recv(new_connection_fd, ptr_http_request_buffer, BUFFER_SIZE, 0);
     if (bytes_recv == -1) {
         free(ptr_http_request_buffer);
-        printf("\nError receiving message");
+        perror("recv failed");
         return NULL;
     } else if (bytes_recv == 0) {
         free(ptr_http_request_buffer);
-        printf("\nClient disconnected");
+        perror("client disconnected");
         return NULL;
     }
     // printf("\nBytes received: %d", bytes_recv);
@@ -528,7 +540,6 @@ void parse_HTTP_requests(int new_connection_fd) {
 void *server_thread_to_run(void *args) {
     thread_config_t *ptr_client_config = (thread_config_t *)args;
     // printf("ptr_client_config (thread function): %p\n", ptr_client_config);
-    pthread_mutex_lock(&ptr_client_config->mutex);
     int new_connection_fd = ptr_client_config->sock_fd;
 
     // using wall-clock time to time how long thread takes to run
@@ -542,22 +553,100 @@ void *server_thread_to_run(void *args) {
     parse_HTTP_requests(new_connection_fd);
 
     gettimeofday(&end, NULL);
+
     time_used =
         (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000.0;
-    printf("\nTime taken: %.4lf seconds to finish thread for fd=%d", time_used,
-           new_connection_fd);
+    // printf("\nTime taken: %.4lf seconds to finish thread for fd=%d",
+    // time_used,
+    //        new_connection_fd);
 
-    free(ptr_client_config);
+    // free(ptr_client_config);
     close(new_connection_fd);
-    pthread_mutex_unlock(&ptr_client_config->mutex);
     return NULL;
 }
 
+void thread_pool_enqueue_t(thread_config_t tct) {
+    pthread_mutex_lock(&thread_pool->thread_pool_mutex_t);
+
+    printf("\n[ENQUEUE] FD: %d, Queue size: %zu, Front: %zu, Rear: %zu",
+           tct.sock_fd, thread_pool->queue_size, thread_pool->front_pointer,
+           thread_pool->rear_pointer);
+
+    if (thread_pool->queue_size < QUEUE_SIZE) {
+        thread_pool->queue[thread_pool->rear_pointer] = tct;
+        thread_pool->rear_pointer =
+            (thread_pool->rear_pointer + 1) % QUEUE_SIZE;
+        thread_pool->queue_size += 1;
+        // signal/notify worker threads that a task has been added to the thread
+        // pool queue
+        pthread_cond_signal(&thread_pool->thread_pool_cond_t);
+    } else {
+        perror("Thread pool queue is full!");
+    }
+    pthread_mutex_unlock(&thread_pool->thread_pool_mutex_t);
+    return;
+}
+
+void *worker_thread_t(void *args) {
+    while (1) {
+        pthread_mutex_lock(&thread_pool->thread_pool_mutex_t);
+
+        printf("\n[WORKER %lu] Waiting for work (Queue size: %zu)",
+               pthread_self(), thread_pool->queue_size);
+
+        thread_config_t tct;
+        // worker thread sleep until signalled there is a task in queue
+        while (thread_pool->queue_size == 0) {
+            pthread_cond_wait(&thread_pool->thread_pool_cond_t,
+                              &thread_pool->thread_pool_mutex_t);
+        }
+        if (thread_pool->queue_size > 0) {
+            tct = thread_pool->queue[thread_pool->front_pointer];
+
+            printf("\n[WORKER %lu] Processing FD: %d (Queue size: %zu, Front: "
+                   "%zu)",
+                   pthread_self(), tct.sock_fd, thread_pool->queue_size,
+                   thread_pool->front_pointer);
+
+            thread_pool->front_pointer =
+                (thread_pool->front_pointer + 1) % QUEUE_SIZE;
+            thread_pool->queue_size -= 1;
+            pthread_mutex_unlock(&thread_pool->thread_pool_mutex_t);
+            server_thread_to_run(&tct);
+        } else {
+            pthread_mutex_unlock(&thread_pool->thread_pool_mutex_t);
+            perror("\nThread pool queue is empty!");
+        }
+    }
+    return NULL;
+}
+
+void thread_pool_t_init() {
+    thread_pool->front_pointer = 0;
+    thread_pool->rear_pointer = 0;
+    thread_pool->queue_size = 0;
+    pthread_mutex_init(&thread_pool->thread_pool_mutex_t, NULL);
+    pthread_cond_init(&thread_pool->thread_pool_cond_t, NULL);
+}
+
 int main(int argc, char *argv[]) {
+
+    thread_pool = malloc(sizeof(thread_pool_t));
+    thread_pool_t_init();
     signal(SIGPIPE,
            SIG_IGN); // deepseek -> used for pipe error: when client disconnects
                      // abruptly while server is trying to write data to socket
                      // -> caused when spamming refresh
+
+    pthread_t worker_threads_t[NUM_OF_THREADS];
+
+    for (int i = 0; i < NUM_OF_THREADS; i++) {
+        if (pthread_create(&worker_threads_t[i], NULL, &worker_thread_t,
+                           NULL) != 0) {
+            perror("\nFailed to create thread.");
+        }
+    }
+
     struct addrinfo hints, *res;
     int server_fd;
     int reuse_addr_flag = 1;
@@ -569,7 +658,7 @@ int main(int argc, char *argv[]) {
     hints.ai_flags = AI_PASSIVE;
     int addr_info = getaddrinfo(NULL, MYPORT, &hints, &res);
     if (addr_info == -1) {
-        error("error getaddrinfo");
+        perror("error getaddrerinfo");
     }
 
     /*int socket(int domain, int type, int protocol);  */
@@ -581,12 +670,11 @@ int main(int argc, char *argv[]) {
     int bind_conn = bind(server_fd, res->ai_addr,
                          res->ai_addrlen); /*int bind(int sockfd, struct
                                               sockaddr *my_addr, int addrlen);*/
-    printf("starting server: %d\n", bind_conn);
+    printf("\nstarting server: %d", bind_conn);
 
     listen(server_fd, BACKLOG);
 
     while (1) {
-        printf("Waiting for a connection!\n");
 
         // setting up client connection
         socklen_t client_addr_len;
@@ -598,38 +686,11 @@ int main(int argc, char *argv[]) {
 
         // error checking
         if (client_fd < 0) {
-            printf("\nerror on accepting connection from client");
-            // error("ERROR on accepting connection from client!");
+            perror("error on accepting connection from client");
         } else {
-            // setting up thread
-            pthread_t client_thread;
-            pthread_mutex_t mutex_lock;
-            pthread_mutex_init(&mutex_lock, NULL);
-            // malloc data on the heap to avoid race conditions (stop
-            // threads accessing shared data)
-            thread_config_t *ptr_client_config =
-                malloc(sizeof(thread_config_t));
-            ptr_client_config->sock_fd = client_fd;
-            ptr_client_config->mutex = mutex_lock;
-            printf("\nThread started with fd=%d\n", client_fd);
-            // printf("ptr_client_config (while loop): %p\n",
-            // ptr_client_config);
-
-            // create the actual thread (comment both these lines out if you
-            // want to convert to sequential server)
-            if (pthread_create(&client_thread, NULL, server_thread_to_run,
-                               ptr_client_config) != 0) {
-                printf("\nFailed to create thread.");
-                close(client_fd);
-                free(ptr_client_config);
-                pthread_mutex_destroy(&mutex_lock);
-            } else if (pthread_detach(client_thread) != 0) {
-                printf("\nFailed to detach thread.");
-                close(client_fd);
-                free(ptr_client_config);
-                pthread_mutex_destroy(&mutex_lock);
-            }
-            pthread_mutex_destroy(&mutex_lock);
+            thread_config_t *tct = malloc(sizeof(thread_config_t));
+            tct->sock_fd = client_fd;
+            thread_pool_enqueue_t(*tct);
         }
     }
     freeaddrinfo(res);
