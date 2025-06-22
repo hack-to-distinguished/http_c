@@ -22,18 +22,18 @@ void error(const char *msg) {
 
 void send_http_response(int sock, char *body) {
     char response[BUFFER_SIZE];
-    printf("sizeof response: %ld\n", sizeof(response));
+    int body_len = strlen(body) + 15; // Add 15 to account for the dict format
 
     // TODO: make into json by formatting the body properly
     snprintf(response, sizeof(response),
          "HTTP/1.1 200 OK\r\n"
-         "Content-Type: text/plain\r\n"
+         "Content-Type: application/json\r\n"
          "Access-Control-Allow-Origin: *\r\n"
          "Content-Length: %d\r\n"
-         "Connection: close\r\n"
+         "Connection: keep-alive\r\n"
          "\r\n"
-         "%s",
-         strlen(body), body);
+         "{\"message\": \"%s\"}",
+         body_len, body);
     write(sock, response, strlen(response));
 }
 
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
 
             if (fd_count >= BACKLOG + 1) {
                 printf("Connection to full server attempted\n");
-                char *msg = "Server full\n";
+                char *msg = "Server full";
                 send_http_response(client_sockfd, msg);
                 close(client_sockfd);
             } else {
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
                 pfds[fd_count].events = POLLIN;
                 fd_count += 1;
 
-                char *msg = "Connected to the server\n";
+                char *msg = "Connected to the server";
                 send_http_response(client_sockfd, msg);
                 printf("SENT MSG TO THE CLIENT\n");
             }

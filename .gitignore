@@ -8,3 +8,4 @@ mul_client_server
 
 # Front end development
 frontend_httpc/.vite/
+node_modules/ 
