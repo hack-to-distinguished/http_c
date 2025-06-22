@@ -179,8 +179,6 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
     int counter;
     char *file_type = get_file_type_from_uri(ptr_uri_buffer);
 
-    // printf("\nFile Type: %s", file_type);
-
     if (strcmp(file_type, "txt") == 0 || strcmp(file_type, "html") == 0) {
 
         file_ptr = fopen(ptr_uri_buffer, "r");
@@ -193,8 +191,8 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
         size_t file_contents_len;
 
         if (file_ptr == NULL) {
-            fprintf(stderr, "\t Can't open file : %s", ptr_uri_buffer);
             close(new_connection_fd);
+            perror("Can't open file.");
             exit(-1);
             return;
         }
@@ -211,21 +209,16 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
         fclose(file_ptr);
 
         file_contents_len = strlen(ptr_file_contents);
+
+        char HTTP_format[] = "HTTP/1.1 200 OK\r\nContent-Length: "
+                             "%ld\r\nContent-Type: %s;\r\n\r\n%s";
         // format http response, will be stored in packet_buffer
         if (strcmp(file_type, "txt") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE,
-                     "HTTP/1.1 200 OK\r\n"
-                     "Content-Length: %ld\r\n"
-                     "Content-Type: text/plain;\r\n\r\n"
-                     "%s",
-                     file_contents_len, ptr_file_contents);
+            snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format,
+                     file_contents_len, "text/plain", ptr_file_contents);
         } else if (strcmp(file_type, "html") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE,
-                     "HTTP/1.1 200 OK\r\n"
-                     "Content-Length: %ld\r\n"
-                     "Content-Type: text/html;\r\n\r\n"
-                     "%s",
-                     file_contents_len, ptr_file_contents);
+            snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format,
+                     file_contents_len, "text/html", ptr_file_contents);
         }
 
         send_http_response(new_connection_fd, ptr_packet_buffer);
@@ -254,44 +247,27 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
 
         // printf("\nsize of file: %ld\n", size);
         // printf("\nbytes read: %ld\n", bytes_read);
-
+        char HTTP_format[] = "HTTP/1.1 200 OK\r\nContent-Length: "
+                             "%ld\r\nContent-Type: %s;\r\n\r\n";
         char *ptr_packet_buffer = malloc(BUFFER_SIZE + size);
         if (strcmp(file_type, "jpg") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE + size,
-                     "HTTP/1.1 200 OK\r\n"
-                     "Content-Length: %ld\r\n"
-                     "Content-Type: image/jpeg;\r\n\r\n",
-                     size);
+            snprintf(ptr_packet_buffer, BUFFER_SIZE + size, HTTP_format, size,
+                     "image/jpeg");
         } else if (strcmp(file_type, "png") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE + size,
-                     "HTTP/1.1 200 OK\r\n"
-                     "Content-Length: %ld\r\n"
-                     "Content-Type: image/png;\r\n\r\n",
-                     size);
+            snprintf(ptr_packet_buffer, BUFFER_SIZE + size, HTTP_format, size,
+                     "image/png");
         } else if (strcmp(file_type, "gif") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE + size,
-                     "HTTP/1.1 200 OK\r\n"
-                     "Content-Length: %ld\r\n"
-                     "Content-Type: image/gif;\r\n\r\n",
-                     size);
+            snprintf(ptr_packet_buffer, BUFFER_SIZE + size, HTTP_format, size,
+                     "image/gif");
         } else if (strcmp(file_type, "webp") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE + size,
-                     "HTTP/1.1 200 OK\r\n"
-                     "Content-Length: %ld\r\n"
-                     "Content-Type: image/webp;\r\n\r\n",
-                     size);
+            snprintf(ptr_packet_buffer, BUFFER_SIZE + size, HTTP_format, size,
+                     "image/webp");
         } else if (strcmp(file_type, "svg") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE + size,
-                     "HTTP/1.1 200 OK\r\n"
-                     "Content-Length: %ld\r\n"
-                     "Content-Type: image/svg+xml;\r\n\r\n",
-                     size);
+            snprintf(ptr_packet_buffer, BUFFER_SIZE + size, HTTP_format, size,
+                     "image/svg+xml");
         } else if (strcmp(file_type, "ico") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE + size,
-                     "HTTP/1.1 200 OK\r\n"
-                     "Content-Length: %ld\r\n"
-                     "Content-Type: image/x-icon;\r\n\r\n",
-                     size);
+            snprintf(ptr_packet_buffer, BUFFER_SIZE + size, HTTP_format, size,
+                     "image/x-icon");
         }
 
         send_http_response(new_connection_fd, ptr_packet_buffer);
