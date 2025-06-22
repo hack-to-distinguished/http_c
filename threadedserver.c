@@ -1,4 +1,5 @@
 #include <arpa/inet.h>
+#include <bits/pthreadtypes.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <pthread.h>
@@ -35,6 +36,7 @@ void ERROR_STATE(int new_connection_fd);
 
 typedef struct {
     int sock_fd;
+    pthread_mutex_t mutex;
 } thread_config_t;
 
 char *receive_HTTP_request(int new_connection_fd) {
@@ -526,6 +528,7 @@ void parse_HTTP_requests(int new_connection_fd) {
 void *server_thread_to_run(void *args) {
     thread_config_t *ptr_client_config = (thread_config_t *)args;
     // printf("ptr_client_config (thread function): %p\n", ptr_client_config);
+    pthread_mutex_lock(&ptr_client_config->mutex);
     int new_connection_fd = ptr_client_config->sock_fd;
 
     // using wall-clock time to time how long thread takes to run
@@ -546,6 +549,7 @@ void *server_thread_to_run(void *args) {
 
     free(ptr_client_config);
     close(new_connection_fd);
+    pthread_mutex_unlock(&ptr_client_config->mutex);
     return NULL;
 }
 
@@ -599,11 +603,14 @@ int main(int argc, char *argv[]) {
         } else {
             // setting up thread
             pthread_t client_thread;
+            pthread_mutex_t mutex_lock;
+            pthread_mutex_init(&mutex_lock, NULL);
             // malloc data on the heap to avoid race conditions (stop
             // threads accessing shared data)
             thread_config_t *ptr_client_config =
                 malloc(sizeof(thread_config_t));
             ptr_client_config->sock_fd = client_fd;
+            ptr_client_config->mutex = mutex_lock;
             printf("\nThread started with fd=%d\n", client_fd);
             // printf("ptr_client_config (while loop): %p\n",
             // ptr_client_config);
@@ -615,15 +622,14 @@ int main(int argc, char *argv[]) {
                 printf("\nFailed to create thread.");
                 close(client_fd);
                 free(ptr_client_config);
+                pthread_mutex_destroy(&mutex_lock);
             } else if (pthread_detach(client_thread) != 0) {
                 printf("\nFailed to detach thread.");
                 close(client_fd);
                 free(ptr_client_config);
+                pthread_mutex_destroy(&mutex_lock);
             }
-
-            // comment this line out for sequential server to see the time
-            // difference between concurrency with threads and not
-            // server_thread_to_run(ptr_client_config);
+            pthread_mutex_destroy(&mutex_lock);
         }
     }
     freeaddrinfo(res);
