@@ -283,7 +283,9 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
                           char *ptr_method) {
 
     char *processed_uri_ptr = ptr_uri;
-    processed_uri_ptr += 1;
+    if (!(strcmp(ptr_uri, "/") == 0)) {
+        processed_uri_ptr += 1;
+    }
     char uri_buffer[strlen(processed_uri_ptr)];
     strcpy(uri_buffer, processed_uri_ptr);
     // printf("\nURI at end of headers state: %s", uri_buffer);
@@ -303,7 +305,6 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
         fclose(file_ptr);
         return;
     } else if (strcmp(ptr_method, "HEAD") == 0) {
-
         // printf("\nHEAD Method!");
         if (strcmp(processed_uri_ptr, "") == 0) {
             printf("\nURI is NULL.");
@@ -485,11 +486,11 @@ void parse_HTTP_requests(int new_connection_fd) {
         return;
     }
     // required as strtok modifies the original ptr data
-    char *dupe_ptr_http_client = malloc(strlen(ptr_http_client_buffer) + 1);
-    memcpy(dupe_ptr_http_client, ptr_http_client_buffer,
-           strlen(ptr_http_client_buffer) + 1);
-    char *token = strtok(dupe_ptr_http_client, "\r\n");
-
+    // char *dupe_ptr_http_client = malloc(strlen(ptr_http_client_buffer) + 1);
+    // memcpy(dupe_ptr_http_client, ptr_http_client_buffer,
+    //        strlen(ptr_http_client_buffer) + 1);
+    // char *token = strtok(dupe_ptr_http_client, "\r\n");
+    //
     // printf("\nHTTP Packet received from browser/client:\n");
     // int status_line_found = 0;
     // char *ptr_status_line;
@@ -506,7 +507,7 @@ void parse_HTTP_requests(int new_connection_fd) {
     STATE_PARSER(ptr_http_client_buffer, new_connection_fd);
 
     free(ptr_http_client_buffer);
-    free(dupe_ptr_http_client);
+    // free(dupe_ptr_http_client);
     return;
 }
 
