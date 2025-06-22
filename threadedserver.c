@@ -51,21 +51,38 @@ typedef struct {
 thread_pool_t *thread_pool;
 
 char *receive_HTTP_request(int new_connection_fd) {
-    int bytes_recv;
-    char *ptr_http_request_buffer = malloc(BUFFER_SIZE);
-    bytes_recv =
-        recv(new_connection_fd, ptr_http_request_buffer, BUFFER_SIZE, 0);
+    char *ptr_http_request_buffer = malloc(BUFFER_SIZE + 1);
+
+    size_t total_received = 0;
+    ssize_t bytes_recv;
+
+    while ((bytes_recv = recv(new_connection_fd,
+                              ptr_http_request_buffer + total_received,
+                              BUFFER_SIZE - total_received, 0)) > 0) {
+        total_received += bytes_recv;
+
+        if (strstr(ptr_http_request_buffer, "\r\n\r\n")) {
+            break;
+        }
+
+        if (total_received >= BUFFER_SIZE) {
+            perror("request too large");
+            free(ptr_http_request_buffer);
+            return NULL;
+        }
+    }
+
     if (bytes_recv == -1) {
-        free(ptr_http_request_buffer);
         perror("recv failed");
-        return NULL;
-    } else if (bytes_recv == 0) {
         free(ptr_http_request_buffer);
+        return NULL;
+    } else if (bytes_recv == 0 && total_received == 0) {
         perror("client disconnected");
+        free(ptr_http_request_buffer);
         return NULL;
     }
-    // printf("\nBytes received: %d", bytes_recv);
-    ptr_http_request_buffer[bytes_recv] = '\0';
+
+    ptr_http_request_buffer[total_received] = '\0';
     return ptr_http_request_buffer;
 }
 
