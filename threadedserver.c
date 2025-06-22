@@ -1,4 +1,3 @@
-#include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <pthread.h>
@@ -19,7 +18,7 @@
 #define QUEUE_SIZE 2048
 #define NUM_OF_THREADS 8
 #define MYPORT "8080"
-#define BACKLOG 50 // how many pending connections queue will hold
+#define BACKLOG 50
 #define BUFFER_SIZE 1024
 
 void error(const char *msg) {
