@@ -6,6 +6,8 @@ persistent_client
 .clang-format
 mul_client_server
 
-# Front end development
+# Front end development just in case
 frontend_httpc/.vite/
 node_modules/ 
+package-lock.json
+package.json
