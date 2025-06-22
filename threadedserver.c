@@ -1,5 +1,4 @@
 #include <arpa/inet.h>
-#include <bits/pthreadtypes.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <pthread.h>
