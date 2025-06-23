@@ -19,7 +19,7 @@
 #define NUM_OF_THREADS 8
 #define MYPORT "8080"
 #define BACKLOG 50
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 2048
 
 void error(const char *msg) {
     perror(msg);
@@ -52,12 +52,12 @@ thread_pool_t *thread_pool;
 char *receive_HTTP_request(int new_connection_fd) {
     char *ptr_http_request_buffer = malloc(BUFFER_SIZE + 1);
 
-    size_t total_received = 0;
-    ssize_t bytes_recv;
+    int total_received = 0;
+    int bytes_recv;
 
-    while ((bytes_recv = recv(new_connection_fd,
-                              ptr_http_request_buffer + total_received,
-                              BUFFER_SIZE - total_received, 0)) > 0) {
+    // recv(int fd, void *buf, size_t n, int flags)
+    while ((bytes_recv = recv(new_connection_fd, ptr_http_request_buffer,
+                              BUFFER_SIZE, 0)) > 0) {
         total_received += bytes_recv;
 
         if (strstr(ptr_http_request_buffer, "\r\n\r\n")) {
