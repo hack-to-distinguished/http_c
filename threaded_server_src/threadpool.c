@@ -1,6 +1,10 @@
 #include "threadpool.h"
 #include "http.h"
+#include <bits/pthreadtypes.h>
+#include <pthread.h>
+#include <stddef.h>
 #include <stdio.h>
+#include <sys/procfs.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -9,7 +13,6 @@ thread_pool_t *thread_pool = NULL;
 
 void *server_thread_to_run(void *args) {
     thread_config_t *ptr_client_config = (thread_config_t *)args;
-    // printf("ptr_client_config (thread function): %p\n", ptr_client_config);
     int new_connection_fd = ptr_client_config->sock_fd;
 
     // using wall-clock time to time how long thread takes to run
@@ -26,11 +29,9 @@ void *server_thread_to_run(void *args) {
 
     time_used =
         (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000.0;
-    // printf("\nTime taken: %.4lf seconds to finish thread for fd=%d",
-    // time_used,
-    //        new_connection_fd);
+    printf("\n[WOKRER %ld] Time taken: %.4lf seconds to finish for fd=%d",
+           pthread_self(), time_used, new_connection_fd);
 
-    // free(ptr_client_config);
     close(new_connection_fd);
     return NULL;
 }
@@ -98,4 +99,17 @@ void thread_pool_t_init() {
     thread_pool->queue_size = 0;
     pthread_mutex_init(&thread_pool->thread_pool_mutex_t, NULL);
     pthread_cond_init(&thread_pool->thread_pool_cond_t, NULL);
+}
+
+pthread_t *worker_threads_init(int num_of_workers) {
+    pthread_t WORKER_THREADS[num_of_workers];
+    pthread_t *ptr_WORKER_THREADS = WORKER_THREADS;
+    for (size_t i = 0; i < num_of_workers; i++) {
+        if (pthread_create(&WORKER_THREADS[i], NULL, worker_thread_t, NULL) !=
+            0) {
+            printf("\nFailed to create thread.");
+            return NULL;
+        }
+    }
+    return ptr_WORKER_THREADS;
 }

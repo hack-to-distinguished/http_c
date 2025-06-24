@@ -20,3 +20,4 @@ void *server_thread_to_run(void *args);
 void thread_pool_enqueue_t(thread_config_t tct);
 void *worker_thread_t(void *args);
 void thread_pool_t_init();
+pthread_t *worker_threads_init(int num_of_workers);

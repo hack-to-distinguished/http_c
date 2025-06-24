@@ -24,14 +24,7 @@ int main(int argc, char *argv[]) {
                      // abruptly while server is trying to write data to socket
                      // -> caused when spamming refresh
 
-    pthread_t worker_threads_t[NUM_OF_THREADS];
-
-    for (int i = 0; i < NUM_OF_THREADS; i++) {
-        if (pthread_create(&worker_threads_t[i], NULL, &worker_thread_t,
-                           NULL) != 0) {
-            perror("\nFailed to create thread.");
-        }
-    }
+    pthread_t *worker_threads_t = worker_threads_init(NUM_OF_THREADS);
 
     struct addrinfo hints, *res;
     int server_fd;
