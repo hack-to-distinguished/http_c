@@ -1,7 +1,6 @@
 #include "http.h"
 #include "threadpool.h"
 #include <netdb.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -19,11 +18,6 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
     thread_pool_t_init();
-    signal(SIGPIPE,
-           SIG_IGN); // deepseek -> used for pipe error: when client disconnects
-                     // abruptly while server is trying to write data to socket
-                     // -> caused when spamming refresh
-
     pthread_t *worker_threads_t = worker_threads_init(NUM_OF_THREADS);
 
     struct addrinfo hints, *res;
