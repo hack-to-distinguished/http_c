@@ -1,21 +1,52 @@
-import { useState } from 'react'
-import './components.css'
+import { useState, useEffect } from "react";
+import "./components.css";
+import axios from "axios";
 
 function MessageDisplay() {
-  // This component will be used to display the messages.
-  // The MessageBox page will call the C API and here we handle the displaying of each message.
-  // They should be displayed from bottom to top as if coming from below the screen.
-  // They slowly float to the top, they aren't forever, only available for a short period of time.
-  // If no messages are sent for a while, the most recent messages (maybe 10 max) float back down and wait.
-  // When a messages is sent, they're pushed back up.
-  // The web view of HTTPC is more for fun (this one at least). The actual important messaging section with 
-  // extra security and stuff will be through a different medium. I'm thinking something SSH related. Accessible via
-  // the command line or something else that would be easily portable to a mobile device. All security will be handled
-  // on the sever side (C) so doing the web client this way doesn't weaken the important part
+
+  const serverUrl = "http://127.0.0.1:8080";
+  async function receiveMessage() {
+    await fetch(serverUrl, {
+      method: "GET",
+      headers: { "Content-Type": "text/plain" },
+    })
+      .then(res => res.text())
+      .then(console.log);
+  }
+
+
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const startPolling = () => {
+      axios.get("http://localhost:8080")
+        .then(response => {
+          if (isMounted) {
+            setData(response.data);
+            console.log("Data received:", response.data);
+            startPolling();
+          }
+        })
+        .catch(error => {
+          console.error("Error while polling:", error);
+          if (isMounted) {
+            setTimeout(startPolling, 8000);
+          }
+        });
+    };
+
+    startPolling();
+
+    return () => { // Cleanup on component unmount
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <>
-      <div class="div_messages_view">
+      <div className="div_messages_view">
+        <button onClick={receiveMessage}>Get Message</button>
       </div>
     </>
   )
