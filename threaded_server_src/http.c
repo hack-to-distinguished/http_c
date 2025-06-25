@@ -174,7 +174,8 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
     int counter;
     char *file_type = get_file_type_from_uri(ptr_uri_buffer);
 
-    if (strcmp(file_type, "txt") == 0 || strcmp(file_type, "html") == 0) {
+    if (strcmp(file_type, "txt") == 0 || strcmp(file_type, "html") == 0 ||
+        strcmp(file_type, "css") == 0) {
 
         file_ptr = fopen(ptr_uri_buffer, "r");
         size_t size = get_size_of_file(file_ptr);
@@ -214,6 +215,9 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
         } else if (strcmp(file_type, "html") == 0) {
             snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format,
                      file_contents_len, "text/html", ptr_file_contents);
+        } else if (strcmp(file_type, "css") == 0) {
+            snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format,
+                     file_contents_len, "text/css", ptr_file_contents);
         }
 
         send_http_response(new_connection_fd, ptr_packet_buffer);
