@@ -334,6 +334,20 @@ void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer) {
             data_type = "text/javascript";
         } else if (strcmp(file_type, "xml") == 0) {
             data_type = "text/xml";
+        } else if (strcmp(file_type, "jpg") == 0) {
+            data_type = "image/jpeg";
+        } else if (strcmp(file_type, "png") == 0) {
+            data_type = "image/png";
+        } else if (strcmp(file_type, "gif") == 0) {
+            data_type = "image/gif";
+        } else if (strcmp(file_type, "webp") == 0) {
+            data_type = "image/webp";
+        } else if (strcmp(file_type, "svg") == 0) {
+            data_type = "image/svg+xml";
+        } else if (strcmp(file_type, "ico") == 0) {
+            data_type = "image/x-icon";
+        } else {
+            ERROR_STATE_404(new_connection_fd);
         }
 
         snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, data_type,
