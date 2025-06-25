@@ -43,6 +43,7 @@ char *receive_HTTP_request(int new_connection_fd) {
         return NULL;
     }
 
+    printf("\nMessage Received: \n%s", ptr_http_request_buffer);
     ptr_http_request_buffer[total_received] = '\0';
     return ptr_http_request_buffer;
 }
@@ -283,8 +284,7 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
         fclose(file_ptr);
         return;
     } else if (strcmp(ptr_method, "HEAD") == 0) {
-        // printf("\nHEAD Method!");
-        if (strcmp(processed_uri_ptr, "") == 0) {
+        if (strcmp(ptr_uri_buffer, "/") == 0) {
             printf("\nURI is NULL.");
             char *ptr_packet_buffer = malloc(BUFFER_SIZE);
             snprintf(ptr_packet_buffer, BUFFER_SIZE,

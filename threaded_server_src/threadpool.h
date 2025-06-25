@@ -7,6 +7,7 @@ typedef struct {
 
 typedef struct {
     thread_config_t queue[QUEUE_SIZE];
+    pthread_t *WORKER_THREADS;
     size_t front_pointer;
     size_t rear_pointer;
     size_t queue_size;

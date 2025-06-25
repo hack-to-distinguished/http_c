@@ -111,5 +111,6 @@ pthread_t *worker_threads_init(int num_of_workers) {
             return NULL;
         }
     }
+    thread_pool->WORKER_THREADS = ptr_WORKER_THREADS;
     return ptr_WORKER_THREADS;
 }
