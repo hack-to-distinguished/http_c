@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 
 #define BACKLOG 50
@@ -43,7 +44,7 @@ char *receive_HTTP_request(int new_connection_fd) {
         return NULL;
     }
 
-    printf("\nMessage Received: \n%s", ptr_http_request_buffer);
+    // printf("\nMessage Received: \n%s", ptr_http_request_buffer);
     ptr_http_request_buffer[total_received] = '\0';
     return ptr_http_request_buffer;
 }
@@ -289,24 +290,46 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
     return;
 }
 
+char *format_date(char *str, time_t val) {
+    strftime(str, 64, "%a, %d %b %Y %H:%M:%S GMT", gmtime(&val));
+    return str;
+}
+
 void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer) {
     FILE *file_ptr;
-    char HTTP_format[] = "HTTP/1.1 200 OK\r\nContent-Type: %s;\r\n\r\n";
-    printf("\nptr_uri_buffer: %s", ptr_uri_buffer);
+    struct stat file_stat;
+    struct tm *timeinfo = localtime(&file_stat.st_atime);
     char *file_type = get_file_type_from_uri(ptr_uri_buffer);
-    printf("\nFile Type: %s", file_type);
+
     if (strcmp(ptr_uri_buffer, "/") == 0) {
+        char HTTP_format[] = "HTTP/1.1 200 OK\r\nContent-Type: %s;\r\n\r\n";
         char *ptr_packet_buffer = malloc(BUFFER_SIZE);
         snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, "text/plain");
         send_http_response(new_connection_fd, ptr_packet_buffer);
         return;
-    } else if (strcmp(ptr_uri_buffer, "txt") == 0) {
-        file_ptr = fopen(ptr_uri_buffer, "r");
-        size_t size = get_size_of_file(file_ptr);
+    } else if (strcmp(file_type, "txt") == 0) {
+
+        char HTTP_format[] =
+            "HTTP/1.1 200 OK\r\nContent-Type: %s\r\nLast-Modified: "
+            "%s\r\nContent-length: %lu\r\nConnection: close\r\nDate: "
+            "%s\r\n\r\n";
+        if (stat(ptr_uri_buffer, &file_stat) < 0) {
+            ERROR_STATE_404(new_connection_fd);
+            return;
+        }
+
+        char last_modified_date[64];
+        char date_now[64];
+        char *ptr_packet_buffer = malloc(BUFFER_SIZE);
+        snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, "text/plain",
+                 format_date(last_modified_date, file_stat.st_mtime),
+                 file_stat.st_size, format_date(date_now, time(NULL)));
+        send_http_response(new_connection_fd, ptr_packet_buffer);
+        return;
     } else {
         ERROR_STATE_404(new_connection_fd);
+        return;
     }
-    return;
 }
 
 void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
@@ -335,7 +358,8 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
         free(ptr_method);
         fclose(file_ptr);
         return;
-    } else if (strcmp(ptr_method, "HEAD") == 0) {
+    } else if (strcmp(ptr_method, "HEAD") == 0 &&
+               access(uri_buffer, F_OK) == 0 && !S_ISDIR(sb.st_mode)) {
         // printf("\nhead request");
         send_requested_HEAD_back(new_connection_fd, ptr_uri_buffer);
         free(ptr_uri);
