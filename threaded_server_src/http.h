@@ -7,7 +7,8 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
 void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
                         int new_connection_fd, bool host_header_present,
                         char *ptr_uri, char *ptr_method);
-void ERROR_STATE(int new_connection_fd);
+void ERROR_STATE_400(int new_connection_fd);
+void ERROR_STATE_404(int new_connection_fd);
 void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
                         int new_connection_fd);
 void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,

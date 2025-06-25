@@ -54,7 +54,7 @@ void send_http_response(int new_connection_fd, char *ptr_packet_buffer) {
     return;
 }
 
-void ERROR_STATE(int new_connection_fd) {
+void ERROR_STATE_400(int new_connection_fd) {
     char *ptr_packet_buffer = malloc(BUFFER_SIZE);
     char *ptr_body;
     int body_len;
@@ -72,6 +72,23 @@ void ERROR_STATE(int new_connection_fd) {
     return;
 }
 
+void ERROR_STATE_404(int new_connection_fd) {
+    char *ptr_packet_buffer = malloc(BUFFER_SIZE);
+    char *ptr_body;
+    size_t body_len;
+    ptr_body = "<body>\r\n"
+               "Error 404! Not Found\r\n"
+               "</body>\r\n";
+    body_len = strlen(ptr_body);
+    snprintf(ptr_packet_buffer, BUFFER_SIZE,
+             "HTTP/1.1 404 Not Found\r\n"
+             "Content-Length: %ld\r\n"
+             "Content-Type: text/html;\r\n\r\n"
+             "%s",
+             body_len, ptr_body);
+    send_http_response(new_connection_fd, ptr_packet_buffer);
+    return;
+}
 void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
                         int new_connection_fd, bool host_header_present,
                         char *ptr_uri, char *ptr_method) {
@@ -117,7 +134,7 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
         return;
     } else {
         printf("\nerror at header value state");
-        ERROR_STATE(new_connection_fd);
+        ERROR_STATE_400(new_connection_fd);
         return;
     }
 }
@@ -132,7 +149,7 @@ size_t get_size_of_file(FILE *fp) {
 
 char *get_file_type_from_uri(char *ptr_uri_buffer) {
     // get file type
-    char *file_type = malloc(sizeof(char) * 8);
+    char *file_type = malloc(sizeof(char) * 64);
     int counter = 0;
     bool past_period = false;
     for (int i = 0; i < strlen(ptr_uri_buffer); i++) {
@@ -259,18 +276,29 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
 }
 
 void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer) {
+    FILE *file_ptr;
     char HTTP_format[] = "HTTP/1.1 200 OK\r\nContent-Type: %s;\r\n\r\n";
+    printf("\nptr_uri_buffer: %s", ptr_uri_buffer);
+    char *file_type = get_file_type_from_uri(ptr_uri_buffer);
+    printf("\nFile Type: %s", file_type);
     if (strcmp(ptr_uri_buffer, "/") == 0) {
         char *ptr_packet_buffer = malloc(BUFFER_SIZE);
-        snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, "text/html");
+        snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, "text/plain");
         send_http_response(new_connection_fd, ptr_packet_buffer);
         return;
+    } else if (strcmp(ptr_uri_buffer, "txt") == 0) {
+        file_ptr = fopen(ptr_uri_buffer, "r");
+        size_t size = get_size_of_file(file_ptr);
+    } else {
+        ERROR_STATE_404(new_connection_fd);
     }
+    return;
 }
 
 void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
                           char *ptr_method) {
 
+    // printf("\nEnd of headers state reached.");
     char *processed_uri_ptr = ptr_uri;
     if (!(strcmp(ptr_uri, "/") == 0)) {
         processed_uri_ptr += 1;
@@ -294,42 +322,14 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
         fclose(file_ptr);
         return;
     } else if (strcmp(ptr_method, "HEAD") == 0) {
+        // printf("\nhead request");
         send_requested_HEAD_back(new_connection_fd, ptr_uri_buffer);
         free(ptr_uri);
         free(ptr_method);
-        fclose(file_ptr);
         return;
-        // if (strcmp(ptr_uri_buffer, "/") == 0) {
-        //     printf("\nURI is NULL.");
-        //     char *ptr_packet_buffer = malloc(BUFFER_SIZE);
-        //     snprintf(ptr_packet_buffer, BUFFER_SIZE,
-        //              "HTTP/1.1 200 OK\r\n"
-        //              "Content-Type: text/html;\r\n\r\n");
-        //     send_http_response(new_connection_fd, ptr_packet_buffer);
-        //     free(ptr_uri);
-        //     free(ptr_method);
-        //     fclose(file_ptr);
-        //     return;
-        // }
-        // } else if (strcmp(ptr_uri)) {
-        // }
-
     } else {
-        printf("\nFile does not exist!");
-        char *ptr_packet_buffer = malloc(BUFFER_SIZE);
-        char *ptr_body;
-        size_t body_len;
-        ptr_body = "<body>\r\n"
-                   "Error 404! File does not exist\r\n"
-                   "</body>\r\n";
-        body_len = strlen(ptr_body);
-        snprintf(ptr_packet_buffer, BUFFER_SIZE,
-                 "HTTP/1.1 404 Not Found\r\n"
-                 "Content-Length: %ld\r\n"
-                 "Content-Type: text/html;\r\n\r\n"
-                 "%s",
-                 body_len, ptr_body);
-        send_http_response(new_connection_fd, ptr_packet_buffer);
+        // printf("\nFile does not exist!");
+        ERROR_STATE_404(new_connection_fd);
         free(ptr_uri);
         free(ptr_method);
         return;
@@ -387,7 +387,7 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
         return;
     } else {
         printf("\nerror at header name state");
-        ERROR_STATE(new_connection_fd);
+        ERROR_STATE_400(new_connection_fd);
         return;
     }
 }
@@ -406,14 +406,14 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
 
     char *crlf_ptr = strstr(buffer, http_version);
     if (crlf_ptr == NULL) {
-        ERROR_STATE(new_connection_fd);
+        ERROR_STATE_400(new_connection_fd);
         printf("\nerror at request line state");
         free(ptr_method);
         return;
     }
     crlf_ptr += 8;
     if (result != 3) {
-        ERROR_STATE(new_connection_fd);
+        ERROR_STATE_400(new_connection_fd);
         printf("\nerror at request line state");
         free(ptr_method);
         return;
@@ -421,21 +421,21 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
 
     if (!(strcmp(ptr_method, "GET") == 0 || strcmp(ptr_method, "POST") == 0 ||
           strcmp(ptr_method, "HEAD") == 0)) {
-        ERROR_STATE(new_connection_fd);
+        ERROR_STATE_400(new_connection_fd);
         printf("\nerror at request line state");
         free(ptr_method);
         return;
     }
 
     if (strcmp(http_version, "HTTP/1.1") != 0) {
-        ERROR_STATE(new_connection_fd);
+        ERROR_STATE_400(new_connection_fd);
         printf("\nerror at request line state");
         free(ptr_method);
         return;
     }
 
     if (!(crlf_ptr[0] == '\r' && crlf_ptr[1] == '\n')) {
-        ERROR_STATE(new_connection_fd);
+        ERROR_STATE_400(new_connection_fd);
         printf("\nerror at request line state");
         free(ptr_method);
         return;
@@ -450,7 +450,7 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
           buffer[len_method + 1] == '/' &&
           buffer[len_method + len_uri + 1] == ' ' &&
           buffer[len_method + len_uri + 2] != ' ')) {
-        ERROR_STATE(new_connection_fd);
+        ERROR_STATE_400(new_connection_fd);
         printf("\nerror at request line state");
         free(ptr_method);
         return;
