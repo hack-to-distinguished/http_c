@@ -19,3 +19,4 @@ void send_http_response(int new_connection_fd, char *ptr_packet_buffer);
 size_t get_size_of_file(FILE *fp);
 char *get_file_type_from_uri(char *ptr_uri_buffer);
 void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer);
+void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer);

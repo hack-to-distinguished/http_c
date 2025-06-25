@@ -258,6 +258,16 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
     return;
 }
 
+void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer) {
+    char HTTP_format[] = "HTTP/1.1 200 OK\r\nContent-Type: %s;\r\n\r\n";
+    if (strcmp(ptr_uri_buffer, "/") == 0) {
+        char *ptr_packet_buffer = malloc(BUFFER_SIZE);
+        snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, "text/html");
+        send_http_response(new_connection_fd, ptr_packet_buffer);
+        return;
+    }
+}
+
 void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
                           char *ptr_method) {
 
@@ -276,26 +286,31 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
     stat(uri_buffer, &sb);
     // printf("\nURI at end of headers state: %s", uri_buffer);
 
-    if (access(uri_buffer, F_OK) == 0 && !S_ISDIR(sb.st_mode)) {
-        // printf("\nFile exists!");
+    if (access(uri_buffer, F_OK) == 0 && !S_ISDIR(sb.st_mode) &&
+        strcmp(ptr_method, "GET") == 0) {
         send_requested_file_back(new_connection_fd, ptr_uri_buffer);
         free(ptr_uri);
         free(ptr_method);
         fclose(file_ptr);
         return;
     } else if (strcmp(ptr_method, "HEAD") == 0) {
-        if (strcmp(ptr_uri_buffer, "/") == 0) {
-            printf("\nURI is NULL.");
-            char *ptr_packet_buffer = malloc(BUFFER_SIZE);
-            snprintf(ptr_packet_buffer, BUFFER_SIZE,
-                     "HTTP/1.1 200 OK\r\n"
-                     "Content-Type: text/html;\r\n\r\n");
-            send_http_response(new_connection_fd, ptr_packet_buffer);
-            free(ptr_uri);
-            free(ptr_method);
-            fclose(file_ptr);
-            return;
-        }
+        send_requested_HEAD_back(new_connection_fd, ptr_uri_buffer);
+        free(ptr_uri);
+        free(ptr_method);
+        fclose(file_ptr);
+        return;
+        // if (strcmp(ptr_uri_buffer, "/") == 0) {
+        //     printf("\nURI is NULL.");
+        //     char *ptr_packet_buffer = malloc(BUFFER_SIZE);
+        //     snprintf(ptr_packet_buffer, BUFFER_SIZE,
+        //              "HTTP/1.1 200 OK\r\n"
+        //              "Content-Type: text/html;\r\n\r\n");
+        //     send_http_response(new_connection_fd, ptr_packet_buffer);
+        //     free(ptr_uri);
+        //     free(ptr_method);
+        //     fclose(file_ptr);
+        //     return;
+        // }
         // } else if (strcmp(ptr_uri)) {
         // }
 
@@ -465,8 +480,8 @@ void parse_HTTP_requests(int new_connection_fd) {
         return;
     }
     // required as strtok modifies the original ptr data
-    // char *dupe_ptr_http_client = malloc(strlen(ptr_http_client_buffer) + 1);
-    // memcpy(dupe_ptr_http_client, ptr_http_client_buffer,
+    // char *dupe_ptr_http_client = malloc(strlen(ptr_http_client_buffer) +
+    // 1); memcpy(dupe_ptr_http_client, ptr_http_client_buffer,
     //        strlen(ptr_http_client_buffer) + 1);
     // char *token = strtok(dupe_ptr_http_client, "\r\n");
     //
