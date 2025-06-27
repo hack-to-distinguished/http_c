@@ -1,6 +1,8 @@
 #include "http.h"
 #include "threadpool.h"
 #include <netdb.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -9,6 +11,12 @@
 #define NUM_OF_THREADS 8
 #define MYPORT "8080"
 #define BACKLOG 50
+
+void termination_handler(int sig_num) {
+    printf("\nTerminating the server gracefully!");
+    thread_pool_shutdown_t();
+    exit(0);
+}
 
 int main(int argc, char *argv[]) {
 
@@ -43,10 +51,11 @@ int main(int argc, char *argv[]) {
     int bind_conn = bind(server_fd, res->ai_addr,
                          res->ai_addrlen); /*int bind(int sockfd, struct
                                               sockaddr *my_addr, int addrlen);*/
-    printf("\nstarting server: %d", bind_conn);
+    // printf("\nstarting server: %d", bind_conn);
 
     listen(server_fd, BACKLOG);
 
+    signal(SIGINT, termination_handler);
     while (1) {
 
         // setting up client connection

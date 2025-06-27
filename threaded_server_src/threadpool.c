@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/procfs.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -62,16 +63,29 @@ void *worker_thread_t(void *args) {
     while (1) {
         pthread_mutex_lock(&thread_pool->thread_pool_mutex_t);
 
+        // check shutdown signal before waiting
+        if (thread_pool->shutdown == 1) {
+            pthread_mutex_unlock(&thread_pool->thread_pool_mutex_t);
+            break;
+        }
+
         printf("\n[WORKER %lu] Waiting for work (Queue size: %zu)",
                pthread_self(), thread_pool->queue_size);
 
         thread_config_t tct;
 
         // worker thread sleep until signalled there is a task in queue
-        while (thread_pool->queue_size == 0) {
+        while (thread_pool->queue_size == 0 && thread_pool->shutdown != 1) {
             pthread_cond_wait(&thread_pool->thread_pool_cond_t,
                               &thread_pool->thread_pool_mutex_t);
         }
+
+        // check shutdown signal after waiting
+        if (thread_pool->shutdown == 1) {
+            pthread_mutex_unlock(&thread_pool->thread_pool_mutex_t);
+            break;
+        }
+
         if (thread_pool->queue_size > 0) {
             tct = thread_pool->queue[thread_pool->front_pointer];
 
@@ -90,6 +104,7 @@ void *worker_thread_t(void *args) {
             perror("\nThread pool queue is empty!");
         }
     }
+    printf("\n[WORKER %ld] Terminating...", pthread_self());
     return NULL;
 }
 
@@ -97,13 +112,13 @@ void thread_pool_t_init() {
     thread_pool->front_pointer = 0;
     thread_pool->rear_pointer = 0;
     thread_pool->queue_size = 0;
+    thread_pool->shutdown = 0;
     pthread_mutex_init(&thread_pool->thread_pool_mutex_t, NULL);
     pthread_cond_init(&thread_pool->thread_pool_cond_t, NULL);
 }
 
 pthread_t *worker_threads_init(int num_of_workers) {
-    pthread_t WORKER_THREADS[num_of_workers];
-    pthread_t *ptr_WORKER_THREADS = WORKER_THREADS;
+    pthread_t *WORKER_THREADS = malloc(sizeof(pthread_t) * num_of_workers);
     for (size_t i = 0; i < num_of_workers; i++) {
         if (pthread_create(&WORKER_THREADS[i], NULL, worker_thread_t, NULL) !=
             0) {
@@ -111,6 +126,27 @@ pthread_t *worker_threads_init(int num_of_workers) {
             return NULL;
         }
     }
-    thread_pool->WORKER_THREADS = ptr_WORKER_THREADS;
-    return ptr_WORKER_THREADS;
+    thread_pool->WORKER_THREADS = WORKER_THREADS;
+    thread_pool->MAX_WORKERS = num_of_workers;
+    return WORKER_THREADS;
+}
+
+void thread_pool_shutdown_t() {
+    if (thread_pool == NULL) {
+        return;
+    }
+
+    pthread_mutex_lock(&thread_pool->thread_pool_mutex_t);
+    thread_pool->shutdown = 1;
+    pthread_cond_broadcast(&thread_pool->thread_pool_cond_t);
+    pthread_mutex_unlock(&thread_pool->thread_pool_mutex_t);
+
+    for (size_t i = 0; i < thread_pool->MAX_WORKERS; i++) {
+        if (pthread_join(thread_pool->WORKER_THREADS[i], NULL) != 0) {
+            printf("\nFailed to join thread.");
+        }
+    }
+    pthread_mutex_destroy(&thread_pool->thread_pool_mutex_t);
+    pthread_cond_destroy(&thread_pool->thread_pool_cond_t);
+    free(thread_pool);
 }
