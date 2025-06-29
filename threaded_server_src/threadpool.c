@@ -148,5 +148,6 @@ void thread_pool_shutdown_t() {
     }
     pthread_mutex_destroy(&thread_pool->thread_pool_mutex_t);
     pthread_cond_destroy(&thread_pool->thread_pool_cond_t);
+    free(thread_pool->WORKER_THREADS);
     free(thread_pool);
 }
