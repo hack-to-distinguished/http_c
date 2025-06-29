@@ -1,11 +1,9 @@
 #include "threadpool.h"
 #include "http.h"
-#include <bits/pthreadtypes.h>
 #include <pthread.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/procfs.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <unistd.h>

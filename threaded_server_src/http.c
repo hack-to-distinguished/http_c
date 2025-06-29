@@ -66,7 +66,7 @@ void ERROR_STATE_400(int new_connection_fd) {
     snprintf(ptr_packet_buffer, BUFFER_SIZE,
              "HTTP/1.1 400 Bad Request\r\n"
              "Content-Length: %d\r\n"
-             "Content-Type: text/html;\r\n\r\n"
+             "Content-Type: text/html;\r\nConnection: close\r\n\r\n"
              "%s",
              body_len, ptr_body);
     send_http_response(new_connection_fd, ptr_packet_buffer);
@@ -84,7 +84,7 @@ void ERROR_STATE_404(int new_connection_fd) {
     snprintf(ptr_packet_buffer, BUFFER_SIZE,
              "HTTP/1.1 404 Not Found\r\n"
              "Content-Length: %ld\r\n"
-             "Content-Type: text/html;\r\n\r\n"
+             "Content-Type: text/html;\r\nConnection: close\r\n\r\n"
              "%s",
              body_len, ptr_body);
     send_http_response(new_connection_fd, ptr_packet_buffer);
@@ -208,8 +208,9 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
 
         file_contents_len = strlen(ptr_file_contents);
 
-        char HTTP_format[] = "HTTP/1.1 200 OK\r\nContent-Length: "
-                             "%ld\r\nContent-Type: %s;\r\n\r\n%s";
+        char HTTP_format[] =
+            "HTTP/1.1 200 OK\r\nContent-Length: "
+            "%ld\r\nContent-Type: %s\r\nConnection: close\r\n\r\n%s";
         // format http response, will be stored in packet_buffer
         if (strcmp(file_type, "txt") == 0) {
             snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format,
@@ -257,8 +258,9 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
 
         // printf("\nsize of file: %ld\n", size);
         // printf("\nbytes read: %ld\n", bytes_read);
-        char HTTP_format[] = "HTTP/1.1 200 OK\r\nContent-Length: "
-                             "%ld\r\nContent-Type: %s;\r\n\r\n";
+        char HTTP_format[] =
+            "HTTP/1.1 200 OK\r\nContent-Length: "
+            "%ld\r\nContent-Type: %s\r\nConnection: close\r\n\r\n";
         char *ptr_packet_buffer = malloc(BUFFER_SIZE + size);
         if (strcmp(file_type, "jpg") == 0) {
             snprintf(ptr_packet_buffer, BUFFER_SIZE + size, HTTP_format, size,
@@ -302,7 +304,8 @@ void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer) {
     char *file_type = get_file_type_from_uri(ptr_uri_buffer);
 
     if (strcmp(ptr_uri_buffer, "/") == 0) {
-        char HTTP_format[] = "HTTP/1.1 200 OK\r\nContent-Type: %s;\r\n\r\n";
+        char HTTP_format[] =
+            "HTTP/1.1 200 OK\r\nContent-Type: %s\r\nConnection: close\r\n\r\n";
         char *ptr_packet_buffer = malloc(BUFFER_SIZE);
         snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, "text/plain");
         send_http_response(new_connection_fd, ptr_packet_buffer);
