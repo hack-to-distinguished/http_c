@@ -2,6 +2,10 @@
 
 A bare-bones HTTP server written in C from scratch using low-level socket programming. This project walks through core networking concepts like TCP, echo servers, request parsing, and HTTP response construction.
 
+- Thread Pool.
+- Stateful Parsing.
+- GET, HEAD Requests supported.
+
 ---
 
 ## 🧱 Project Structure
@@ -18,8 +22,8 @@ A bare-bones HTTP server written in C from scratch using low-level socket progra
 ### ✅ Phase 2: HTTP Server
 
 - [x] Listen on TCP port
-- [ ] Apply HTTP protocol to incoming and outgoing data (Ongoing - NJ)
-- [ ] Large data streaming
+- [x] Apply HTTP protocol to incoming and outgoing data (Ongoing - NJ)
+- [x] Large data streaming
 
 ---
 
@@ -42,7 +46,6 @@ A bare-bones HTTP server written in C from scratch using low-level socket progra
 - [ ] Integrating our packet streaming service into Tank Squared to enable multiplayer
 
 ---
-
 
 ### ⚙️ How to Compile and Run
 
