@@ -10,7 +10,7 @@
 
 #define NUM_OF_THREADS 8
 #define MYPORT "8080"
-#define BACKLOG 50
+#define BACKLOG 500
 
 void termination_handler(int sig_num) {
     printf("\nTerminating the server gracefully!");

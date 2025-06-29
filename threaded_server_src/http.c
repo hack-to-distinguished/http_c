@@ -9,7 +9,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#define BACKLOG 50
 #define BUFFER_SIZE 1024
 
 char *receive_HTTP_request(int new_connection_fd) {
