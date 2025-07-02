@@ -19,6 +19,8 @@ void termination_handler(int sig_num) {
 }
 
 int main(int argc, char *argv[]) {
+    signal(SIGPIPE,
+           SIG_IGN); // deepseek -> used for pipe error: when client
 
     thread_pool = malloc(sizeof(thread_pool_t));
     if (thread_pool == NULL) {
