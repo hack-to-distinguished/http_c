@@ -545,28 +545,9 @@ void parse_HTTP_requests(int new_connection_fd) {
         free(ptr_http_client_buffer);
         return;
     }
-    // required as strtok modifies the original ptr data
-    // char *dupe_ptr_http_client = malloc(strlen(ptr_http_client_buffer) +
-    // 1); memcpy(dupe_ptr_http_client, ptr_http_client_buffer,
-    //        strlen(ptr_http_client_buffer) + 1);
-    // char *token = strtok(dupe_ptr_http_client, "\r\n");
-    //
-    // printf("\nHTTP Packet received from browser/client:\n");
-    // int status_line_found = 0;
-    // char *ptr_status_line;
-    // while (token != NULL) {
-    //     printf("%s\n", token);
-    //     if (status_line_found == 0) {
-    //         ptr_status_line = token;
-    //         status_line_found = 1;
-    //     }
-    //     token = strtok(NULL, "\r\n"); // split string by delimitter CRLF
-    // }
-    // printf("\n");
 
     STATE_PARSER(ptr_http_client_buffer, new_connection_fd);
 
     free(ptr_http_client_buffer);
-    // free(dupe_ptr_http_client);
     return;
 }
