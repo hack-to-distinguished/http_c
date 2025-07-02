@@ -51,7 +51,7 @@ A bare-bones HTTP server written in C from scratch using low-level socket progra
 
 ```bash
 # Compile
-make
+make threadpoolserver
 
 # Run (on default port 8080)
 ./threadpoolserver
