@@ -1,6 +1,6 @@
 #include <pthread.h>
 #include <stddef.h>
-#define QUEUE_SIZE 256
+#define QUEUE_SIZE 1024
 
 typedef struct {
     int sock_fd;
