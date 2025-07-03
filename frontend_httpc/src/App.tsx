@@ -10,7 +10,7 @@ function App() {
       {/* The div below should contain the chat feed of floating messages */}
       {/*Should also contain the enter message chat box */}
       <div>
-        <MessageDisplay />
+        {/* <MessageDisplay /> */}
         <MessageBox />
       </div>
     </>

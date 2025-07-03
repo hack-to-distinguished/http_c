@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "threaded_server_src/http.h"
 
 #define MYPORT "8080"
 #define BACKLOG 10
@@ -19,11 +20,11 @@ void error(const char *msg) {
     exit(0);
 }
 
-void send_http_response(int sock, char *body) {
+// TODO: Send http response need to be websocket format
+void ws_send_http_response(int sock, char *body) {
     char response[BUFFER_SIZE];
     int body_len = strlen(body) + 15; // Add 15 to account for the dict format
 
-    // TODO: make into json by formatting the body properly
     snprintf(response, sizeof(response),
          "HTTP/1.1 200 OK\r\n"
          "Content-Type: application/json\r\n"
@@ -33,6 +34,20 @@ void send_http_response(int sock, char *body) {
          "\r\n"
          "{\"message\": \"%s\"}",
          body_len, body);
+    write(sock, response, strlen(response));
+}
+
+void ws_send_websocket_response(int sock, char *body) {
+    char response[BUFFER_SIZE];
+    // FIX: Not sure if I still need this
+    int body_len = strlen(body) + 15; // Add 15 to account for the dict format
+
+    snprintf(response, sizeof(response),
+         "HTTP/1.1 101 Switching Protocols\r\n"
+         "Upgrage: websocket\r\n"
+         "Connection: Upgrade\r\n"
+         "Sec-WebSocket-Accept: [calced Base64 str]\r\n\r\n" // FIX: CALCULATE
+    );
     write(sock, response, strlen(response));
 }
 
@@ -92,7 +107,7 @@ int main(int argc, char *argv[]) {
             if (fd_count >= BACKLOG + 1) {
                 printf("Connection to full server attempted\n");
                 char *msg = "Server full";
-                send_http_response(client_sockfd, msg);
+                ws_send_http_response(client_sockfd, msg);
                 close(client_sockfd);
             } else {
                 printf("%d successfully connected to the server\n", client_sockfd);
@@ -101,8 +116,16 @@ int main(int argc, char *argv[]) {
                 pfds[fd_count].events = POLLIN;
                 fd_count += 1;
 
-                char *msg = "Connected to the server";
-                send_http_response(client_sockfd, msg);
+                // TODO: Make the makefile to work (later)
+                // parse_HTTP_requests(client_sockfd); // This validates the headers
+                // TODO: 
+                // - Fuck validating the HTTP header, do that later
+                // - Calculate server's acceptance key 
+                // - Send the server's handshake response switching the protocol to websockets
+
+
+                // char *msg = "Connected to the server";
+                // ws_send_http_response(client_sockfd, msg);
                 printf("SENT MSG TO THE CLIENT\n");
             }
         }
@@ -128,7 +151,7 @@ int main(int argc, char *argv[]) {
 
                     for (int j = 1; j < fd_count; j++) {
                         if (pfds[j].fd != pfds[i].fd) {
-                            send_http_response(pfds[j].fd, buffer);
+                            ws_send_http_response(pfds[j].fd, buffer);
                         }
                     }
                 }
