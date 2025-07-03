@@ -12,7 +12,7 @@
 #define MYPORT "8080"
 #define BACKLOG 500
 
-void termination_handler() {
+void termination_handler(int signum) {
     printf("\nTerminating the server gracefully!");
     thread_pool_shutdown_t();
     exit(0);

@@ -57,7 +57,7 @@ void thread_pool_enqueue_t(thread_config_t tct) {
     return;
 }
 
-void *worker_thread_t() {
+void *worker_thread_t(void *args) {
     while (1) {
         pthread_mutex_lock(&thread_pool->thread_pool_mutex_t);
 
