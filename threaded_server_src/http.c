@@ -10,7 +10,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 4096
 
 char *receive_HTTP_request(int new_connection_fd) {
     char *ptr_http_request_buffer = malloc(BUFFER_SIZE + 1);
@@ -182,6 +182,14 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
         strcmp(file_type, "js") == 0 || strcmp(file_type, "xml") == 0) {
 
         file_ptr = fopen(ptr_uri_buffer, "r");
+
+        if (file_ptr == NULL) {
+            close(new_connection_fd);
+            perror("Can't open file.");
+            exit(0);
+            return;
+        }
+
         size_t size = get_size_of_file(file_ptr);
 
         char ch;
@@ -189,13 +197,6 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
         char *ptr_packet_buffer = malloc(BUFFER_SIZE + (size + 1));
         counter = 0;
         size_t file_contents_len;
-
-        if (file_ptr == NULL) {
-            close(new_connection_fd);
-            perror("Can't open file.");
-            exit(-1);
-            return;
-        }
 
         while ((ch = fgetc(file_ptr)) != EOF) {
             ptr_file_contents[counter] = ch;
@@ -247,7 +248,7 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
         if (file_ptr == NULL) {
             fprintf(stderr, "\t Can't open file : %s", ptr_uri_buffer);
             close(new_connection_fd);
-            exit(-1);
+            exit(0);
             return;
         }
 
@@ -370,11 +371,19 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
     if (!(strcmp(ptr_uri, "/") == 0)) {
         processed_uri_ptr += 1;
     }
-    size_t processed_len = strlen(processed_uri_ptr);
-    char uri_buffer[processed_len + 1];
+    // size_t processed_len = strlen(processed_uri_ptr);
+    // char uri_buffer[processed_len + 1];
+    char *uri_buffer = strdup(processed_uri_ptr);
     strcpy(uri_buffer, processed_uri_ptr); // error is here
     char *ptr_uri_buffer = uri_buffer;
     FILE *file_ptr = fopen(uri_buffer, "r");
+
+    if (file_ptr == NULL) {
+        close(new_connection_fd);
+        perror("Can't open file.");
+        exit(0);
+        return;
+    }
 
     struct stat sb;
     stat(uri_buffer, &sb);
@@ -383,6 +392,7 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
     if (access(uri_buffer, F_OK) == 0 && !S_ISDIR(sb.st_mode) &&
         strcmp(ptr_method, "GET") == 0) {
         send_requested_file_back(new_connection_fd, ptr_uri_buffer);
+        free(uri_buffer);
         free(ptr_uri);
         free(ptr_method);
         fclose(file_ptr);
@@ -391,12 +401,14 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
                access(uri_buffer, F_OK) == 0 && !S_ISDIR(sb.st_mode)) {
         // printf("\nhead request");
         send_requested_HEAD_back(new_connection_fd, ptr_uri_buffer);
+        free(uri_buffer);
         free(ptr_uri);
         free(ptr_method);
         return;
     } else {
         // printf("\nFile does not exist!");
         ERROR_STATE_404(new_connection_fd);
+        free(uri_buffer);
         free(ptr_uri);
         free(ptr_method);
         return;
@@ -543,6 +555,7 @@ void parse_HTTP_requests(int new_connection_fd) {
     char *ptr_http_client_buffer = receive_HTTP_request(new_connection_fd);
     if (ptr_http_client_buffer == NULL) {
         free(ptr_http_client_buffer);
+        close(new_connection_fd);
         return;
     }
 

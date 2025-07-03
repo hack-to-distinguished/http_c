@@ -51,6 +51,7 @@ void thread_pool_enqueue_t(thread_config_t tct) {
         // pool queue
         pthread_cond_signal(&thread_pool->thread_pool_cond_t);
     } else {
+        close(tct.sock_fd);
         perror("Thread pool queue is full!");
     }
     pthread_mutex_unlock(&thread_pool->thread_pool_mutex_t);
