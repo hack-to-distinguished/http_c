@@ -1,4 +1,5 @@
 #include "http.h"
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -96,20 +97,21 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
     bool single_crlf_found = false;
     char *buffer = *ptr_ptr_http_client_buffer;
     char header_value[256];
-    int counter = 0;
-    int j = 0;
+    size_t counter = 0;
+    size_t j = 0;
+    size_t buffer_len = strlen(buffer);
 
     // this for loop is used to skip redundant characters
-    for (int i = 0; i < strlen(buffer); i++) {
+    for (size_t i = 0; i < buffer_len; i++) {
         if (buffer[i] == ':' || buffer[i] == ' ' || buffer[i] == '\r' ||
             buffer[i] == '\n') {
             j += 1;
         } else {
-            i = strlen(buffer);
+            i = buffer_len;
         }
     }
 
-    for (j = j; j < strlen(buffer); j++) {
+    for (NULL; j < buffer_len; j++) {
         if (!(buffer[j] == '\r' || buffer[j] == '\n') && !header_value_found) {
             header_value[counter] = buffer[j];
             counter += 1;
@@ -118,7 +120,7 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
             header_value_found = true;
         }
 
-        if (j < (strlen(buffer) - 1)) {
+        if (j < (buffer_len - 1)) {
             if (buffer[j] == '\r' && buffer[j + 1] == '\n' &&
                 !single_crlf_found) {
                 single_crlf_found = true;
@@ -150,9 +152,10 @@ size_t get_size_of_file(FILE *fp) {
 char *get_file_type_from_uri(char *ptr_uri_buffer) {
     // get file type
     char *file_type = malloc(sizeof(char) * 64);
-    int counter = 0;
+    size_t counter = 0;
     bool past_period = false;
-    for (int i = 0; i < strlen(ptr_uri_buffer); i++) {
+    size_t buffer_len = strlen(ptr_uri_buffer);
+    for (size_t i = 0; i < buffer_len; i++) {
 
         if (ptr_uri_buffer[i] == '.') {
             past_period = true;
@@ -182,8 +185,8 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
         size_t size = get_size_of_file(file_ptr);
 
         char ch;
-        char *ptr_file_contents = malloc(sizeof(char) * size);
-        char *ptr_packet_buffer = malloc(BUFFER_SIZE + size);
+        char *ptr_file_contents = malloc(sizeof(char) * (size + 1));
+        char *ptr_packet_buffer = malloc(BUFFER_SIZE + (size + 1));
         counter = 0;
         size_t file_contents_len;
 
@@ -252,8 +255,7 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
         // unsigned char img_file_contents[size];
         unsigned char *ptr_img_file_contents =
             malloc(sizeof(unsigned char) * size);
-        size_t bytes_read =
-            fread(ptr_img_file_contents, sizeof(unsigned char), size, file_ptr);
+        fread(ptr_img_file_contents, sizeof(unsigned char), size, file_ptr);
 
         // printf("\nsize of file: %ld\n", size);
         // printf("\nbytes read: %ld\n", bytes_read);
@@ -297,9 +299,7 @@ char *format_date(char *str, time_t val) {
 }
 
 void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer) {
-    FILE *file_ptr;
     struct stat file_stat;
-    struct tm *timeinfo = localtime(&file_stat.st_atime);
     char *file_type = get_file_type_from_uri(ptr_uri_buffer);
 
     if (strcmp(ptr_uri_buffer, "/") == 0) {
@@ -349,6 +349,7 @@ void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer) {
         } else if (strcmp(file_type, "ico") == 0) {
             data_type = "image/x-icon";
         } else {
+            data_type = NULL;
             ERROR_STATE_404(new_connection_fd);
         }
 
@@ -363,17 +364,17 @@ void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer) {
 void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
                           char *ptr_method) {
 
-    // printf("\nEnd of headers state reached.");
+    // TODO: fix this memory bug here...
+
     char *processed_uri_ptr = ptr_uri;
     if (!(strcmp(ptr_uri, "/") == 0)) {
         processed_uri_ptr += 1;
     }
-    char uri_buffer[strlen(processed_uri_ptr)];
-    strcpy(uri_buffer, processed_uri_ptr);
+    size_t processed_len = strlen(processed_uri_ptr);
+    char uri_buffer[processed_len + 1];
+    strcpy(uri_buffer, processed_uri_ptr); // error is here
     char *ptr_uri_buffer = uri_buffer;
-    //
     FILE *file_ptr = fopen(uri_buffer, "r");
-    size_t len_uri = strlen(uri_buffer);
 
     struct stat sb;
     stat(uri_buffer, &sb);
@@ -410,16 +411,16 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
     char header_name[256];
     bool colon_found = false;
     bool single_crlf_found = false;
-    int buffer_len = strlen(buffer);
-    int counter = 0;
+    size_t counter = 0;
+    size_t buffer_len = strlen(buffer);
 
     // printf("\n size of buffer: %d", buffer_len);
     // extract the header name from the header field
-    for (int i = 0; i < strlen(buffer); i++) {
+    for (size_t i = 0; i < buffer_len; i++) {
         if (buffer[i] == ':') {
             colon_found = true;
             *ptr_ptr_http_client_buffer = &buffer[i];
-            i = strlen(buffer);
+            i = buffer_len;
         }
 
         if (!single_crlf_found) {
@@ -429,7 +430,7 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
             header_name[counter] = '\0';
         }
 
-        if (strlen(buffer) == 2 && buffer[i] == '\r' && buffer[i + 1] == '\n') {
+        if (buffer_len == 2 && buffer[i] == '\r' && buffer[i + 1] == '\n') {
             // printf("\ncrlf found at header name state!");
             single_crlf_found = true;
         }
@@ -466,7 +467,6 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
     char *ptr_method = malloc(sizeof(char) * 8);
     char *ptr_uri = malloc(sizeof(char) * 1025);
     char http_version[16];
-    bool valid_spacing = false;
     bool host_header_present = false;
     int result = sscanf(buffer, "%s %s %s", ptr_method, ptr_uri, http_version);
 
@@ -507,8 +507,8 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
         return;
     }
 
-    int len_method = strlen(ptr_method);
-    int len_uri = strlen(ptr_uri);
+    size_t len_method = strlen(ptr_method);
+    size_t len_uri = strlen(ptr_uri);
     ptr_uri[len_uri] = '\0';
     ptr_method[len_method] = '\0';
 

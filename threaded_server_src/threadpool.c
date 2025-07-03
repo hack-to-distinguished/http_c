@@ -28,8 +28,8 @@ void *server_thread_to_run(void *args) {
 
     time_used =
         (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000.0;
-    printf("\n[WOKRER %ld] Time taken: %.4lf seconds to finish for fd=%d",
-           pthread_self(), time_used, new_connection_fd);
+    printf("\n[WOKRER %lu] Time taken: %.4lf seconds to finish for fd=%d",
+           (unsigned long)pthread_self(), time_used, new_connection_fd);
 
     close(new_connection_fd);
     return NULL;
@@ -57,7 +57,7 @@ void thread_pool_enqueue_t(thread_config_t tct) {
     return;
 }
 
-void *worker_thread_t(void *args) {
+void *worker_thread_t() {
     while (1) {
         pthread_mutex_lock(&thread_pool->thread_pool_mutex_t);
 
@@ -68,7 +68,7 @@ void *worker_thread_t(void *args) {
         }
 
         printf("\n[WORKER %lu] Waiting for work (Queue size: %zu)",
-               pthread_self(), thread_pool->queue_size);
+               (unsigned long)pthread_self(), thread_pool->queue_size);
 
         thread_config_t tct;
 
@@ -89,8 +89,8 @@ void *worker_thread_t(void *args) {
 
             printf("\n[WORKER %lu] Processing FD: %d (Queue size: %zu, Front: "
                    "%zu)",
-                   pthread_self(), tct.sock_fd, thread_pool->queue_size,
-                   thread_pool->front_pointer);
+                   (unsigned long)pthread_self(), tct.sock_fd,
+                   thread_pool->queue_size, thread_pool->front_pointer);
 
             thread_pool->front_pointer =
                 (thread_pool->front_pointer + 1) % QUEUE_SIZE;
@@ -102,7 +102,7 @@ void *worker_thread_t(void *args) {
             perror("\nThread pool queue is empty!");
         }
     }
-    printf("\n[WORKER %ld] Terminating...", pthread_self());
+    printf("\n[WORKER %lu] Terminating...", (unsigned long)pthread_self());
     return NULL;
 }
 
@@ -115,7 +115,7 @@ void thread_pool_t_init() {
     pthread_cond_init(&thread_pool->thread_pool_cond_t, NULL);
 }
 
-pthread_t *worker_threads_init(int num_of_workers) {
+pthread_t *worker_threads_init(size_t num_of_workers) {
     pthread_t *WORKER_THREADS = malloc(sizeof(pthread_t) * num_of_workers);
     for (size_t i = 0; i < num_of_workers; i++) {
         if (pthread_create(&WORKER_THREADS[i], NULL, worker_thread_t, NULL) !=

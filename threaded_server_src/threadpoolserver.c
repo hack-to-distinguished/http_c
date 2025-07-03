@@ -12,13 +12,13 @@
 #define MYPORT "8080"
 #define BACKLOG 500
 
-void termination_handler(int sig_num) {
+void termination_handler() {
     printf("\nTerminating the server gracefully!");
     thread_pool_shutdown_t();
     exit(0);
 }
 
-int main(int argc, char *argv[]) {
+int main() {
     signal(SIGPIPE,
            SIG_IGN); // deepseek -> used for pipe error: when client
 
@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
     thread_pool_t_init();
-    pthread_t *worker_threads_t = worker_threads_init(NUM_OF_THREADS);
+    worker_threads_init(NUM_OF_THREADS);
 
     struct addrinfo hints, *res;
     int server_fd;
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     int bind_conn = bind(server_fd, res->ai_addr,
                          res->ai_addrlen); /*int bind(int sockfd, struct
                                               sockaddr *my_addr, int addrlen);*/
-    // printf("\nstarting server: %d", bind_conn);
+    printf("\nstarting server: %d", bind_conn);
 
     listen(server_fd, BACKLOG);
 
