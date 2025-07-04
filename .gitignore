@@ -8,6 +8,7 @@ persistent_client
 mul_client_server
 
 .DS_Store
+threadpoolserver.dSYM
 
 # Front end development just in case
 frontend_httpc/.vite/
