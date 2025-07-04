@@ -12,7 +12,6 @@
 #define NUM_OF_THREADS 8
 #define MYPORT "8080"
 #define BACKLOG 100
-#define MAX_CLIENTS 100
 
 void termination_handler(int signum) {
     printf("\nTerminating the server gracefully!");
@@ -20,26 +19,8 @@ void termination_handler(int signum) {
     exit(0);
 }
 
-int handle_new_connection(int server_fd, int current_clients) {
-    if (current_clients >= MAX_CLIENTS) {
-        int temp_fd = accept(server_fd, NULL, NULL);
-        if (temp_fd >= 0)
-            close(temp_fd);
-        return -1;
-    }
-
-    int client_fd = accept(server_fd, NULL, NULL);
-    if (client_fd >= 0) {
-        current_clients++;
-    }
-    return client_fd;
-}
-
 int main() {
-
-    int current_clients = 0;
-    // signal(SIGPIPE,
-    //        SIG_IGN); // deepseek -> used for pipe error: when client
+    signal(SIGPIPE, SIG_IGN);
     thread_pool = malloc(sizeof(thread_pool_t));
     if (thread_pool == NULL) {
         perror("Failed to allocate memory for thread pool");
@@ -83,12 +64,8 @@ int main() {
         int client_fd;
         struct sockaddr_storage client_addr;
 
-        // client_fd = accept(server_fd, (struct sockaddr *)&client_addr,
-        //                    &client_addr_len);
-        client_fd = handle_new_connection(server_fd, current_clients);
-        // if (client_fd == 1024) {
-        //     perror("reached limit of number of file descriptors");
-        // }
+        client_fd = accept(server_fd, (struct sockaddr *)&client_addr,
+                           &client_addr_len);
         // error checking
         if (client_fd < 0) {
             perror("error on accepting connection from client");

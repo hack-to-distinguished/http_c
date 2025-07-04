@@ -137,6 +137,7 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
     } else {
         printf("\nerror at header value state");
         ERROR_STATE_400(new_connection_fd);
+        close(new_connection_fd);
         return;
     }
 }
@@ -374,7 +375,7 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
     // size_t processed_len = strlen(processed_uri_ptr);
     // char uri_buffer[processed_len + 1];
     char *uri_buffer = strdup(processed_uri_ptr);
-    strcpy(uri_buffer, processed_uri_ptr); // error is here
+    // strcpy(uri_buffer, processed_uri_ptr); // error is here
     char *ptr_uri_buffer = uri_buffer;
     FILE *file_ptr = fopen(uri_buffer, "r");
 
@@ -411,6 +412,7 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
         free(uri_buffer);
         free(ptr_uri);
         free(ptr_method);
+        close(new_connection_fd);
         return;
     }
 }
@@ -467,6 +469,7 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
     } else {
         printf("\nerror at header name state");
         ERROR_STATE_400(new_connection_fd);
+        close(new_connection_fd);
         return;
     }
 }
@@ -487,6 +490,8 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
         ERROR_STATE_400(new_connection_fd);
         printf("\nerror at request line state");
         free(ptr_method);
+        free(ptr_uri);
+        close(new_connection_fd);
         return;
     }
     crlf_ptr += 8;
@@ -494,6 +499,9 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
         ERROR_STATE_400(new_connection_fd);
         printf("\nerror at request line state");
         free(ptr_method);
+        free(ptr_method);
+        free(ptr_uri);
+        close(new_connection_fd);
         return;
     }
 
@@ -502,6 +510,8 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
         ERROR_STATE_400(new_connection_fd);
         printf("\nerror at request line state");
         free(ptr_method);
+        free(ptr_uri);
+        close(new_connection_fd);
         return;
     }
 
@@ -509,6 +519,8 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
         ERROR_STATE_400(new_connection_fd);
         printf("\nerror at request line state");
         free(ptr_method);
+        free(ptr_uri);
+        close(new_connection_fd);
         return;
     }
 
@@ -516,6 +528,8 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
         ERROR_STATE_400(new_connection_fd);
         printf("\nerror at request line state");
         free(ptr_method);
+        free(ptr_uri);
+        close(new_connection_fd);
         return;
     }
 
@@ -531,6 +545,8 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
         ERROR_STATE_400(new_connection_fd);
         printf("\nerror at request line state");
         free(ptr_method);
+        free(ptr_uri);
+        close(new_connection_fd);
         return;
     }
 
