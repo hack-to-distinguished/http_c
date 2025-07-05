@@ -37,10 +37,12 @@ char *receive_HTTP_request(int new_connection_fd) {
     if (bytes_recv == -1) {
         perror("recv failed");
         free(ptr_http_request_buffer);
+        close(new_connection_fd);
         return NULL;
     } else if (bytes_recv == 0 && total_received == 0) {
         perror("client disconnected");
         free(ptr_http_request_buffer);
+        close(new_connection_fd);
         return NULL;
     }
 

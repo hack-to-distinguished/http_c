@@ -45,6 +45,7 @@ int main() {
 
     /*int socket(int domain, int type, int protocol);  */
     server_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
     setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, ptr_reuse_addr_flag,
                sizeof(reuse_addr_flag));
     setsockopt(server_fd, SOL_SOCKET, SO_REUSEPORT, ptr_reuse_addr_flag,
@@ -64,16 +65,21 @@ int main() {
         int client_fd;
         struct sockaddr_storage client_addr;
 
-        client_fd = accept(server_fd, (struct sockaddr *)&client_addr,
-                           &client_addr_len);
-        // error checking
-        if (client_fd < 0) {
-            perror("error on accepting connection from client");
+        // printf("\nSize: %zu", thread_pool->queue_size);
+        if (thread_pool->queue_size < QUEUE_SIZE) {
+            client_fd = accept(server_fd, (struct sockaddr *)&client_addr,
+                               &client_addr_len);
+            // error checking
+            if (client_fd < 0) {
+                perror("error on accepting connection from client");
+            } else {
+                thread_config_t *tct = malloc(sizeof(thread_config_t));
+                tct->sock_fd = client_fd;
+                thread_pool_enqueue_t(*tct);
+                free(tct);
+            }
         } else {
-            thread_config_t *tct = malloc(sizeof(thread_config_t));
-            tct->sock_fd = client_fd;
-            thread_pool_enqueue_t(*tct);
-            free(tct);
+            printf("\nQueue Full! Size: %zu", thread_pool->queue_size);
         }
     }
     freeaddrinfo(res);
