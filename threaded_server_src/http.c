@@ -13,14 +13,15 @@
 #define BUFFER_SIZE 4096
 
 char *receive_HTTP_request(int new_connection_fd) {
-    char *ptr_http_request_buffer = malloc(BUFFER_SIZE + 1);
+    char *ptr_http_request_buffer = malloc(BUFFER_SIZE);
 
     int total_received = 0;
     int bytes_recv;
 
     // recv(int fd, void *buf, size_t n, int flags)
-    while ((bytes_recv = recv(new_connection_fd, ptr_http_request_buffer,
-                              BUFFER_SIZE, 0)) > 0) {
+    while ((bytes_recv = recv(new_connection_fd,
+                              ptr_http_request_buffer + total_received,
+                              BUFFER_SIZE - total_received, 0)) > 0) {
         total_received += bytes_recv;
 
         if (strstr(ptr_http_request_buffer, "\r\n\r\n")) {
@@ -28,7 +29,7 @@ char *receive_HTTP_request(int new_connection_fd) {
         }
 
         if (total_received >= BUFFER_SIZE) {
-            perror("request too large");
+            fprintf(stderr, "\nrequest too large");
             free(ptr_http_request_buffer);
             return NULL;
         }
@@ -37,12 +38,12 @@ char *receive_HTTP_request(int new_connection_fd) {
     if (bytes_recv == -1) {
         perror("recv failed");
         free(ptr_http_request_buffer);
-        close(new_connection_fd);
         return NULL;
-    } else if (bytes_recv == 0 && total_received == 0) {
-        perror("client disconnected");
+    }
+
+    if (bytes_recv == 0 && total_received == 0) {
+        fprintf(stderr, "\nclient disconnected");
         free(ptr_http_request_buffer);
-        close(new_connection_fd);
         return NULL;
     }
 
@@ -573,7 +574,6 @@ void parse_HTTP_requests(int new_connection_fd) {
     char *ptr_http_client_buffer = receive_HTTP_request(new_connection_fd);
     if (ptr_http_client_buffer == NULL) {
         free(ptr_http_client_buffer);
-        close(new_connection_fd);
         return;
     }
 

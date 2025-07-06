@@ -60,13 +60,12 @@ int main() {
     signal(SIGINT, termination_handler);
     while (1) {
 
-        // setting up client connection
-        socklen_t client_addr_len;
-        int client_fd;
-        struct sockaddr_storage client_addr;
-
         // printf("\nSize: %zu", thread_pool->queue_size);
         if (thread_pool->queue_size < QUEUE_SIZE) {
+            socklen_t client_addr_len;
+            int client_fd;
+            struct sockaddr_storage client_addr;
+
             client_fd = accept(server_fd, (struct sockaddr *)&client_addr,
                                &client_addr_len);
             // error checking
@@ -79,7 +78,7 @@ int main() {
                 free(tct);
             }
         } else {
-            printf("\nQueue Full! Size: %zu", thread_pool->queue_size);
+            // printf("\nQueue Full! Size: %zu", thread_pool->queue_size);
         }
     }
     freeaddrinfo(res);
