@@ -46,9 +46,30 @@ void ws_send_websocket_response(int sock, char *body) {
          "HTTP/1.1 101 Switching Protocols\r\n"
          "Upgrage: websocket\r\n"
          "Connection: Upgrade\r\n"
-         "Sec-WebSocket-Accept: [calced Base64 str]\r\n\r\n" // FIX: CALCULATE
+         "Sec-WebSocket-Accept: [calced Base64 str]\r\n\r\n" // TODO: CALCULATE
     );
     write(sock, response, strlen(response));
+}
+
+char *ws_parse_websocket_http(const char *http_header) {
+    printf("Full Header: \n%s\n", http_header);
+    const char *needle = "Sec-WebSocket-Key:";
+    char *line = strtok(strdup(http_header), "\r\n");
+
+    while (line != NULL) {
+        if (strncmp(line, needle, strlen(needle)) == 0) {
+            const char *value_start = line + strlen(needle);
+            while (*value_start == ' ') value_start++;
+
+            char *result = malloc(strlen(value_start) + 1);
+            if (!result) return NULL;
+            strcpy(result, value_start);
+            printf("Key found: %s\n", result);
+            return result;
+        }
+        line = strtok(NULL, "\n\r");
+    }
+    return NULL;
 }
 
 int main(int argc, char *argv[]) {
@@ -116,14 +137,6 @@ int main(int argc, char *argv[]) {
                 pfds[fd_count].events = POLLIN;
                 fd_count += 1;
 
-                // TODO: Make the makefile to work (later)
-                // parse_HTTP_requests(client_sockfd); // This validates the headers
-                // TODO: 
-                // - Fuck validating the HTTP header, do that later
-                // - Calculate server's acceptance key 
-                // - Send the server's handshake response switching the protocol to websockets
-
-
                 // char *msg = "Connected to the server";
                 // ws_send_http_response(client_sockfd, msg);
                 printf("SENT MSG TO THE CLIENT\n");
@@ -147,7 +160,10 @@ int main(int argc, char *argv[]) {
                     i--;
                 } else {
                     buffer[bytes_recv] = '\0'; // make eof
-                    printf("Message received: %s from %d\n", buffer, pfds[i].fd);
+                    printf("Message received: %s \nfrom %d\n", buffer, pfds[i].fd);
+                    char *ws_sec_key = ws_parse_websocket_http(buffer);
+                    // TODO: Use this websocket to append and base64 encode etc
+                    printf("websocket key: %s\n", ws_sec_key);
 
                     for (int j = 1; j < fd_count; j++) {
                         if (pfds[j].fd != pfds[i].fd) {
