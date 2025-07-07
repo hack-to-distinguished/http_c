@@ -142,7 +142,6 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
         ERROR_STATE_400(new_connection_fd);
         free(ptr_method);
         free(ptr_uri);
-        close(new_connection_fd);
         return;
     }
 }
