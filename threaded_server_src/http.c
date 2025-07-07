@@ -140,6 +140,8 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
     } else {
         printf("\nerror at header value state");
         ERROR_STATE_400(new_connection_fd);
+        free(ptr_method);
+        free(ptr_uri);
         close(new_connection_fd);
         return;
     }
@@ -472,7 +474,8 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
     } else {
         printf("\nerror at header name state");
         ERROR_STATE_400(new_connection_fd);
-        close(new_connection_fd);
+        free(ptr_method);
+        free(ptr_uri);
         return;
     }
 }
