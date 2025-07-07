@@ -13,7 +13,7 @@
 #define BUFFER_SIZE 4096
 
 char *receive_HTTP_request(int new_connection_fd) {
-    char *ptr_http_request_buffer = malloc(BUFFER_SIZE);
+    char *ptr_http_request_buffer = malloc(BUFFER_SIZE + 1);
 
     int total_received = 0;
     int bytes_recv;
