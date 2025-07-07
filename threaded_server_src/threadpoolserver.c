@@ -2,6 +2,7 @@
 #include "threadpool.h"
 #include <netdb.h>
 #include <signal.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,12 +60,14 @@ int main() {
 
     signal(SIGINT, termination_handler);
     while (1) {
+        size_t queue_size_t = thread_pool->queue_size;
+        struct sockaddr_storage client_addr;
+        socklen_t client_addr_len = sizeof(client_addr);
+        int client_fd;
 
         // printf("\nSize: %zu", thread_pool->queue_size);
-        if (thread_pool->queue_size < QUEUE_SIZE) {
-            socklen_t client_addr_len;
-            int client_fd;
-            struct sockaddr_storage client_addr;
+
+        if (queue_size_t < QUEUE_SIZE) {
 
             client_fd = accept(server_fd, (struct sockaddr *)&client_addr,
                                &client_addr_len);
@@ -77,8 +80,6 @@ int main() {
                 thread_pool_enqueue_t(*tct);
                 free(tct);
             }
-        } else {
-            // printf("\nQueue Full! Size: %zu", thread_pool->queue_size);
         }
     }
     freeaddrinfo(res);
