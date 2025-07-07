@@ -501,7 +501,6 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
         ERROR_STATE_400(new_connection_fd);
         printf("\nerror at request line state");
         free(ptr_method);
-        free(ptr_method);
         free(ptr_uri);
         return;
     }
