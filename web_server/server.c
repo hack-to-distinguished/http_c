@@ -9,7 +9,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "threaded_server_src/http.h"
+#include "../threaded_server_src/http.h"
 
 #define MYPORT "8080"
 #define BACKLOG 10
@@ -76,7 +76,7 @@ char *ws_parse_websocket_http(const char *http_header) {
 
     // TODO: Calc the server's acceptance key
     // - append the magic string
-    // - Compute the SHA1 hash - Use pre-existing SHA-1 Implementation. It's too much work and not worth it
+    // - Compute the SHA1 hash
     // - Base64 encode
     char *magic_str = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
     strcat(magic_str, result);
