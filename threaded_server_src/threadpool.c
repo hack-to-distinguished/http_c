@@ -1,11 +1,9 @@
 #include "threadpool.h"
 #include "http.h"
-#include <bits/pthreadtypes.h>
 #include <pthread.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/procfs.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -30,9 +28,9 @@ void *server_thread_to_run(void *args) {
 
     time_used =
         (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000.0;
-    printf("\n[WOKRER %ld] Time taken: %.4lf seconds to finish for fd=%d",
-           pthread_self(), time_used, new_connection_fd);
-
+    // printf("\n[WOKRER %lu] Time taken: %.4lf seconds to finish for fd=%d",
+    //        (unsigned long)pthread_self(), time_used, new_connection_fd);
+    //
     close(new_connection_fd);
     return NULL;
 }
@@ -40,9 +38,9 @@ void *server_thread_to_run(void *args) {
 void thread_pool_enqueue_t(thread_config_t tct) {
     pthread_mutex_lock(&thread_pool->thread_pool_mutex_t);
 
-    printf("\n[ENQUEUE] FD: %d, Queue size: %zu, Front: %zu, Rear: %zu",
-           tct.sock_fd, thread_pool->queue_size, thread_pool->front_pointer,
-           thread_pool->rear_pointer);
+    // printf("\n[ENQUEUE] FD: %d, Queue size: %zu, Front: %zu, Rear: %zu",
+    //        tct.sock_fd, thread_pool->queue_size, thread_pool->front_pointer,
+    //        thread_pool->rear_pointer);
 
     if (thread_pool->queue_size < QUEUE_SIZE) {
         thread_pool->queue[thread_pool->rear_pointer] = tct;
@@ -53,6 +51,7 @@ void thread_pool_enqueue_t(thread_config_t tct) {
         // pool queue
         pthread_cond_signal(&thread_pool->thread_pool_cond_t);
     } else {
+        close(tct.sock_fd);
         perror("Thread pool queue is full!");
     }
     pthread_mutex_unlock(&thread_pool->thread_pool_mutex_t);
@@ -69,9 +68,9 @@ void *worker_thread_t(void *args) {
             break;
         }
 
-        printf("\n[WORKER %lu] Waiting for work (Queue size: %zu)",
-               pthread_self(), thread_pool->queue_size);
-
+        // printf("\n[WORKER %lu] Waiting for work (Queue size: %zu)",
+        //        (unsigned long)pthread_self(), thread_pool->queue_size);
+        //
         thread_config_t tct;
 
         // worker thread sleep until signalled there is a task in queue
@@ -89,11 +88,12 @@ void *worker_thread_t(void *args) {
         if (thread_pool->queue_size > 0) {
             tct = thread_pool->queue[thread_pool->front_pointer];
 
-            printf("\n[WORKER %lu] Processing FD: %d (Queue size: %zu, Front: "
-                   "%zu)",
-                   pthread_self(), tct.sock_fd, thread_pool->queue_size,
-                   thread_pool->front_pointer);
-
+            // printf("\n[WORKER %lu] Processing FD: %d (Queue size: %zu, Front:
+            // "
+            //        "%zu)",
+            //        (unsigned long)pthread_self(), tct.sock_fd,
+            //        thread_pool->queue_size, thread_pool->front_pointer);
+            //
             thread_pool->front_pointer =
                 (thread_pool->front_pointer + 1) % QUEUE_SIZE;
             thread_pool->queue_size -= 1;
@@ -104,7 +104,7 @@ void *worker_thread_t(void *args) {
             perror("\nThread pool queue is empty!");
         }
     }
-    printf("\n[WORKER %ld] Terminating...", pthread_self());
+    printf("\n[WORKER %lu] Terminating...", (unsigned long)pthread_self());
     return NULL;
 }
 
@@ -117,7 +117,7 @@ void thread_pool_t_init() {
     pthread_cond_init(&thread_pool->thread_pool_cond_t, NULL);
 }
 
-pthread_t *worker_threads_init(int num_of_workers) {
+pthread_t *worker_threads_init(size_t num_of_workers) {
     pthread_t *WORKER_THREADS = malloc(sizeof(pthread_t) * num_of_workers);
     for (size_t i = 0; i < num_of_workers; i++) {
         if (pthread_create(&WORKER_THREADS[i], NULL, worker_thread_t, NULL) !=
