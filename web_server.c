@@ -20,6 +20,10 @@ void error(const char *msg) {
     exit(0);
 }
 
+char *ws_sha1_hash(char *key) {
+    return NULL;
+}
+
 // TODO: Send http response need to be websocket format
 void ws_send_http_response(int sock, char *body) {
     char response[BUFFER_SIZE];
@@ -61,15 +65,23 @@ char *ws_parse_websocket_http(const char *http_header) {
             const char *value_start = line + strlen(needle);
             while (*value_start == ' ') value_start++;
 
-            char *result = malloc(strlen(value_start) + 1);
+            char *result = malloc(strlen(value_start) + 37); // Magic str to append will be 36 bytes
             if (!result) return NULL;
             strcpy(result, value_start);
             printf("Key found: %s\n", result);
-            return result;
+            // return result;
         }
         line = strtok(NULL, "\n\r");
     }
-    return NULL;
+
+    // TODO: Calc the server's acceptance key
+    // - append the magic string
+    // - Compute the SHA1 hash - Use pre-existing SHA-1 Implementation. It's too much work and not worth it
+    // - Base64 encode
+    char *magic_str = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+    strcat(magic_str, result);
+    // The above might be a retarded way of doing things
+    const char acceptance_key = ws_sha1_hash(result);
 }
 
 int main(int argc, char *argv[]) {
@@ -139,7 +151,6 @@ int main(int argc, char *argv[]) {
 
                 // char *msg = "Connected to the server";
                 // ws_send_http_response(client_sockfd, msg);
-                printf("SENT MSG TO THE CLIENT\n");
             }
         }
 
