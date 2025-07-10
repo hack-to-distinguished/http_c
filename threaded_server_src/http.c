@@ -13,13 +13,16 @@
 #define BUFFER_SIZE 4096
 
 const mime_type mime_types[] = {
-    {"txt", "text/plain", "text"},     {"html", "text/html", "text"},
-    {"css", "text/css", "text"},       {"csv", "text/csv", "text"},
-    {"js", "text/javascript", "text"}, {"xml", "text/xml", "text"},
-    {"jpg", "image/jpeg", "image"},    {"png", "image/png", "image"},
-    {"gif", "image/gif", "image"},     {"webp", "image/webp", "image"},
-    {"svg", "image/svg+xml", "image"}, {"ico", "image/x-icon", "image"},
-    {"webm", "video/webm", "video"},   {"mp4", "video/mp4", "video"}};
+    {"txt", "text/plain", "text"},       {"html", "text/html", "text"},
+    {"css", "text/css", "text"},         {"csv", "text/csv", "text"},
+    {"js", "text/javascript", "text"},   {"xml", "text/xml", "text"},
+    {"jpg", "image/jpeg", "image"},      {"png", "image/png", "image"},
+    {"gif", "image/gif", "image"},       {"webp", "image/webp", "image"},
+    {"svg", "image/svg+xml", "image"},   {"ico", "image/x-icon", "image"},
+    {"webm", "video/webm", "video"},     {"mp4", "video/mp4", "video"},
+    {"mpg", "video/mpeg", "video"},      {"mov", "video/quicktime", "video"},
+    {"qt", "video/quicktime", "video"},  {"wmv", "video/x-ms-wmv", "video"},
+    {"avi", "video/x-msvideo", "video"}, {"flv", "video/x-flv", "video"}};
 
 const size_t mime_types_len = sizeof(mime_types) / sizeof(mime_types[0]);
 
