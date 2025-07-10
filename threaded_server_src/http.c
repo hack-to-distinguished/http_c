@@ -19,7 +19,7 @@ const mime_type mime_types[] = {
     {"jpg", "image/jpeg", "image"},    {"png", "image/png", "image"},
     {"gif", "image/gif", "image"},     {"webp", "image/webp", "image"},
     {"svg", "image/svg+xml", "image"}, {"ico", "image/x-icon", "image"},
-    {"webm", "video/webm", "video"}};
+    {"webm", "video/webm", "video"},   {"mp4", "video/mp4", "video"}};
 
 const size_t mime_types_len = sizeof(mime_types) / sizeof(mime_types[0]);
 
