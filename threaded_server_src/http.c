@@ -12,6 +12,16 @@
 
 #define BUFFER_SIZE 4096
 
+const mime_type mime_types[] = {
+    {"txt", "text/plain", "text"},     {"html", "text/html", "text"},
+    {"css", "text/css", "text"},       {"csv", "text/csv", "text"},
+    {"js", "text/javascript", "text"}, {"xml", "text/xml", "text"},
+    {"jpg", "image/jpeg", "image"},    {"png", "image/png", "image"},
+    {"gif", "image/gif", "image"},     {"webp", "image/webp", "image"},
+    {"svg", "image/svg+xml", "image"}, {"ico", "image/x-icon", "image"}};
+
+const size_t mime_types_len = sizeof(mime_types) / sizeof(mime_types[0]);
+
 char *receive_HTTP_request(int new_connection_fd) {
     char *ptr_http_request_buffer = malloc(BUFFER_SIZE + 1);
 
@@ -100,34 +110,35 @@ void HEADER_VALUE_STATE(char **ptr_ptr_http_client_buffer,
     bool single_crlf_found = false;
     char *buffer = *ptr_ptr_http_client_buffer;
     char header_value[256];
-    size_t counter = 0;
-    size_t j = 0;
+    size_t header_value_counter = 0;
+    size_t start_pos = 0;
     size_t buffer_len = strlen(buffer);
 
     // this for loop is used to skip redundant characters
     for (size_t i = 0; i < buffer_len; i++) {
         if (buffer[i] == ':' || buffer[i] == ' ' || buffer[i] == '\r' ||
             buffer[i] == '\n') {
-            j += 1;
+            start_pos += 1;
         } else {
             i = buffer_len;
         }
     }
 
-    for (NULL; j < buffer_len; j++) {
-        if (!(buffer[j] == '\r' || buffer[j] == '\n') && !header_value_found) {
-            header_value[counter] = buffer[j];
-            counter += 1;
+    for (NULL; start_pos < buffer_len; start_pos++) {
+        if (!(buffer[start_pos] == '\r' || buffer[start_pos] == '\n') &&
+            !header_value_found) {
+            header_value[header_value_counter] = buffer[start_pos];
+            header_value_counter += 1;
         } else {
-            header_value[counter] = '\0';
+            header_value[header_value_counter] = '\0';
             header_value_found = true;
         }
 
-        if (j < (buffer_len - 1)) {
-            if (buffer[j] == '\r' && buffer[j + 1] == '\n' &&
+        if (start_pos < (buffer_len - 1)) {
+            if (buffer[start_pos] == '\r' && buffer[start_pos + 1] == '\n' &&
                 !single_crlf_found) {
                 single_crlf_found = true;
-                *ptr_ptr_http_client_buffer = &buffer[j + 2];
+                *ptr_ptr_http_client_buffer = &buffer[start_pos + 2];
             }
         }
     }
@@ -177,14 +188,36 @@ char *get_file_type_from_uri(char *ptr_uri_buffer) {
     return file_type;
 }
 
+const mime_type *get_http_mime_type(const mime_type mime_types[],
+                                    char *file_type, size_t mime_types_len) {
+    for (size_t i = 0; i < mime_types_len; i++) {
+        if (strcmp(file_type, mime_types[i].ptr_file_extension) == 0) {
+            return &mime_types[i];
+        }
+    }
+    return NULL;
+};
+
 void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
     FILE *file_ptr;
     int counter;
     char *file_type = get_file_type_from_uri(ptr_uri_buffer);
 
-    if (strcmp(file_type, "txt") == 0 || strcmp(file_type, "html") == 0 ||
-        strcmp(file_type, "css") == 0 || strcmp(file_type, "csv") == 0 ||
-        strcmp(file_type, "js") == 0 || strcmp(file_type, "xml") == 0) {
+    const mime_type *mime_type =
+        get_http_mime_type(mime_types, file_type, mime_types_len);
+
+    if (mime_type == NULL) {
+        fprintf(stderr, "\t Can't get http mime type \n");
+        ERROR_STATE_404(new_connection_fd);
+        close(new_connection_fd);
+        return;
+    }
+
+    const char *file_extension = mime_type->ptr_file_extension;
+    const char *content_type = mime_type->ptr_http_content_type;
+    const char *content_type_prefix = mime_type->ptr_http_content_type_prefix;
+
+    if (strcmp(content_type_prefix, "text") == 0) {
 
         file_ptr = fopen(ptr_uri_buffer, "r");
 
@@ -209,45 +242,21 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
         }
 
         ptr_file_contents[counter] = '\0';
-
-        // printf("\nsize of file: %ld", size);
-
         fclose(file_ptr);
-
         file_contents_len = strlen(ptr_file_contents);
 
         char HTTP_format[] =
             "HTTP/1.1 200 OK\r\nContent-Length: "
             "%ld\r\nContent-Type: %s\r\nConnection: close\r\n\r\n%s";
-        // format http response, will be stored in packet_buffer
-        if (strcmp(file_type, "txt") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format,
-                     file_contents_len, "text/plain", ptr_file_contents);
-        } else if (strcmp(file_type, "html") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format,
-                     file_contents_len, "text/html", ptr_file_contents);
-        } else if (strcmp(file_type, "css") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format,
-                     file_contents_len, "text/css", ptr_file_contents);
-        } else if (strcmp(file_type, "csv") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format,
-                     file_contents_len, "text/csv", ptr_file_contents);
-        } else if (strcmp(file_type, "js") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format,
-                     file_contents_len, "text/javascript", ptr_file_contents);
-        } else if (strcmp(file_type, "xml") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format,
-                     file_contents_len, "text/xml", ptr_file_contents);
-        }
+
+        snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, file_contents_len,
+                 content_type, ptr_file_contents);
 
         send_http_response(new_connection_fd, ptr_packet_buffer);
         free(file_type);
         free(ptr_file_contents);
         return;
-    } else if (strcmp(file_type, "jpg") == 0 || strcmp(file_type, "png") == 0 ||
-               strcmp(file_type, "gif") == 0 ||
-               strcmp(file_type, "webp") == 0 ||
-               strcmp(file_type, "svg") == 0 || strcmp(file_type, "ico") == 0) {
+    } else if (strcmp(content_type_prefix, "image") == 0) {
         file_ptr = fopen(ptr_uri_buffer, "rb");
 
         if (file_ptr == NULL) {
@@ -268,26 +277,10 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
         char HTTP_format[] =
             "HTTP/1.1 200 OK\r\nContent-Length: "
             "%ld\r\nContent-Type: %s\r\nConnection: close\r\n\r\n";
+
         char *ptr_packet_buffer = malloc(BUFFER_SIZE + size);
-        if (strcmp(file_type, "jpg") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE + size, HTTP_format, size,
-                     "image/jpeg");
-        } else if (strcmp(file_type, "png") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE + size, HTTP_format, size,
-                     "image/png");
-        } else if (strcmp(file_type, "gif") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE + size, HTTP_format, size,
-                     "image/gif");
-        } else if (strcmp(file_type, "webp") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE + size, HTTP_format, size,
-                     "image/webp");
-        } else if (strcmp(file_type, "svg") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE + size, HTTP_format, size,
-                     "image/svg+xml");
-        } else if (strcmp(file_type, "ico") == 0) {
-            snprintf(ptr_packet_buffer, BUFFER_SIZE + size, HTTP_format, size,
-                     "image/x-icon");
-        }
+        snprintf(ptr_packet_buffer, BUFFER_SIZE + size, HTTP_format, size,
+                 content_type);
 
         send_http_response(new_connection_fd, ptr_packet_buffer);
         send(new_connection_fd, ptr_img_file_contents, size, 0);
