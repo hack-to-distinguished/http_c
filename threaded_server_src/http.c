@@ -199,7 +199,7 @@ const mime_type *get_http_mime_type(const mime_type mime_types[],
 };
 
 void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
-    FILE *file_ptr;
+    FILE *ptr_file;
     int counter;
     char *file_type = get_file_type_from_uri(ptr_uri_buffer);
 
@@ -219,16 +219,16 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
 
     if (strcmp(content_type_prefix, "text") == 0) {
 
-        file_ptr = fopen(ptr_uri_buffer, "r");
+        ptr_file = fopen(ptr_uri_buffer, "r");
 
-        if (file_ptr == NULL) {
+        if (ptr_file == NULL) {
             fprintf(stderr, "\t Can't open file : %s\n", ptr_uri_buffer);
             ERROR_STATE_404(new_connection_fd);
             close(new_connection_fd);
             return;
         }
 
-        size_t size = get_size_of_file(file_ptr);
+        size_t size = get_size_of_file(ptr_file);
 
         char ch;
         char *ptr_file_contents = malloc(sizeof(char) * (size + 1));
@@ -236,13 +236,13 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
         counter = 0;
         size_t file_contents_len;
 
-        while ((ch = fgetc(file_ptr)) != EOF) {
+        while ((ch = fgetc(ptr_file)) != EOF) {
             ptr_file_contents[counter] = ch;
             counter += 1;
         }
 
         ptr_file_contents[counter] = '\0';
-        fclose(file_ptr);
+        fclose(ptr_file);
         file_contents_len = strlen(ptr_file_contents);
 
         char HTTP_format[] =
@@ -257,23 +257,20 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
         free(ptr_file_contents);
         return;
     } else if (strcmp(content_type_prefix, "image") == 0) {
-        file_ptr = fopen(ptr_uri_buffer, "rb");
+        ptr_file = fopen(ptr_uri_buffer, "rb");
 
-        if (file_ptr == NULL) {
+        if (ptr_file == NULL) {
             fprintf(stderr, "\t Can't open file : %s\n", ptr_uri_buffer);
             ERROR_STATE_404(new_connection_fd);
             close(new_connection_fd);
             return;
         }
 
-        size_t size = get_size_of_file(file_ptr);
-        // unsigned char img_file_contents[size];
+        size_t size = get_size_of_file(ptr_file);
         unsigned char *ptr_img_file_contents =
             malloc(sizeof(unsigned char) * size);
-        fread(ptr_img_file_contents, sizeof(unsigned char), size, file_ptr);
+        fread(ptr_img_file_contents, sizeof(unsigned char), size, ptr_file);
 
-        // printf("\nsize of file: %ld\n", size);
-        // printf("\nbytes read: %ld\n", bytes_read);
         char HTTP_format[] =
             "HTTP/1.1 200 OK\r\nContent-Length: "
             "%ld\r\nContent-Type: %s\r\nConnection: close\r\n\r\n";
@@ -286,7 +283,7 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
         send(new_connection_fd, ptr_img_file_contents, size, 0);
         free(ptr_img_file_contents);
         free(file_type);
-        fclose(file_ptr);
+        fclose(ptr_file);
         return;
     }
     return;
@@ -301,6 +298,16 @@ void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer) {
     struct stat file_stat;
     char *file_type = get_file_type_from_uri(ptr_uri_buffer);
 
+    const mime_type *mime_type =
+        get_http_mime_type(mime_types, file_type, mime_types_len);
+
+    if (mime_type == NULL) {
+        fprintf(stderr, "\t Can't get http mime type \n");
+        ERROR_STATE_404(new_connection_fd);
+        close(new_connection_fd);
+        return;
+    }
+
     if (strcmp(ptr_uri_buffer, "/") == 0) {
         char HTTP_format[] =
             "HTTP/1.1 200 OK\r\nContent-Type: %s\r\nConnection: close\r\n\r\n";
@@ -314,6 +321,7 @@ void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer) {
             "HTTP/1.1 200 OK\r\nContent-Type: %s\r\nLast-Modified: "
             "%s\r\nContent-length: %lu\r\nConnection: close\r\nDate: "
             "%s\r\n\r\n";
+
         if (stat(ptr_uri_buffer, &file_stat) < 0) {
             ERROR_STATE_404(new_connection_fd);
             return;
@@ -322,38 +330,9 @@ void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer) {
         char last_modified_date[64];
         char date_now[64];
         char *ptr_packet_buffer = malloc(BUFFER_SIZE);
-        char *data_type;
-        if (strcmp(file_type, "txt") == 0) {
-            data_type = "text/plain";
-        } else if (strcmp(file_type, "html") == 0) {
-            data_type = "text/html";
-        } else if (strcmp(file_type, "css") == 0) {
-            data_type = "text/css";
-        } else if (strcmp(file_type, "csv") == 0) {
-            data_type = "text/csv";
-        } else if (strcmp(file_type, "js") == 0) {
-            data_type = "text/javascript";
-        } else if (strcmp(file_type, "xml") == 0) {
-            data_type = "text/xml";
-        } else if (strcmp(file_type, "jpg") == 0) {
-            data_type = "image/jpeg";
-        } else if (strcmp(file_type, "png") == 0) {
-            data_type = "image/png";
-        } else if (strcmp(file_type, "gif") == 0) {
-            data_type = "image/gif";
-        } else if (strcmp(file_type, "webp") == 0) {
-            data_type = "image/webp";
-        } else if (strcmp(file_type, "svg") == 0) {
-            data_type = "image/svg+xml";
-        } else if (strcmp(file_type, "ico") == 0) {
-            data_type = "image/x-icon";
-        } else {
-            data_type = NULL;
-            ERROR_STATE_404(new_connection_fd);
-            return;
-        }
+        const char *content_type = mime_type->ptr_http_content_type;
 
-        snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, data_type,
+        snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, content_type,
                  format_date(last_modified_date, file_stat.st_mtime),
                  file_stat.st_size, format_date(date_now, time(NULL)));
         send_http_response(new_connection_fd, ptr_packet_buffer);
