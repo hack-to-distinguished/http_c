@@ -18,7 +18,8 @@ const mime_type mime_types[] = {
     {"js", "text/javascript", "text"}, {"xml", "text/xml", "text"},
     {"jpg", "image/jpeg", "image"},    {"png", "image/png", "image"},
     {"gif", "image/gif", "image"},     {"webp", "image/webp", "image"},
-    {"svg", "image/svg+xml", "image"}, {"ico", "image/x-icon", "image"}};
+    {"svg", "image/svg+xml", "image"}, {"ico", "image/x-icon", "image"},
+    {"webm", "video/webm", "video"}};
 
 const size_t mime_types_len = sizeof(mime_types) / sizeof(mime_types[0]);
 
@@ -256,7 +257,8 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
         free(file_type);
         free(ptr_file_contents);
         return;
-    } else if (strcmp(content_type_prefix, "image") == 0) {
+    } else if (strcmp(content_type_prefix, "image") == 0 ||
+               strcmp(content_type_prefix, "video") == 0) {
         ptr_file = fopen(ptr_uri_buffer, "rb");
 
         if (ptr_file == NULL) {
