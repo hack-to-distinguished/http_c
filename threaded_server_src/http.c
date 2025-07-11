@@ -61,7 +61,7 @@ char *receive_HTTP_request(int new_connection_fd) {
         return NULL;
     }
 
-    // printf("\nMessage Received: \n%s", ptr_http_request_buffer);
+    printf("\nMessage Received: \n%s", ptr_http_request_buffer);
     ptr_http_request_buffer[total_received] = '\0';
     return ptr_http_request_buffer;
 }
