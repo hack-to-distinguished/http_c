@@ -1,6 +1,6 @@
 #include <pthread.h>
 #include <stddef.h>
-#define QUEUE_SIZE 256
+#define QUEUE_SIZE 200
 
 typedef struct {
     int sock_fd;
@@ -24,5 +24,5 @@ void *server_thread_to_run(void *args);
 void thread_pool_enqueue_t(thread_config_t tct);
 void *worker_thread_t(void *args);
 void thread_pool_t_init();
-pthread_t *worker_threads_init(int num_of_workers);
+pthread_t *worker_threads_init(size_t num_of_workers);
 void thread_pool_shutdown_t();

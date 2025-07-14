@@ -47,12 +47,12 @@ A bare-bones HTTP server written in C from scratch using low-level socket progra
 
 ---
 
-### ⚙️ How to Compile and Run
+### ⚙️ How to Compile and Run the HTTP Web Server
 
 ```bash
 # Compile
-gcc Server.c -o http_server
+make threadpoolserver
 
 # Run (on default port 8080)
-./http_server
+./threadpoolserver
 ```

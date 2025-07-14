@@ -7,6 +7,9 @@ persistent_client
 .clang-format
 mul_client_server
 
+.DS_Store
+threadpoolserver.dSYM
+
 # Front end development just in case
 frontend_httpc/.vite/
 node_modules/ 
