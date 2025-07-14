@@ -9,7 +9,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "../threaded_server_src/http.h"
+#include "sha1.h"
 
 #define MYPORT "8080"
 #define BACKLOG 10
@@ -20,9 +20,6 @@ void error(const char *msg) {
     exit(0);
 }
 
-char *ws_sha1_hash(char *key) {
-    return NULL;
-}
 
 // TODO: Send http response need to be websocket format
 void ws_send_http_response(int sock, char *body) {
@@ -55,10 +52,11 @@ void ws_send_websocket_response(int sock, char *body) {
     write(sock, response, strlen(response));
 }
 
-char *ws_parse_websocket_http(const char *http_header) {
+const char *ws_parse_websocket_http(const char *http_header) {
     printf("Full Header: \n%s\n", http_header);
     const char *needle = "Sec-WebSocket-Key:";
     char *line = strtok(strdup(http_header), "\r\n");
+    char *result;
 
     while (line != NULL) {
         if (strncmp(line, needle, strlen(needle)) == 0) {
@@ -66,7 +64,7 @@ char *ws_parse_websocket_http(const char *http_header) {
             while (*value_start == ' ') value_start++;
 
             char *result = malloc(strlen(value_start) + 37); // Magic str to append will be 36 bytes
-            if (!result) return NULL;
+            if (!result) break;
             strcpy(result, value_start);
             printf("Key found: %s\n", result);
             // return result;
@@ -74,15 +72,35 @@ char *ws_parse_websocket_http(const char *http_header) {
         line = strtok(NULL, "\n\r");
     }
 
-    // TODO: Calc the server's acceptance key
-    // - append the magic string
-    // - Compute the SHA1 hash
-    // - Base64 encode
     char *magic_str = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
     strcat(magic_str, result);
+    printf("concatenated string: %s\n", magic_str);
+
     // The above might be a retarded way of doing things
-    const char acceptance_key = ws_sha1_hash(result);
+    // TODO: Compute the SHA1 hash (sha1_process_block)
+
+    static char accept_key[64]; // static for return, enough for base64 + null
+    char concat[128];
+    // snprintf(concat, sizeof(concat), "%s%s", key, magic_str);
+
+    SHA1 sha1;
+    sha1_reset(&sha1);
+    sha1_process_bytes(&sha1, concat, strlen(concat));
+    digest8_t digest;
+    sha1_get_digest_bytes(&sha1, digest);
+
+
+    // TODO: Base64 encode
+    // b64_encode(digest, 20, accept_key, sizeof(accept_key), B64_STD_ALPHA, B64_DEFAULT_PAD);
+    accept_key[28] = '\0'; // base64 of 20 bytes is always 28 chars + null
+    // return accept_key
+
+
+    return accept_key;
+    // TODO: Send the handshake response with the updated key
+    // Put that in another function
 }
+
 
 int main(int argc, char *argv[]) {
     struct addrinfo hints, *res;
@@ -172,7 +190,7 @@ int main(int argc, char *argv[]) {
                 } else {
                     buffer[bytes_recv] = '\0'; // make eof
                     printf("Message received: %s \nfrom %d\n", buffer, pfds[i].fd);
-                    char *ws_sec_key = ws_parse_websocket_http(buffer);
+                    const char *ws_sec_key = ws_parse_websocket_http(buffer);
                     // TODO: Use this websocket to append and base64 encode etc
                     printf("websocket key: %s\n", ws_sec_key);
 
