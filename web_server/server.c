@@ -93,7 +93,6 @@ const char *ws_parse_websocket_http(const char *http_header) {
     // TODO: Base64 encode
     // b64_encode(digest, 20, accept_key, sizeof(accept_key), B64_STD_ALPHA, B64_DEFAULT_PAD);
     accept_key[28] = '\0'; // base64 of 20 bytes is always 28 chars + null
-    // return accept_key
 
 
     return accept_key;
