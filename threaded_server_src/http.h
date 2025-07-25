@@ -33,4 +33,6 @@ const mime_type *get_http_mime_type(const mime_type mime_types[],
                                     char *file_type, size_t mime_types_len);
 void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer);
 void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer);
+void parse_body_of_POST(int new_connection_fd);
+void process_body_of_POST(int new_connection_fd);
 char *format_date(char *str, time_t val);

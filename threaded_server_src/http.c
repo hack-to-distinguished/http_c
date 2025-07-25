@@ -61,7 +61,7 @@ char *receive_HTTP_request(int new_connection_fd) {
         return NULL;
     }
 
-    printf("\nMessage Received: \n%s", ptr_http_request_buffer);
+    // printf("\nMessage Received: \n%s", ptr_http_request_buffer);
     ptr_http_request_buffer[total_received] = '\0';
     return ptr_http_request_buffer;
 }
@@ -345,6 +345,8 @@ void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer) {
     }
 }
 
+void parse_body_of_POST(int new_connection_fd) { return; }
+
 void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
                           char *ptr_method) {
 
@@ -384,6 +386,13 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
                access(uri_buffer, F_OK) == 0 && !S_ISDIR(sb.st_mode)) {
         // printf("\nhead request");
         send_requested_HEAD_back(new_connection_fd, ptr_uri_buffer);
+        free(uri_buffer);
+        free(ptr_uri);
+        free(ptr_method);
+        return;
+    } else if (strcmp(ptr_method, "POST") == 0) {
+        printf("\nPOST Method detected!");
+        parse_body_of_POST(new_connection_fd);
         free(uri_buffer);
         free(ptr_uri);
         free(ptr_method);
@@ -528,7 +537,7 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
     crlf_ptr += 2;
     ptr_ptr_http_client_buffer = &crlf_ptr;
     //
-    // printf("\nHTTP Method: %s", ptr_method);
+    printf("\nHTTP Method: %s", ptr_method);
     // printf("\nURI: %s", ptr_uri);
     // printf("\nHTTP Version: %s\n", http_version);
     //
