@@ -60,8 +60,8 @@ char *receive_HTTP_request(int new_connection_fd) {
         return NULL;
     }
 
-    // printf("\nBytes Received: %d\nMessage Received: \n%s", total_received,
-    //        ptr_http_request_buffer);
+    printf("\nBytes Received: %d\nMessage Received: \n%s", total_received,
+           ptr_http_request_buffer);
     ptr_http_request_buffer[total_received] = '\0';
     return ptr_http_request_buffer;
 }
@@ -345,10 +345,15 @@ void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer) {
     }
 }
 
-void parse_body_of_POST(int new_connection_fd) { return; }
+void parse_body_of_POST(int new_connection_fd,
+                        char **ptr_ptr_http_client_buffer) {
+    char *ptr_body = *ptr_ptr_http_client_buffer;
+    printf("\n%c %d", ptr_body[0], ptr_body[0]);
+    return;
+}
 
 void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
-                          char *ptr_method) {
+                          char *ptr_method, char **ptr_ptr_http_client_buffer) {
 
     char *processed_uri_ptr = ptr_uri;
 
@@ -388,7 +393,7 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
         return;
     } else if (strcmp(ptr_method, "POST") == 0) {
         printf("\nPOST Method detected!");
-        parse_body_of_POST(new_connection_fd);
+        parse_body_of_POST(new_connection_fd, ptr_ptr_http_client_buffer);
         free(uri_buffer);
         free(ptr_uri);
         free(ptr_method);
@@ -437,12 +442,14 @@ void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
         } else if (strcmp(ptr_method, "POST") == 0 && buffer[i] == '\r' &&
                    buffer[i + 1] == '\n') {
             single_crlf_found = true;
+            *ptr_ptr_http_client_buffer = &buffer[i + 2];
         }
     }
 
     if (single_crlf_found && host_header_present) {
         // printf("\nReached end of headers state!");
-        END_OF_HEADERS_STATE(new_connection_fd, ptr_uri, ptr_method);
+        END_OF_HEADERS_STATE(new_connection_fd, ptr_uri, ptr_method,
+                             ptr_ptr_http_client_buffer);
         return;
     }
 
