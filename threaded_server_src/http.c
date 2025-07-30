@@ -32,7 +32,6 @@ char *receive_HTTP_request(int new_connection_fd) {
     int total_received = 0;
     int bytes_recv;
 
-    // recv(int fd, void *buf, size_t n, int flags)
     while ((bytes_recv = recv(new_connection_fd,
                               ptr_http_request_buffer + total_received,
                               BUFFER_SIZE - total_received, 0)) > 0) {
@@ -350,16 +349,13 @@ void parse_body_of_POST(int new_connection_fd) { return; }
 void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
                           char *ptr_method) {
 
-    // TODO: fix this memory bug here...
-
     char *processed_uri_ptr = ptr_uri;
+
     if (!(strcmp(ptr_uri, "/") == 0)) {
         processed_uri_ptr += 1;
     }
-    // size_t processed_len = strlen(processed_uri_ptr);
-    // char uri_buffer[processed_len + 1];
+
     char *uri_buffer = strdup(processed_uri_ptr);
-    // strcpy(uri_buffer, processed_uri_ptr); // error is here
     char *ptr_uri_buffer = uri_buffer;
     FILE *file_ptr = fopen(uri_buffer, "r");
 
@@ -372,7 +368,6 @@ void END_OF_HEADERS_STATE(int new_connection_fd, char *ptr_uri,
 
     struct stat sb;
     stat(uri_buffer, &sb);
-    // printf("\nURI at end of headers state: %s", uri_buffer);
 
     if (access(uri_buffer, F_OK) == 0 && !S_ISDIR(sb.st_mode) &&
         strcmp(ptr_method, "GET") == 0) {
