@@ -84,18 +84,28 @@ const char *ws_parse_websocket_http(const char *http_header) {
     free(key);
     printf("Concatenated string: %s\n", concat_str);
 
-    // Compute SHA1 Hash
 
+    unsigned char digest[20];
+    SHA1_CTX ctx;
+    SHA1Init(&ctx);
+    SHA1Update(&ctx, (const unsigned char*)concat_str, strlen(concat_str));
+    SHA1Final(digest, &ctx);
+    printf("SHA1 res: %s\n", digest);
 
-    // Base64
-    // static char accept_key[64];
-    // b64_encode(digest, 20, accept_key, sizeof(accept_key));
+    // PSEUDO-CODE for Base64 encoding
+    static char accept_key[32]; // Base64 of 20 bytes is 28 chars + padding + null
+    // base64_encode(digest, 20, accept_key, sizeof(accept_key));
 
-
-    // return accept_key;
-    // TODO: Send the handshake response with the updated key
-    // Put that in another function
-    return "BASE64";
+    // Confirm hash by printing HEX
+    printf("SHA-1 Digest (in hex): ");
+    for (int i = 0; i < 20; i++) {
+        printf("%02x", digest[i]);
+    }
+    printf("\n");
+    
+    // TODO: Replace placeholder with Base64 encoded result
+    // strcpy(accept_key, "BASE64_ENCODED_STRING");
+    return "TODO_BASE64_ENCODE_THE_DIGEST";
 }
 
 
