@@ -54,51 +54,50 @@ void ws_send_websocket_response(int sock, char *body) {
 
 const char *ws_parse_websocket_http(const char *http_header) {
     printf("Full Header: \n%s\n", http_header);
-    const char *needle = "Sec-WebSocket-Key:";
-    char *line = strtok(strdup(http_header), "\r\n");
-    char *result;
+    char *key = NULL;
+    char *header_copy = strdup(http_header);
+    if (!header_copy) return NULL;
 
+    const char *needle = "Sec-WebSocket-Key:";
+    char *line = strtok(header_copy, "\r\n");
     while (line != NULL) {
         if (strncmp(line, needle, strlen(needle)) == 0) {
             const char *value_start = line + strlen(needle);
             while (*value_start == ' ') value_start++;
-
-            char *result = malloc(strlen(value_start) + 37); // Magic str to append will be 36 bytes
-            if (!result) break;
-            strcpy(result, value_start);
-            printf("Key found: %s\n", result);
-            // return result;
+            key = strdup(value_start);
+            break;
         }
-        line = strtok(NULL, "\n\r");
+        line = strtok(NULL, "\r\n");
+    }
+    free(header_copy);
+
+    if (key == NULL) {
+        printf("Error: Sec-WebSocket-Key not found.\n");
+        return NULL;
     }
 
-    char *magic_str = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-    strcat(magic_str, result);
-    printf("concatenated string: %s\n", magic_str);
+    printf("Key found: %s\n", key);
 
-    // The above might be a retarded way of doing things
-    // TODO: Compute the SHA1 hash (sha1_process_block)
+    const char *magic_str = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+    char concat_str[128];
+    snprintf(concat_str, sizeof(concat_str), "%s%s", key, magic_str);
+    free(key);
+    printf("Concatenated string: %s\n", concat_str);
 
-    static char accept_key[64]; // static for return, enough for base64 + null
-    char concat[128];
-    // snprintf(concat, sizeof(concat), "%s%s", key, magic_str);
-
-    SHA1 sha1;
-    sha1_reset(&sha1);
-    sha1_process_bytes(&sha1, concat, strlen(concat));
-    digest8_t digest;
-    sha1_get_digest_bytes(&sha1, digest);
+    // Compute SHA1 Hash
 
 
-    // TODO: Base64 encode
-    // b64_encode(digest, 20, accept_key, sizeof(accept_key), B64_STD_ALPHA, B64_DEFAULT_PAD);
-    accept_key[28] = '\0'; // base64 of 20 bytes is always 28 chars + null
+    // Base64
+    // static char accept_key[64];
+    // b64_encode(digest, 20, accept_key, sizeof(accept_key));
 
 
-    return accept_key;
+    // return accept_key;
     // TODO: Send the handshake response with the updated key
     // Put that in another function
+    return "BASE64";
 }
+
 
 
 int main(int argc, char *argv[]) {
