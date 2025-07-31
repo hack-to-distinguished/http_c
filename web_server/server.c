@@ -102,7 +102,7 @@ const char *ws_parse_websocket_http(const char *http_header) {
         printf("%02x", digest[i]);
     }
     printf("\n");
-    
+
     // TODO: Replace placeholder with Base64 encoded result
     // strcpy(accept_key, "BASE64_ENCODED_STRING");
     return "TODO_BASE64_ENCODE_THE_DIGEST";
