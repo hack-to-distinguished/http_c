@@ -3,6 +3,7 @@
 #include <netinet/in.h>
 #include <poll.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,8 +21,30 @@ void error(const char *msg) {
     exit(0);
 }
 
+// AI generate b64 encoder
+static const char b64_table[] ="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+size_t base64_encode(const unsigned char *in, size_t in_len, char *out, size_t out_size) {
+    size_t i = 0, o = 0;
+    while (i < in_len) {
+        unsigned char a3[3] = {0,0,0};
+        int j;
+        for (j = 0; j < 3 && i < in_len; j++, i++)
+            a3[j] = in[i];
 
-// TODO: Send http response need to be websocket format
+        if (o + 4 >= out_size)  // prevent overflow
+            return 0;
+
+        out[o++] = b64_table[(a3[0] & 0xfc) >> 2];
+        out[o++] = b64_table[((a3[0] & 0x03) << 4) | ((a3[1] & 0xf0) >> 4)];
+        out[o++] = (j > 1) ? b64_table[((a3[1] & 0x0f) << 2) | ((a3[2] & 0xc0) >> 6)] : '=';
+        out[o++] = (j > 2) ? b64_table[a3[2] & 0x3f] : '=';
+    }
+    if (o < out_size)
+        out[o] = '\0';
+    return o;  // returns number of bytes written (not counting null terminator)
+}
+
+
 void ws_send_http_response(int sock, char *body) {
     char response[BUFFER_SIZE];
     int body_len = strlen(body) + 15; // Add 15 to account for the dict format
@@ -38,17 +61,14 @@ void ws_send_http_response(int sock, char *body) {
     write(sock, response, strlen(response));
 }
 
-void ws_send_websocket_response(int sock, char *body) {
+void ws_send_websocket_response(int sock, char *accept_key) {
     char response[BUFFER_SIZE];
-    // FIX: Not sure if I still need this
-    int body_len = strlen(body) + 15; // Add 15 to account for the dict format
-
     snprintf(response, sizeof(response),
          "HTTP/1.1 101 Switching Protocols\r\n"
-         "Upgrage: websocket\r\n"
+         "Upgrade: websocket\r\n"
          "Connection: Upgrade\r\n"
-         "Sec-WebSocket-Accept: [calced Base64 str]\r\n\r\n" // TODO: CALCULATE
-    );
+         "Sec-WebSocket-Accept: %s\r\n\r\n",
+         accept_key);
     write(sock, response, strlen(response));
 }
 
@@ -90,12 +110,8 @@ const char *ws_parse_websocket_http(const char *http_header) {
     SHA1Init(&ctx);
     SHA1Update(&ctx, (const unsigned char*)concat_str, strlen(concat_str));
     SHA1Final(digest, &ctx);
-    printf("SHA1 res: %s\n", digest);
 
-    // PSEUDO-CODE for Base64 encoding
-    static char accept_key[32]; // Base64 of 20 bytes is 28 chars + padding + null
-    // base64_encode(digest, 20, accept_key, sizeof(accept_key));
-
+    // TODO: Remove when done with
     // Confirm hash by printing HEX
     printf("SHA-1 Digest (in hex): ");
     for (int i = 0; i < 20; i++) {
@@ -103,9 +119,11 @@ const char *ws_parse_websocket_http(const char *http_header) {
     }
     printf("\n");
 
-    // TODO: Replace placeholder with Base64 encoded result
-    // strcpy(accept_key, "BASE64_ENCODED_STRING");
-    return "TODO_BASE64_ENCODE_THE_DIGEST";
+
+    static char accept_key[32]; // Base64 of 20 bytes is 28 chars + padding + null
+    base64_encode(digest, 20, accept_key, sizeof(accept_key));
+    printf("Sec-WebSocket-Accept: %s\n", accept_key);
+    return accept_key;
 }
 
 
