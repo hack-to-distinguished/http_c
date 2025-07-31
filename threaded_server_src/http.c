@@ -31,14 +31,29 @@ char *receive_HTTP_request(int new_connection_fd) {
 
     int total_received = 0;
     int bytes_recv;
+    size_t body_len = 0;
+    bool header_read = false;
 
     while ((bytes_recv = recv(new_connection_fd,
                               ptr_http_request_buffer + total_received,
                               BUFFER_SIZE - total_received, 0)) > 0) {
         total_received += bytes_recv;
 
-        if (strstr(ptr_http_request_buffer, "\r\n\r\n")) {
-            break;
+        char *end_of_headers = strstr(ptr_http_request_buffer, "\r\n\r\n");
+        if (end_of_headers != NULL) {
+            header_read = true;
+            char *result = strstr(ptr_http_request_buffer, "Content-Length: ");
+            if (result != NULL) {
+                body_len = atoi(result + 15);
+            }
+        }
+
+        if (header_read) {
+            size_t header_size = (end_of_headers + 4) - ptr_http_request_buffer;
+            size_t body_bytes = total_received - header_size;
+            if (body_bytes >= body_len) {
+                break;
+            }
         }
 
         if (total_received >= BUFFER_SIZE) {
@@ -349,6 +364,7 @@ void parse_body_of_POST(int new_connection_fd,
                         char **ptr_ptr_http_client_buffer) {
     char *ptr_body = *ptr_ptr_http_client_buffer;
     printf("\n%c %d", ptr_body[0], ptr_body[0]);
+    printf("\n%c %d", ptr_body[-1], ptr_body[-1]);
     return;
 }
 
