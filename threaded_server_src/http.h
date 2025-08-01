@@ -8,9 +8,19 @@ typedef struct {
     const char *ptr_http_content_type_prefix;
 } mime_type;
 
+typedef struct {
+    char **ptr_ptr_http_client_buffer;
+    int new_connection_fd;
+    bool host_header_present;
+    char *ptr_uri;
+    char *ptr_method;
+    char *ptr_body_content_type;
+} http_request_ctx;
+
 extern const mime_type mime_types[];
 extern const size_t mime_types_len;
 
+// TODO: CREATE TYPEDEF STRUCT TO CLEAN UP ALL THESE UGLY AF POINTERS
 void HEADER_NAME_STATE(char **ptr_ptr_http_client_buffer, int new_connection_fd,
                        bool host_header_present, char *ptr_uri,
                        char *ptr_method);
