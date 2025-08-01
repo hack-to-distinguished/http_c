@@ -75,8 +75,8 @@ char *receive_HTTP_request(int new_connection_fd) {
         return NULL;
     }
 
-    printf("\nBytes Received: %d\nMessage Received: \n%s", total_received,
-           ptr_http_request_buffer);
+    // printf("\nBytes Received: %d\nMessage Received: \n%s", total_received,
+    //        ptr_http_request_buffer);
     ptr_http_request_buffer[total_received] = '\0';
     return ptr_http_request_buffer;
 }
@@ -363,8 +363,7 @@ void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer) {
 void parse_body_of_POST(int new_connection_fd,
                         char **ptr_ptr_http_client_buffer) {
     char *ptr_body = *ptr_ptr_http_client_buffer;
-    printf("\n%c %d", ptr_body[0], ptr_body[0]);
-    printf("\n%c %d", ptr_body[-1], ptr_body[-1]);
+    // printf("\n%c %d", ptr_body[0], ptr_body[0]);
     return;
 }
 
@@ -496,6 +495,23 @@ void REQUEST_LINE_STATE(char **ptr_ptr_http_client_buffer,
     char http_version[16];
     bool host_header_present = false;
     int result = sscanf(buffer, "%s %s %s", ptr_method, ptr_uri, http_version);
+
+    char *ptr_body_content_type;
+    char *start = strstr(buffer, "Content-Type: ");
+    char *end;
+    if (start != NULL) {
+        start += 14;
+        size_t pos = 0;
+        while (start[pos] != '\r') {
+            pos += 1;
+            end = &start[pos];
+        }
+        ptr_body_content_type = malloc(sizeof(char) * ((end - start) + 1));
+        strncpy(ptr_body_content_type, start, end - start);
+        ptr_body_content_type[end - start] = '\0';
+        printf("\nContent-Type: %s", ptr_body_content_type);
+    }
+    printf("\nptr_body_content_type: %p", ptr_body_content_type);
 
     char *crlf_ptr = strstr(buffer, http_version);
     if (crlf_ptr == NULL) {
