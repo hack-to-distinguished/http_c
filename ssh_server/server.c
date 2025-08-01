@@ -29,7 +29,7 @@ void send_http_response(int sock, char *body) {
          "HTTP/1.1 200 OK\r\n"
          "Content-Type: text/plain\r\n"
          "Access-Control-Allow-Origin: *\r\n"
-         "Content-Length: %d\r\n"
+         "Content-Length: %ld\r\n"
          "Connection: close\r\n"
          "\r\n"
          "%s",
@@ -37,7 +37,7 @@ void send_http_response(int sock, char *body) {
     write(sock, response, strlen(response));
 }
 
-int main(int argc, char *argv[]) {
+int main() {
     struct addrinfo hints, *res;
     struct sockaddr_storage their_addr;
     socklen_t their_addrlen = sizeof(their_addr);

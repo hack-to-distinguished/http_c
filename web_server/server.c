@@ -116,7 +116,7 @@ const char *ws_parse_websocket_http(const char *http_header) {
 
 
 
-int main(int argc, char *argv[]) {
+int main() {
     struct addrinfo hints, *res;
     struct sockaddr_storage their_addr;
     socklen_t their_addrlen = sizeof(their_addr);
