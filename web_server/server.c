@@ -61,7 +61,7 @@ void ws_send_http_response(int sock, char *body) {
     write(sock, response, strlen(response));
 }
 
-void ws_send_websocket_response(int sock, char *accept_key) {
+void ws_send_websocket_response(int sock, const char *accept_key) {
     char response[BUFFER_SIZE];
     snprintf(response, sizeof(response),
          "HTTP/1.1 101 Switching Protocols\r\n"
@@ -73,7 +73,7 @@ void ws_send_websocket_response(int sock, char *accept_key) {
 }
 
 const char *ws_parse_websocket_http(const char *http_header) {
-    printf("Full Header: \n%s\n", http_header);
+    // printf("Full Header: \n%s\n", http_header);
     char *key = NULL;
     char *header_copy = strdup(http_header);
     if (!header_copy) return NULL;
@@ -96,13 +96,10 @@ const char *ws_parse_websocket_http(const char *http_header) {
         return NULL;
     }
 
-    printf("Key found: %s\n", key);
-
     const char *magic_str = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
     char concat_str[128];
     snprintf(concat_str, sizeof(concat_str), "%s%s", key, magic_str);
     free(key);
-    printf("Concatenated string: %s\n", concat_str);
 
 
     unsigned char digest[20];
@@ -110,15 +107,6 @@ const char *ws_parse_websocket_http(const char *http_header) {
     SHA1Init(&ctx);
     SHA1Update(&ctx, (const unsigned char*)concat_str, strlen(concat_str));
     SHA1Final(digest, &ctx);
-
-    // TODO: Remove when done with
-    // Confirm hash by printing HEX
-    printf("SHA-1 Digest (in hex): ");
-    for (int i = 0; i < 20; i++) {
-        printf("%02x", digest[i]);
-    }
-    printf("\n");
-
 
     static char accept_key[32]; // Base64 of 20 bytes is 28 chars + padding + null
     base64_encode(digest, 20, accept_key, sizeof(accept_key));
@@ -159,7 +147,7 @@ int main(int argc, char *argv[]) {
     listen(server_fd, BACKLOG);
 
 
-    int client_sockfd, conn_clients[BACKLOG], fd_count = 1;
+    int client_fd, conn_clients[BACKLOG], fd_count = 1;
     int bytes_recv;
     struct pollfd pfds[BACKLOG + 1]; // +1 bc adding the server to pfds
     char buffer[BUFFER_SIZE];
@@ -176,25 +164,27 @@ int main(int argc, char *argv[]) {
         }
 
         if (pfds[0].revents & POLLIN) {
-            client_sockfd = accept(server_fd, (struct sockaddr *)&their_addr, &their_addrlen);
-            if (client_sockfd == -1) {
+            client_fd = accept(server_fd, (struct sockaddr *)&their_addr, &their_addrlen);
+            if (client_fd == -1) {
                 error("client can't connect");
             }
 
             if (fd_count >= BACKLOG + 1) {
                 printf("Connection to full server attempted\n");
                 char *msg = "Server full";
-                ws_send_http_response(client_sockfd, msg);
-                close(client_sockfd);
+                ws_send_http_response(client_fd, msg);
+                close(client_fd);
             } else {
-                printf("%d successfully connected to the server\n", client_sockfd);
-                conn_clients[fd_count - 1] = client_sockfd;
-                pfds[fd_count].fd = client_sockfd;
+                printf("%d successfully connected to the server\n", client_fd);
+                conn_clients[fd_count - 1] = client_fd;
+                pfds[fd_count].fd = client_fd;
                 pfds[fd_count].events = POLLIN;
                 fd_count += 1;
 
-                // char *msg = "Connected to the server";
-                // ws_send_http_response(client_sockfd, msg);
+                // recv set here to establish websocket connection
+                recv(client_fd, buffer, BUFFER_SIZE, 0);
+                const char *ws_sec_key = ws_parse_websocket_http(buffer);
+                ws_send_websocket_response(client_fd, ws_sec_key);
             }
         }
 
@@ -216,9 +206,8 @@ int main(int argc, char *argv[]) {
                 } else {
                     buffer[bytes_recv] = '\0'; // make eof
                     printf("Message received: %s \nfrom %d\n", buffer, pfds[i].fd);
-                    const char *ws_sec_key = ws_parse_websocket_http(buffer);
-                    // TODO: Use this websocket to append and base64 encode etc
-                    printf("websocket key: %s\n", ws_sec_key);
+                    // const char *ws_sec_key = ws_parse_websocket_http(buffer);
+                    // printf("websocket key: %s\n", ws_sec_key);
 
                     for (int j = 1; j < fd_count; j++) {
                         if (pfds[j].fd != pfds[i].fd) {
