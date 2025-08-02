@@ -358,12 +358,22 @@ void send_requested_HEAD_back(http_request_ctx *ctx, char *ptr_uri_buffer) {
 }
 
 void parse_body_of_POST(http_request_ctx *ctx) {
-    printf("\nContent-Type of Body of Request: %s", ctx->ptr_body_content_type);
-    printf("\nContent-Length of Body of Request: %zu",
-           *ctx->ptr_body_content_length);
+    char *ptr_body =
+        malloc(sizeof(char) * (((int)*ctx->ptr_body_content_length) + 1));
+    strncpy(ptr_body, *ctx->ptr_ptr_http_client_buffer,
+            (int)*ctx->ptr_body_content_length + 1);
+    ptr_body[(int)*ctx->ptr_body_content_length] = '\0';
+
+    // printf("\nBody: %s", ptr_body);
+    // printf("\nContent-Type of Body of Request: %s",
+    // ctx->ptr_body_content_type); printf("\nContent-Length of Body of Request:
+    // %zu",
+    //        *ctx->ptr_body_content_length);
+
     if (strcmp(ctx->ptr_body_content_type,
                "application/x-www-form-urlencoded") == 0) {
     }
+    free(ptr_body);
     free(ctx->ptr_body_content_type);
     free(ctx->ptr_body_content_length);
     return;
