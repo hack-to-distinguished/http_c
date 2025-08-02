@@ -185,6 +185,11 @@ int main() {
                 recv(client_fd, buffer, BUFFER_SIZE, 0);
                 const char *ws_sec_key = ws_parse_websocket_http(buffer);
                 ws_send_websocket_response(client_fd, ws_sec_key);
+
+		/* TODO:
+		* - Change the state of the client's conection to "OPEN"
+		* - Use "Frames" to send and read data
+		*/
             }
         }
 
