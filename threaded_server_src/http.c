@@ -372,7 +372,13 @@ void parse_body_of_POST(http_request_ctx *ctx) {
 
     if (strcmp(ctx->ptr_body_content_type,
                "application/x-www-form-urlencoded") == 0) {
+        char HTTP_format[] = "HTTP/1.1 200 OK\r\nContent-Type: "
+                             "text/html\r\nConnection: close\r\n\r\n%s";
+        char *ptr_packet_buffer = malloc(BUFFER_SIZE);
+        snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, ptr_body);
+        send_http_response(ctx->new_connection_fd, ptr_packet_buffer);
     }
+
     free(ptr_body);
     free(ctx->ptr_body_content_type);
     free(ctx->ptr_body_content_length);
