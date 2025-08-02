@@ -377,17 +377,6 @@ void parse_body_of_POST(http_request_ctx *ctx) {
     snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, ptr_body);
     send_http_response(ctx->new_connection_fd, ptr_packet_buffer);
 
-    // if (strcmp(ctx->ptr_body_content_type,
-    //            "application/x-www-form-urlencoded") == 0) {
-    //     char *ptr_packet_buffer = malloc(BUFFER_SIZE);
-    //     snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, ptr_body);
-    //     send_http_response(ctx->new_connection_fd, ptr_packet_buffer);
-    // } else if (strcmp(ctx->ptr_body_content_type, "application/json") == 0) {
-    //     char *ptr_packet_buffer = malloc(BUFFER_SIZE);
-    //     snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, ptr_body);
-    //     send_http_response(ctx->new_connection_fd, ptr_packet_buffer);
-    // }
-
     free(ptr_body);
     free(ctx->ptr_body_content_type);
     free(ctx->ptr_body_content_length);
