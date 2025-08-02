@@ -15,6 +15,7 @@ typedef struct {
     char *ptr_uri;
     char *ptr_method;
     char *ptr_body_content_type;
+    size_t *ptr_body_content_length;
 } http_request_ctx;
 
 extern const mime_type mime_types[];

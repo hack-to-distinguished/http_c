@@ -358,9 +358,14 @@ void send_requested_HEAD_back(http_request_ctx *ctx, char *ptr_uri_buffer) {
 }
 
 void parse_body_of_POST(http_request_ctx *ctx) {
-    char *ptr_body = *ctx->ptr_ptr_http_client_buffer;
-    char *ptr_body_content_type = ctx->ptr_body_content_type;
-    free(ptr_body_content_type);
+    printf("\nContent-Type of Body of Request: %s", ctx->ptr_body_content_type);
+    printf("\nContent-Length of Body of Request: %zu",
+           *ctx->ptr_body_content_length);
+    if (strcmp(ctx->ptr_body_content_type,
+               "application/x-www-form-urlencoded") == 0) {
+    }
+    free(ctx->ptr_body_content_type);
+    free(ctx->ptr_body_content_length);
     return;
 }
 
@@ -502,6 +507,18 @@ void REQUEST_LINE_STATE(http_request_ctx *ctx) {
         ptr_body_content_type[end - start] = '\0';
     }
     ctx->ptr_body_content_type = ptr_body_content_type;
+
+    size_t *ptr_body_content_length;
+    start = strstr(buffer, "Content-Length: ");
+    if (start != NULL) {
+        start += 16;
+        size_t content_length = (size_t)atoi(start);
+        size_t *temp_ptr = &content_length;
+        ptr_body_content_length = malloc(sizeof(size_t));
+        memcpy(ptr_body_content_length, temp_ptr, sizeof(size_t));
+        // printf("\n%zu", *ptr_body_content_length);
+    }
+    ctx->ptr_body_content_length = ptr_body_content_length;
 
     char *crlf_ptr = strstr(buffer, http_version);
     if (crlf_ptr == NULL) {
