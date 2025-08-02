@@ -87,7 +87,7 @@ void send_http_response(int new_connection_fd, char *ptr_packet_buffer) {
     return;
 }
 
-void ERROR_STATE_400(int new_connection_fd) {
+void ERROR_STATE_400(http_request_ctx *ctx) {
     char *ptr_packet_buffer = malloc(BUFFER_SIZE);
     char *ptr_body;
     int body_len;
@@ -101,11 +101,11 @@ void ERROR_STATE_400(int new_connection_fd) {
              "Content-Type: text/html;\r\nConnection: close\r\n\r\n"
              "%s",
              body_len, ptr_body);
-    send_http_response(new_connection_fd, ptr_packet_buffer);
+    send_http_response(ctx->new_connection_fd, ptr_packet_buffer);
     return;
 }
 
-void ERROR_STATE_404(int new_connection_fd) {
+void ERROR_STATE_404(http_request_ctx *ctx) {
     char *ptr_packet_buffer = malloc(BUFFER_SIZE);
     char *ptr_body;
     size_t body_len;
@@ -119,7 +119,7 @@ void ERROR_STATE_404(int new_connection_fd) {
              "Content-Type: text/html;\r\nConnection: close\r\n\r\n"
              "%s",
              body_len, ptr_body);
-    send_http_response(new_connection_fd, ptr_packet_buffer);
+    send_http_response(ctx->new_connection_fd, ptr_packet_buffer);
     return;
 }
 void HEADER_VALUE_STATE(http_request_ctx *ctx) {
@@ -166,7 +166,7 @@ void HEADER_VALUE_STATE(http_request_ctx *ctx) {
         return;
     } else {
         printf("\nerror at header value state");
-        ERROR_STATE_400(ctx->new_connection_fd);
+        ERROR_STATE_400(ctx);
         free(ctx->ptr_method);
         free(ctx->ptr_uri);
         return;
@@ -214,7 +214,7 @@ const mime_type *get_http_mime_type(const mime_type mime_types[],
     return NULL;
 };
 
-void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
+void send_requested_file_back(http_request_ctx *ctx, char *ptr_uri_buffer) {
     FILE *ptr_file;
     int counter;
     char *file_type = get_file_type_from_uri(ptr_uri_buffer);
@@ -224,8 +224,8 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
 
     if (mime_type == NULL) {
         fprintf(stderr, "\t Can't get http mime type \n");
-        ERROR_STATE_404(new_connection_fd);
-        close(new_connection_fd);
+        ERROR_STATE_404(ctx);
+        close(ctx->new_connection_fd);
         return;
     }
 
@@ -239,8 +239,8 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
 
         if (ptr_file == NULL) {
             fprintf(stderr, "\t Can't open file : %s\n", ptr_uri_buffer);
-            ERROR_STATE_404(new_connection_fd);
-            close(new_connection_fd);
+            ERROR_STATE_404(ctx);
+            close(ctx->new_connection_fd);
             return;
         }
 
@@ -268,7 +268,7 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
         snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, file_contents_len,
                  content_type, ptr_file_contents);
 
-        send_http_response(new_connection_fd, ptr_packet_buffer);
+        send_http_response(ctx->new_connection_fd, ptr_packet_buffer);
         free(file_type);
         free(ptr_file_contents);
         return;
@@ -278,8 +278,8 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
 
         if (ptr_file == NULL) {
             fprintf(stderr, "\t Can't open file : %s\n", ptr_uri_buffer);
-            ERROR_STATE_404(new_connection_fd);
-            close(new_connection_fd);
+            ERROR_STATE_404(ctx);
+            close(ctx->new_connection_fd);
             return;
         }
 
@@ -296,8 +296,8 @@ void send_requested_file_back(int new_connection_fd, char *ptr_uri_buffer) {
         snprintf(ptr_packet_buffer, BUFFER_SIZE + size, HTTP_format, size,
                  content_type);
 
-        send_http_response(new_connection_fd, ptr_packet_buffer);
-        send(new_connection_fd, ptr_img_file_contents, size, 0);
+        send_http_response(ctx->new_connection_fd, ptr_packet_buffer);
+        send(ctx->new_connection_fd, ptr_img_file_contents, size, 0);
         free(ptr_img_file_contents);
         free(file_type);
         fclose(ptr_file);
@@ -311,7 +311,7 @@ char *format_date(char *str, time_t val) {
     return str;
 }
 
-void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer) {
+void send_requested_HEAD_back(http_request_ctx *ctx, char *ptr_uri_buffer) {
     struct stat file_stat;
     char *file_type = get_file_type_from_uri(ptr_uri_buffer);
 
@@ -320,8 +320,8 @@ void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer) {
 
     if (mime_type == NULL) {
         fprintf(stderr, "\t Can't get http mime type \n");
-        ERROR_STATE_404(new_connection_fd);
-        close(new_connection_fd);
+        ERROR_STATE_404(ctx);
+        close(ctx->new_connection_fd);
         return;
     }
 
@@ -330,7 +330,7 @@ void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer) {
             "HTTP/1.1 200 OK\r\nContent-Type: %s\r\nConnection: close\r\n\r\n";
         char *ptr_packet_buffer = malloc(BUFFER_SIZE);
         snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, "text/plain");
-        send_http_response(new_connection_fd, ptr_packet_buffer);
+        send_http_response(ctx->new_connection_fd, ptr_packet_buffer);
         return;
     } else {
 
@@ -340,7 +340,7 @@ void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer) {
             "%s\r\n\r\n";
 
         if (stat(ptr_uri_buffer, &file_stat) < 0) {
-            ERROR_STATE_404(new_connection_fd);
+            ERROR_STATE_404(ctx);
             return;
         }
 
@@ -352,7 +352,7 @@ void send_requested_HEAD_back(int new_connection_fd, char *ptr_uri_buffer) {
         snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, content_type,
                  format_date(last_modified_date, file_stat.st_mtime),
                  file_stat.st_size, format_date(date_now, time(NULL)));
-        send_http_response(new_connection_fd, ptr_packet_buffer);
+        send_http_response(ctx->new_connection_fd, ptr_packet_buffer);
         return;
     }
 }
@@ -378,7 +378,7 @@ void END_OF_HEADERS_STATE(http_request_ctx *ctx) {
 
     if (file_ptr == NULL) {
         fprintf(stderr, "\t Can't open file : %s\n", ptr_uri_buffer);
-        ERROR_STATE_404(ctx->new_connection_fd);
+        ERROR_STATE_404(ctx);
         close(ctx->new_connection_fd);
         return;
     }
@@ -388,7 +388,7 @@ void END_OF_HEADERS_STATE(http_request_ctx *ctx) {
 
     if (access(uri_buffer, F_OK) == 0 && !S_ISDIR(sb.st_mode) &&
         strcmp(ctx->ptr_method, "GET") == 0) {
-        send_requested_file_back(ctx->new_connection_fd, ptr_uri_buffer);
+        send_requested_file_back(ctx, ptr_uri_buffer);
         free(uri_buffer);
         free(ctx->ptr_uri);
         free(ctx->ptr_method);
@@ -397,7 +397,7 @@ void END_OF_HEADERS_STATE(http_request_ctx *ctx) {
     } else if (strcmp(ctx->ptr_method, "HEAD") == 0 &&
                access(uri_buffer, F_OK) == 0 && !S_ISDIR(sb.st_mode)) {
         // printf("\nhead request");
-        send_requested_HEAD_back(ctx->new_connection_fd, ptr_uri_buffer);
+        send_requested_HEAD_back(ctx, ptr_uri_buffer);
         free(uri_buffer);
         free(ctx->ptr_uri);
         free(ctx->ptr_method);
@@ -411,7 +411,7 @@ void END_OF_HEADERS_STATE(http_request_ctx *ctx) {
         return;
     } else {
         // printf("\nFile does not exist!");
-        ERROR_STATE_404(ctx->new_connection_fd);
+        ERROR_STATE_404(ctx);
         free(uri_buffer);
         free(ctx->ptr_uri);
         free(ctx->ptr_method);
@@ -470,7 +470,7 @@ void HEADER_NAME_STATE(http_request_ctx *ctx) {
         return;
     } else {
         printf("\nerror at header name state");
-        ERROR_STATE_400(ctx->new_connection_fd);
+        ERROR_STATE_400(ctx);
         free(ctx->ptr_method);
         free(ctx->ptr_uri);
         return;
@@ -505,7 +505,7 @@ void REQUEST_LINE_STATE(http_request_ctx *ctx) {
 
     char *crlf_ptr = strstr(buffer, http_version);
     if (crlf_ptr == NULL) {
-        ERROR_STATE_400(ctx->new_connection_fd);
+        ERROR_STATE_400(ctx);
         printf("\nerror at request line state");
         free(ctx->ptr_method);
         free(ctx->ptr_uri);
@@ -513,7 +513,7 @@ void REQUEST_LINE_STATE(http_request_ctx *ctx) {
     }
     crlf_ptr += 8;
     if (result != 3) {
-        ERROR_STATE_400(ctx->new_connection_fd);
+        ERROR_STATE_400(ctx);
         printf("\nerror at request line state");
         free(ctx->ptr_method);
         free(ctx->ptr_uri);
@@ -523,7 +523,7 @@ void REQUEST_LINE_STATE(http_request_ctx *ctx) {
     if (!(strcmp(ctx->ptr_method, "GET") == 0 ||
           strcmp(ctx->ptr_method, "POST") == 0 ||
           strcmp(ctx->ptr_method, "HEAD") == 0)) {
-        ERROR_STATE_400(ctx->new_connection_fd);
+        ERROR_STATE_400(ctx);
         printf("\nerror at request line state");
         free(ctx->ptr_method);
         free(ctx->ptr_uri);
@@ -531,7 +531,7 @@ void REQUEST_LINE_STATE(http_request_ctx *ctx) {
     }
 
     if (strcmp(http_version, "HTTP/1.1") != 0) {
-        ERROR_STATE_400(ctx->new_connection_fd);
+        ERROR_STATE_400(ctx);
         printf("\nerror at request line state");
         free(ctx->ptr_method);
         free(ctx->ptr_uri);
@@ -539,7 +539,7 @@ void REQUEST_LINE_STATE(http_request_ctx *ctx) {
     }
 
     if (!(crlf_ptr[0] == '\r' && crlf_ptr[1] == '\n')) {
-        ERROR_STATE_400(ctx->new_connection_fd);
+        ERROR_STATE_400(ctx);
         printf("\nerror at request line state");
         free(ctx->ptr_method);
         free(ctx->ptr_uri);
@@ -555,7 +555,7 @@ void REQUEST_LINE_STATE(http_request_ctx *ctx) {
           buffer[len_method + 1] == '/' &&
           buffer[len_method + len_uri + 1] == ' ' &&
           buffer[len_method + len_uri + 2] != ' ')) {
-        ERROR_STATE_400(ctx->new_connection_fd);
+        ERROR_STATE_400(ctx);
         printf("\nerror at request line state");
         free(ctx->ptr_method);
         free(ctx->ptr_uri);
