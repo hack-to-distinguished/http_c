@@ -204,7 +204,7 @@ int main() {
                     fd_count--;
                     i--;
                 } else {
-                    buffer[bytes_recv] = '\0'; // make eof
+                    buffer[bytes_recv] = '\0';
                     printf("Message received: %s \nfrom %d\n", buffer, pfds[i].fd);
                     // const char *ws_sec_key = ws_parse_websocket_http(buffer);
                     // printf("websocket key: %s\n", ws_sec_key);
