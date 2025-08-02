@@ -122,6 +122,7 @@ void ERROR_STATE_404(http_request_ctx *ctx) {
     send_http_response(ctx->new_connection_fd, ptr_packet_buffer);
     return;
 }
+
 void HEADER_VALUE_STATE(http_request_ctx *ctx) {
     bool header_value_found = false;
     bool single_crlf_found = false;
@@ -367,17 +368,25 @@ void parse_body_of_POST(http_request_ctx *ctx) {
     // printf("\nBody: %s", ptr_body);
     // printf("\nContent-Type of Body of Request: %s",
     // ctx->ptr_body_content_type); printf("\nContent-Length of Body of Request:
-    // %zu",
+    // %zu ",
     //        *ctx->ptr_body_content_length);
 
-    if (strcmp(ctx->ptr_body_content_type,
-               "application/x-www-form-urlencoded") == 0) {
-        char HTTP_format[] = "HTTP/1.1 200 OK\r\nContent-Type: "
-                             "text/html\r\nConnection: close\r\n\r\n%s";
-        char *ptr_packet_buffer = malloc(BUFFER_SIZE);
-        snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, ptr_body);
-        send_http_response(ctx->new_connection_fd, ptr_packet_buffer);
-    }
+    char HTTP_format[] = "HTTP/1.1 200 OK\r\nContent-Type: "
+                         "text/html\r\nConnection: close\r\n\r\n%s";
+    char *ptr_packet_buffer = malloc(BUFFER_SIZE);
+    snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, ptr_body);
+    send_http_response(ctx->new_connection_fd, ptr_packet_buffer);
+
+    // if (strcmp(ctx->ptr_body_content_type,
+    //            "application/x-www-form-urlencoded") == 0) {
+    //     char *ptr_packet_buffer = malloc(BUFFER_SIZE);
+    //     snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, ptr_body);
+    //     send_http_response(ctx->new_connection_fd, ptr_packet_buffer);
+    // } else if (strcmp(ctx->ptr_body_content_type, "application/json") == 0) {
+    //     char *ptr_packet_buffer = malloc(BUFFER_SIZE);
+    //     snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, ptr_body);
+    //     send_http_response(ctx->new_connection_fd, ptr_packet_buffer);
+    // }
 
     free(ptr_body);
     free(ctx->ptr_body_content_type);
@@ -397,7 +406,7 @@ void END_OF_HEADERS_STATE(http_request_ctx *ctx) {
     char *ptr_uri_buffer = uri_buffer;
     FILE *file_ptr = fopen(uri_buffer, "r");
 
-    if (file_ptr == NULL) {
+    if (file_ptr == NULL && strcmp(ctx->ptr_method, "GET") == 0) {
         fprintf(stderr, "\t Can't open file : %s\n", ptr_uri_buffer);
         ERROR_STATE_404(ctx);
         close(ctx->new_connection_fd);
@@ -409,6 +418,7 @@ void END_OF_HEADERS_STATE(http_request_ctx *ctx) {
 
     if (access(uri_buffer, F_OK) == 0 && !S_ISDIR(sb.st_mode) &&
         strcmp(ctx->ptr_method, "GET") == 0) {
+        // printf("\nGET");
         send_requested_file_back(ctx, ptr_uri_buffer);
         free(uri_buffer);
         free(ctx->ptr_uri);
@@ -417,14 +427,12 @@ void END_OF_HEADERS_STATE(http_request_ctx *ctx) {
         return;
     } else if (strcmp(ctx->ptr_method, "HEAD") == 0 &&
                access(uri_buffer, F_OK) == 0 && !S_ISDIR(sb.st_mode)) {
-        // printf("\nhead request");
         send_requested_HEAD_back(ctx, ptr_uri_buffer);
         free(uri_buffer);
         free(ctx->ptr_uri);
         free(ctx->ptr_method);
         return;
     } else if (strcmp(ctx->ptr_method, "POST") == 0) {
-        printf("\nPOST Method detected!");
         parse_body_of_POST(ctx);
         free(uri_buffer);
         free(ctx->ptr_uri);
@@ -467,12 +475,12 @@ void HEADER_NAME_STATE(http_request_ctx *ctx) {
 
         if (buffer_len == 2 && buffer[i] == '\r' && buffer[i + 1] == '\n') {
             single_crlf_found = true;
-            // no need to check buffer len = 2 if method is POST, as it has a
-            // body unlike HEAD and GET
+            i = buffer_len;
         } else if (strcmp(ctx->ptr_method, "POST") == 0 && buffer[i] == '\r' &&
                    buffer[i + 1] == '\n') {
             single_crlf_found = true;
             *ctx->ptr_ptr_http_client_buffer = &buffer[i + 2];
+            i = buffer_len;
         }
     }
 

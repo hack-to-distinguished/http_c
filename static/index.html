@@ -30,6 +30,7 @@
       Your browser does not support HTML video.
     </video>
 
+  <h2>application/x-www-form-urlencoded format</h2>
   <form method="POST">
     <label for="fname">First name:</label><br>
     <input type="text" id="fname" name="fname" value="John"><br>
@@ -37,8 +38,30 @@
     <input type="text" id="lname" name="lname" value="Doe"><br><br>
     <input type="submit" value="Submit">
   </form> 
+
+  <h2>application/json format</h2>
+  <form id="profileForm">
+    <label>Username:
+      <input type="text" name="username">
+    </label><br>
+
+    <label>Password:
+      <input type="password" name="password">
+    </label><br>
+
+    <label>Favourite Sport:
+      <input type="text" name="sport">
+    </label><br>
+
+    <label>Hobby:
+      <input type="text" name="hobby">
+    </label><br>
+
+    <button type="submit">Submit</button>
+  </form>
   </main>
 
   <script src="./javascript/test.js"></script>
+  <script src="./javascript/json-data-form-handler.js"></script>
 </body>
 </html>
