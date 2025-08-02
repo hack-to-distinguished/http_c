@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
     // recevie data from server
     char buf[1024];
     int bytes_recv;
-    while (recv(client_fd, buf, sizeof(buf), 0) > 0) {
+    while ((bytes_recv = recv(client_fd, buf, sizeof(buf), 0)) > 0) {
         printf("\nMessage(s) recevied from server:\n");
         printf("%s", buf);
     }

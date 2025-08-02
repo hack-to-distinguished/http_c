@@ -1,20 +1,43 @@
-# threadpoolserver: threaded_server_src/http.c threaded_server_src/threadpool.c threaded_server_src/threadpoolserver.c
-# 	gcc -o threadpoolserver threaded_server_src/http.c threaded_server_src/threadpool.c threaded_server_src/threadpoolserver.c 
-#
-# clean:
-# 	rm -f threadpoolserver 
-#
-
+# Compiler and flags
 CC = gcc
-CFLAGS = -g -O1 -fsanitize=address -Wall -Wextra -pthread
-SRC = threaded_server_src/http.c threaded_server_src/threadpool.c threaded_server_src/threadpoolserver.c
-TARGET = threadpoolserver
+CFLAGS = -g -O1 -Wall -Wextra -pthread
 
-all: $(TARGET)
+# Threadpool HTTP server
+THREADPOOL_SRCS = threaded_server_src/http.c threaded_server_src/threadpool.c threaded_server_src/threadpoolserver.c
+THREADPOOL_BIN = threadpoolserver
 
-$(TARGET): $(SRC)
-	$(CC) $(CFLAGS) -o $(TARGET) $(SRC)
+# Web server (WebSocket)
+WEBSERVER_SRCS = web_server/server.c web_server/sha1.c
+WEBSERVER_BIN = web_server/server
+
+# SSH server/client
+SSH_SERVER_SRCS = ssh_server/server.c
+SSH_SERVER_BIN = ssh_server/server
+SSH_CLIENT_SRCS = ssh_server/client.c
+SSH_CLIENT_BIN = ssh_server/client
+
+# Simple client
+CLIENT_SRCS = client.c
+CLIENT_BIN = client
+
+all: $(THREADPOOL_BIN) $(WEBSERVER_BIN) $(SSH_SERVER_BIN) $(SSH_CLIENT_BIN) $(CLIENT_BIN)
+
+$(THREADPOOL_BIN): $(THREADPOOL_SRCS)
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(WEBSERVER_BIN): $(WEBSERVER_SRCS)
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(SSH_SERVER_BIN): $(SSH_SERVER_SRCS)
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(SSH_CLIENT_BIN): $(SSH_CLIENT_SRCS)
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(CLIENT_BIN): $(CLIENT_SRCS)
+	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(THREADPOOL_BIN) $(WEBSERVER_BIN) $(SSH_SERVER_BIN) $(SSH_CLIENT_BIN) $(CLIENT_BIN)
 
+.PHONY: all clean
