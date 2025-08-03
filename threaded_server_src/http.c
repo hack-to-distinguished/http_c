@@ -10,7 +10,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define BUFFER_SIZE 4096
+#define BUFFER_SIZE 8192
 
 const mime_type mime_types[] = {
     {"txt", "text/plain", "text"},       {"html", "text/html", "text"},
@@ -33,10 +33,11 @@ char *receive_HTTP_request(int new_connection_fd) {
     int bytes_recv;
     size_t body_len = 0;
     bool header_read = false;
+    int i = 0;
 
     while ((bytes_recv = recv(new_connection_fd,
                               ptr_http_request_buffer + total_received,
-                              BUFFER_SIZE - total_received, 0)) > 0) {
+                              BUFFER_SIZE, 0)) > 0) {
         total_received += bytes_recv;
 
         char *end_of_headers = strstr(ptr_http_request_buffer, "\r\n\r\n");
@@ -57,9 +58,9 @@ char *receive_HTTP_request(int new_connection_fd) {
         }
 
         if (total_received >= BUFFER_SIZE) {
-            fprintf(stderr, "\nrequest too large");
-            free(ptr_http_request_buffer);
-            return NULL;
+            char *new_ptr =
+                realloc(ptr_http_request_buffer, total_received + BUFFER_SIZE);
+            ptr_http_request_buffer = new_ptr;
         }
     }
 
@@ -75,8 +76,9 @@ char *receive_HTTP_request(int new_connection_fd) {
         return NULL;
     }
 
-    // printf("\nBytes Received: %d\nMessage Received: \n%s", total_received,
-    //        ptr_http_request_buffer);
+    printf("\ni: %d", i);
+    printf("\nBytes Received: %d\nMessage Received: \n%s", total_received,
+           ptr_http_request_buffer);
     ptr_http_request_buffer[total_received] = '\0';
     return ptr_http_request_buffer;
 }

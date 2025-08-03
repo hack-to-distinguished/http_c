@@ -21,7 +21,6 @@ typedef struct {
 extern const mime_type mime_types[];
 extern const size_t mime_types_len;
 
-// TODO: CREATE TYPEDEF STRUCT TO CLEAN UP ALL THESE UGLY AF POINTERS
 void HEADER_NAME_STATE(http_request_ctx *ctx);
 void HEADER_VALUE_STATE(http_request_ctx *ctx);
 void ERROR_STATE_400(http_request_ctx *ctx);
@@ -38,5 +37,4 @@ const mime_type *get_http_mime_type(const mime_type mime_types[],
 void send_requested_file_back(http_request_ctx *ctx, char *ptr_uri_buffer);
 void send_requested_HEAD_back(http_request_ctx *ctx, char *ptr_uri_buffer);
 void parse_body_of_POST(http_request_ctx *ctx);
-void process_body_of_POST(http_request_ctx *ctx);
 char *format_date(char *str, time_t val);

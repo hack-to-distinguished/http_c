@@ -59,6 +59,14 @@
 
     <button type="submit">Submit</button>
   </form>
+
+  <h2>Submit Form (multipart/form-data)</h2>
+  <form action="/upload" method="POST" enctype="multipart/form-data">
+    <label for="profilePic">Upload a file:</label><br>
+    <input type="file" id="fileUpload" name="profilePic"><br><br>
+    <input type="submit" value="Submit">
+  </form>
+
   </main>
 
   <script src="./javascript/test.js"></script>
