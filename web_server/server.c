@@ -187,32 +187,27 @@ int main() {
                 ws_send_websocket_response(client_fd, ws_sec_key);
 
 		/* TODO:
-		* - Change the state of the client's conection to "OPEN"
-		* - Use "Frames" to send and read data
+		* - Build a frames parser
 		*/
             }
         }
 
         for (int i = 1; i < fd_count; i++) {
             if (pfds[i].revents & POLLIN) {
-                bytes_recv = recv(pfds[i].fd, buffer, BUFFER_SIZE, 0);
+
+                while((bytes_recv = recv(pfds[i].fd, buffer, BUFFER_SIZE, 0)) > 0) {
+                    printf("Message received: \n%s \nfrom %d\n", buffer, pfds[i].fd);
+		}
                 if (bytes_recv <= 0) {
-                    if (bytes_recv == 0) {
-                        printf("User %d disconnected\n", pfds[i].fd);
-                    } else {
-                        perror("Recv error");
-                    }
+		    printf("USER %d DISCONNECTED\n", pfds[i].fd);
                     close(pfds[i].fd);
                     conn_clients[i] = conn_clients[fd_count - 1];
-                    pfds[i] = pfds[fd_count - 1];
-                    // Other than pos 0 we don't care about the order
+                    pfds[i] = pfds[fd_count - 1]; // Other than pos 0 we don't care about the order
                     fd_count--;
                     i--;
                 } else {
                     buffer[bytes_recv] = '\0';
-                    printf("Message received: %s \nfrom %d\n", buffer, pfds[i].fd);
-                    // const char *ws_sec_key = ws_parse_websocket_http(buffer);
-                    // printf("websocket key: %s\n", ws_sec_key);
+                    // printf("Message received: %s \nfrom %d\n", buffer, pfds[i].fd);
 
                     for (int j = 1; j < fd_count; j++) {
                         if (pfds[j].fd != pfds[i].fd) {
