@@ -44,7 +44,8 @@ char *receive_HTTP_request(int new_connection_fd) {
         //        ptr_http_request_buffer);
 
         if (total_received >= BUFFER_SIZE - 1) {
-            printf("\nBuffer Size not large enough, dynamically resizing...");
+            // printf("\nBuffer Size not large enough, dynamically
+            // resizing...");
             char *new_ptr =
                 realloc(ptr_http_request_buffer, total_received + BUFFER_SIZE);
             ptr_http_request_buffer = new_ptr;
@@ -371,11 +372,31 @@ void parse_body_of_POST(http_request_ctx *ctx) {
             (int)*ctx->ptr_body_content_length + 1);
     ptr_body[(int)*ctx->ptr_body_content_length] = '\0';
 
-    // printf("\nBody: %s", ptr_body);
+    // printf("\nBody: \n%s\n", ptr_body);
     // printf("\nContent-Type of Body of Request: %s",
     // ctx->ptr_body_content_type); printf("\nContent-Length of Body of Request:
-    // %zu ",
-    //        *ctx->ptr_body_content_length);
+    //        % zu ",
+    //        * ctx->ptr_body_content_length);
+
+    if (strstr(ctx->ptr_body_content_type, "multipart/form-data")) {
+        char *file_name;
+        char *start = strstr(ptr_body, "filename=");
+        start += 10;
+        char *end = strstr(start, "\r\n");
+        size_t file_name_len = end - start - 1;
+
+        // printf("\nstart: %s", start);
+        // printf("\nend: %s", end);
+        // printf("\nend-start: %ld", file_name_len);
+
+        file_name = malloc(file_name_len + 1);
+        strncpy(file_name, start, file_name_len);
+        file_name[file_name_len] = '\0';
+
+        printf("\nFile name: %s", file_name);
+
+        free(file_name);
+    }
 
     char HTTP_format[] = "HTTP/1.1 200 OK\r\nContent-Type: "
                          "text/html\r\nConnection: close\r\n\r\n%s";
@@ -623,7 +644,7 @@ void parse_HTTP_requests(int new_connection_fd) {
     ctx->ptr_ptr_http_client_buffer = &ptr_http_client_buffer;
     REQUEST_LINE_STATE(ctx);
 
-    free(ptr_http_client_buffer);
     free(ctx);
+    free(ptr_http_client_buffer);
     return;
 }
