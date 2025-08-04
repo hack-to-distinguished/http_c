@@ -10,7 +10,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define BUFFER_SIZE 8192
+#define BUFFER_SIZE 1024
 
 const mime_type mime_types[] = {
     {"txt", "text/plain", "text"},       {"html", "text/html", "text"},
@@ -40,10 +40,21 @@ char *receive_HTTP_request(int new_connection_fd) {
                               BUFFER_SIZE, 0)) > 0) {
         total_received += bytes_recv;
 
+        // printf("\nTotal Recv: %d bytes at pointer %p", total_received,
+        //        ptr_http_request_buffer);
+
+        if (total_received >= BUFFER_SIZE - 1) {
+            printf("\nBuffer Size not large enough, dynamically resizing...");
+            char *new_ptr =
+                realloc(ptr_http_request_buffer, total_received + BUFFER_SIZE);
+            ptr_http_request_buffer = new_ptr;
+        }
+
         char *end_of_headers = strstr(ptr_http_request_buffer, "\r\n\r\n");
         if (end_of_headers != NULL) {
             header_read = true;
-            char *result = strstr(ptr_http_request_buffer, "Content-Length: ");
+            char *result = memmem(ptr_http_request_buffer, BUFFER_SIZE + 1,
+                                  "Content-Length: ", 15);
             if (result != NULL) {
                 body_len = atoi(result + 15);
             }
@@ -55,12 +66,6 @@ char *receive_HTTP_request(int new_connection_fd) {
             if (body_bytes >= body_len) {
                 break;
             }
-        }
-
-        if (total_received >= BUFFER_SIZE) {
-            char *new_ptr =
-                realloc(ptr_http_request_buffer, total_received + BUFFER_SIZE);
-            ptr_http_request_buffer = new_ptr;
         }
     }
 
@@ -76,10 +81,9 @@ char *receive_HTTP_request(int new_connection_fd) {
         return NULL;
     }
 
-    printf("\ni: %d", i);
-    printf("\nBytes Received: %d\nMessage Received: \n%s", total_received,
-           ptr_http_request_buffer);
     ptr_http_request_buffer[total_received] = '\0';
+    // printf("\nBytes Received: %d\nMessage Received: \n%s", total_received,
+    //        ptr_http_request_buffer);
     return ptr_http_request_buffer;
 }
 
@@ -251,7 +255,7 @@ void send_requested_file_back(http_request_ctx *ctx, char *ptr_uri_buffer) {
 
         char ch;
         char *ptr_file_contents = malloc(sizeof(char) * (size + 1));
-        char *ptr_packet_buffer = malloc(BUFFER_SIZE + (size + 1));
+        char *ptr_packet_buffer = malloc(BUFFER_SIZE + size + 1);
         counter = 0;
         size_t file_contents_len;
 
@@ -268,8 +272,8 @@ void send_requested_file_back(http_request_ctx *ctx, char *ptr_uri_buffer) {
             "HTTP/1.1 200 OK\r\nContent-Length: "
             "%ld\r\nContent-Type: %s\r\nConnection: close\r\n\r\n%s";
 
-        snprintf(ptr_packet_buffer, BUFFER_SIZE, HTTP_format, file_contents_len,
-                 content_type, ptr_file_contents);
+        snprintf(ptr_packet_buffer, BUFFER_SIZE + size + 1, HTTP_format,
+                 file_contents_len, content_type, ptr_file_contents);
 
         send_http_response(ctx->new_connection_fd, ptr_packet_buffer);
         free(file_type);
@@ -498,6 +502,8 @@ void HEADER_NAME_STATE(http_request_ctx *ctx) {
 }
 
 void REQUEST_LINE_STATE(http_request_ctx *ctx) {
+    // char *buffer = malloc(8);
+    // buffer = *ctx->ptr_ptr_http_client_buffer;
     char *buffer = *ctx->ptr_ptr_http_client_buffer;
 
     ctx->ptr_method = malloc(sizeof(char) * 8);
@@ -617,7 +623,7 @@ void parse_HTTP_requests(int new_connection_fd) {
     ctx->ptr_ptr_http_client_buffer = &ptr_http_client_buffer;
     REQUEST_LINE_STATE(ctx);
 
-    free(ctx);
     free(ptr_http_client_buffer);
+    free(ctx);
     return;
 }
