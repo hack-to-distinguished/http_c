@@ -21,9 +21,9 @@ void error(const char *msg) {
     exit(0);
 }
 
-// AI generate b64 encoder
+// AI generated b64 encoder
 static const char b64_table[] ="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-size_t base64_encode(const unsigned char *in, size_t in_len, char *out, size_t out_size) {
+size_t ws_base64_encode(const unsigned char *in, size_t in_len, char *out, size_t out_size) {
     size_t i = 0, o = 0;
     while (i < in_len) {
         unsigned char a3[3] = {0,0,0};
@@ -42,6 +42,56 @@ size_t base64_encode(const unsigned char *in, size_t in_len, char *out, size_t o
     if (o < out_size)
         out[o] = '\0';
     return o;  // returns number of bytes written (not counting null terminator)
+}
+
+// AI generated frame decoder
+ssize_t ws_recv_frame(int sock, char *out, size_t max_len) {
+    unsigned char hdr[2];
+    if (recv(sock, hdr, 2, 0) <= 0) return -1;
+
+    // int fin = hdr[0] & 0x80;
+    // int opcode = hdr[0] & 0x0F;
+    int masked = hdr[1] & 0x80;
+    size_t payload_len = hdr[1] & 0x7F;
+
+    if (payload_len == 126) {
+        unsigned char ext[2];
+        recv(sock, ext, 2, 0);
+        payload_len = (ext[0] << 8) | ext[1];
+    } else if (payload_len == 127) {
+        unsigned char ext[8];
+        recv(sock, ext, 8, 0);
+        // For simplicity, only support <= 2^32
+        payload_len = 0;
+        for (int i = 0; i < 8; i++) payload_len = (payload_len << 8) | ext[i];
+    }
+
+    unsigned char mask[4];
+    if (masked) recv(sock, mask, 4, 0);
+
+    if (payload_len > max_len) return -1;
+
+    unsigned char *data = (unsigned char *)out;
+    recv(sock, data, payload_len, 0);
+
+    if (masked) {
+        for (size_t i = 0; i < payload_len; i++) {
+            data[i] ^= mask[i % 4];
+        }
+    }
+
+    out[payload_len] = '\0';
+    return payload_len;
+}
+
+void ws_send_frame(int sock, const char *msg) {
+    size_t len = strlen(msg);
+    unsigned char header[2] = {0x81, 0};
+    if (len < 126) {
+        header[1] = len;
+        send(sock, header, 2, 0);
+    }
+    send(sock, msg, len, 0);
 }
 
 
@@ -109,7 +159,7 @@ const char *ws_parse_websocket_http(const char *http_header) {
     SHA1Final(digest, &ctx);
 
     static char accept_key[32]; // Base64 of 20 bytes is 28 chars + padding + null
-    base64_encode(digest, 20, accept_key, sizeof(accept_key));
+    ws_base64_encode(digest, 20, accept_key, sizeof(accept_key));
     printf("Sec-WebSocket-Accept: %s\n", accept_key);
     return accept_key;
 }
@@ -190,28 +240,24 @@ int main() {
 
         for (int i = 1; i < fd_count; i++) {
             if (pfds[i].revents & POLLIN) {
-                bytes_recv = recv(pfds[i].fd, buffer, BUFFER_SIZE, 0);
+
+                while((bytes_recv = ws_recv_frame(pfds[i].fd, buffer, BUFFER_SIZE)) > 0) {
+                    printf("Message received: \n%s \nfrom %d\n", buffer, pfds[i].fd);
+
+		}
                 if (bytes_recv <= 0) {
-                    if (bytes_recv == 0) {
-                        printf("User %d disconnected\n", pfds[i].fd);
-                    } else {
-                        perror("Recv error");
-                    }
+		    printf("USER %d DISCONNECTED\n", pfds[i].fd);
                     close(pfds[i].fd);
                     conn_clients[i] = conn_clients[fd_count - 1];
-                    pfds[i] = pfds[fd_count - 1];
-                    // Other than pos 0 we don't care about the order
+                    pfds[i] = pfds[fd_count - 1]; // Other than pos 0 we don't care about the order
                     fd_count--;
                     i--;
                 } else {
                     buffer[bytes_recv] = '\0';
-                    printf("Message received: %s \nfrom %d\n", buffer, pfds[i].fd);
-                    // const char *ws_sec_key = ws_parse_websocket_http(buffer);
-                    // printf("websocket key: %s\n", ws_sec_key);
 
                     for (int j = 1; j < fd_count; j++) {
                         if (pfds[j].fd != pfds[i].fd) {
-                            ws_send_http_response(pfds[j].fd, buffer);
+                            ws_send_frame(pfds[j].fd, buffer);
                         }
                     }
                 }
