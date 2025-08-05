@@ -372,30 +372,12 @@ void parse_body_of_POST(http_request_ctx *ctx) {
             (int)*ctx->ptr_body_content_length + 1);
     ptr_body[(int)*ctx->ptr_body_content_length] = '\0';
 
-    // printf("\nBody: \n%s\n", ptr_body);
-    // printf("\nContent-Type of Body of Request: %s",
-    // ctx->ptr_body_content_type); printf("\nContent-Length of Body of Request:
-    //        % zu ",
-    //        * ctx->ptr_body_content_length);
+    // printf("\nBody: %s", ptr_body);
 
     if (strstr(ctx->ptr_body_content_type, "multipart/form-data")) {
-        char *file_name;
-        char *start = strstr(ptr_body, "filename=");
-        start += 10;
-        char *end = strstr(start, "\r\n");
-        size_t file_name_len = end - start - 1;
-
-        // printf("\nstart: %s", start);
-        // printf("\nend: %s", end);
-        // printf("\nend-start: %ld", file_name_len);
-
-        file_name = malloc(file_name_len + 1);
-        strncpy(file_name, start, file_name_len);
-        file_name[file_name_len] = '\0';
-
-        printf("\nFile name: %s", file_name);
-
-        free(file_name);
+        printf("\nBoundary: %s", ctx->ptr_boundary);
+        free(ctx->ptr_boundary);
+        // printf("\n%s", *ctx->ptr_ptr_http_client_buffer);
     }
 
     char HTTP_format[] = "HTTP/1.1 200 OK\r\nContent-Type: "
@@ -547,8 +529,23 @@ void REQUEST_LINE_STATE(http_request_ctx *ctx) {
         ptr_body_content_type = malloc(sizeof(char) * ((end - start) + 1));
         strncpy(ptr_body_content_type, start, end - start);
         ptr_body_content_type[end - start] = '\0';
+        char *boundary_start =
+            strstr(ptr_body_content_type, "multipart/form-data; boundary=");
+        char *boundary;
+        if (boundary_start) {
+            // printf("\nboundary detected");
+            boundary_start += strlen("multipart/form-data; boundary=");
+            // printf("\nboundary_start: %s", boundary_start);
+            // printf("\nboundary_start_len: %ld", strlen(boundary_start));
+            boundary = malloc(sizeof(char) * (strlen(boundary_start) + 1));
+            boundary[strlen(boundary_start)] = '\0';
+            strncpy(boundary, boundary_start, strlen(boundary_start));
+            ctx->ptr_boundary = boundary;
+            // printf("\nBoundary Extracted: %s", boundary);
+        }
     }
     ctx->ptr_body_content_type = ptr_body_content_type;
+    // printf("\nContent Type: %s", ptr_body_content_type);
 
     size_t *ptr_body_content_length;
     start = strstr(buffer, "Content-Length: ");
