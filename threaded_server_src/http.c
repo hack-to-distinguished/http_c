@@ -1,4 +1,5 @@
 #include "http.h"
+#include <alloca.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,7 +28,8 @@ const mime_type mime_types[] = {
 const size_t mime_types_len = sizeof(mime_types) / sizeof(mime_types[0]);
 
 char *receive_HTTP_request(int new_connection_fd) {
-    char *ptr_http_request_buffer = malloc(BUFFER_SIZE + 1);
+    size_t allocated_size = BUFFER_SIZE + 1;
+    char *ptr_http_request_buffer = malloc(allocated_size);
 
     int total_received = 0;
     int bytes_recv;
@@ -37,8 +39,10 @@ char *receive_HTTP_request(int new_connection_fd) {
 
     while ((bytes_recv = recv(new_connection_fd,
                               ptr_http_request_buffer + total_received,
-                              BUFFER_SIZE, 0)) > 0) {
+                              allocated_size - total_received - 1, 0)) > 0) {
         total_received += bytes_recv;
+
+        ptr_http_request_buffer[total_received] = '\0';
 
         // printf("\nTotal Recv: %d bytes at pointer %p", total_received,
         //        ptr_http_request_buffer);
@@ -46,15 +50,16 @@ char *receive_HTTP_request(int new_connection_fd) {
         if (total_received >= BUFFER_SIZE - 1) {
             // printf("\nBuffer Size not large enough, dynamically
             // resizing...");
-            char *new_ptr =
-                realloc(ptr_http_request_buffer, total_received + BUFFER_SIZE);
+            size_t new_size = allocated_size * 2;
+            char *new_ptr = realloc(ptr_http_request_buffer, new_size);
             ptr_http_request_buffer = new_ptr;
+            allocated_size = new_size;
         }
 
         char *end_of_headers = strstr(ptr_http_request_buffer, "\r\n\r\n");
         if (end_of_headers != NULL) {
             header_read = true;
-            char *result = memmem(ptr_http_request_buffer, BUFFER_SIZE + 1,
+            char *result = memmem(ptr_http_request_buffer, BUFFER_SIZE,
                                   "Content-Length: ", 15);
             if (result != NULL) {
                 body_len = atoi(result + 15);
