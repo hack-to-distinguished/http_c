@@ -1,17 +1,21 @@
+# Exe files
 client
 threadpoolserver
-omar 
+omar
 threadedserver
 server
 persistent_client
 .clang-format
 mul_client_server
+*.o
 
+# Random
 .DS_Store
 threadpoolserver.dSYM
+.zed
 
 # Front end development just in case
 frontend_httpc/.vite/
-node_modules/ 
+node_modules/
 package-lock.json
 package.json
