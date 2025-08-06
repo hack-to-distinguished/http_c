@@ -1,5 +1,4 @@
 #include "http.h"
-#include <_string.h>
 #include <alloca.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -383,239 +382,70 @@ void parse_body_of_POST(http_request_ctx *ctx) {
 
     printf("\nContent Body Length: %zu", *ctx->ptr_body_content_length);
 
-    // if (strstr(ctx->ptr_body_content_type, "multipart/form-data")) {
-    //     size_t body_len = *ctx->ptr_body_content_length;
-    //     char *ptr_body = *ctx->ptr_ptr_http_client_buffer;
-    //
-    //     // Extract boundary from content type
-    //     const char *boundary_key = "boundary=";
-    //     const char *boundary_start =
-    //         strstr(ctx->ptr_body_content_type, boundary_key);
-    //     if (!boundary_start) {
-    //         fprintf(stderr, "No boundary found in content type\n");
-    //         return;
-    //     }
-    //     boundary_start += strlen(boundary_key);
-    //     const char *boundary_end = strchr(boundary_start, ';');
-    //     size_t boundary_len = boundary_end
-    //                               ? (size_t)(boundary_end - boundary_start)
-    //                               : strlen(boundary_start);
-    //
-    //     char *boundary = malloc(boundary_len + 1);
-    //     if (!boundary) {
-    //         perror("malloc boundary");
-    //         return;
-    //     }
-    //     strncpy(boundary, boundary_start, boundary_len);
-    //     boundary[boundary_len] = '\0';
-    //
-    //     // full boundary string = "--" + boundary
-    //     size_t full_boundary_len = boundary_len + 2;
-    //     char *full_boundary = malloc(full_boundary_len + 1);
-    //     if (!full_boundary) {
-    //         perror("malloc full_boundary");
-    //         free(boundary);
-    //         return;
-    //     }
-    //     snprintf(full_boundary, full_boundary_len + 1, "--%s", boundary);
-    //
-    //     // Simple memmem implementation here (inline), searching for boundary
-    //     // in
-    //     // ptr_body
-    //     void *memmem_ptr = NULL;
-    //     size_t i;
-    //     for (i = 0; i <= body_len - full_boundary_len; i++) {
-    //         if (memcmp(ptr_body + i, full_boundary, full_boundary_len) == 0)
-    //         {
-    //             memmem_ptr = ptr_body + i;
-    //             break;
-    //         }
-    //     }
-    //     if (!memmem_ptr) {
-    //         fprintf(stderr, "Boundary string not found in body\n");
-    //         free(boundary);
-    //         free(full_boundary);
-    //         return;
-    //     }
-    //     char *part_start = (char *)memmem_ptr + full_boundary_len;
-    //     if (part_start + 2 > ptr_body + body_len ||
-    //         strncmp(part_start, "\r\n", 2) != 0) {
-    //         fprintf(stderr, "Boundary format incorrect\n");
-    //         free(boundary);
-    //         free(full_boundary);
-    //         return;
-    //     }
-    //     part_start += 2; // Skip \r\n
-    //
-    //     // Find headers end (\r\n\r\n)
-    //     memmem_ptr = NULL;
-    //     for (i = 0; i <= (size_t)((ptr_body + body_len) - part_start) - 4;
-    //          i++) {
-    //         if (memcmp(part_start + i, "\r\n\r\n", 4) == 0) {
-    //             memmem_ptr = part_start + i;
-    //             break;
-    //         }
-    //     }
-    //     if (!memmem_ptr) {
-    //         fprintf(stderr, "Headers end not found\n");
-    //         free(boundary);
-    //         free(full_boundary);
-    //         return;
-    //     }
-    //     char *headers_end = (char *)memmem_ptr;
-    //
-    //     size_t headers_len = headers_end - part_start;
-    //     char *headers = malloc(headers_len + 1);
-    //     if (!headers) {
-    //         perror("malloc headers");
-    //         free(boundary);
-    //         free(full_boundary);
-    //         return;
-    //     }
-    //     memcpy(headers, part_start, headers_len);
-    //     headers[headers_len] = '\0';
-    //
-    //     // Find filename="..."
-    //     const char *filename_key = "filename=\"";
-    //     char *filename_start = strstr(headers, filename_key);
-    //     if (!filename_start) {
-    //         fprintf(stderr, "Filename not found in headers\n");
-    //         free(boundary);
-    //         free(full_boundary);
-    //         free(headers);
-    //         return;
-    //     }
-    //     filename_start += strlen(filename_key);
-    //     char *filename_end = strchr(filename_start, '"');
-    //     if (!filename_end) {
-    //         fprintf(stderr, "Invalid filename format\n");
-    //         free(boundary);
-    //         free(full_boundary);
-    //         free(headers);
-    //         return;
-    //     }
-    //     size_t filename_len = filename_end - filename_start;
-    //     char *filename = malloc(filename_len + 1);
-    //     if (!filename) {
-    //         perror("malloc filename");
-    //         free(boundary);
-    //         free(full_boundary);
-    //         free(headers);
-    //         return;
-    //     }
-    //     strncpy(filename, filename_start, filename_len);
-    //     filename[filename_len] = '\0';
-    //
-    //     free(headers);
-    //
-    //     // Content starts after \r\n\r\n
-    //     char *content_start = headers_end + 4;
-    //     printf("\nheaders_end: %s", headers_end);
-    //
-    //     // Find next boundary occurrence for content end
-    //     size_t rest_len = (ptr_body + body_len) - content_start;
-    //     memmem_ptr = NULL;
-    //     for (i = 0; i <= rest_len - full_boundary_len; i++) {
-    //         if (memcmp(content_start + i, full_boundary, full_boundary_len)
-    //         ==
-    //             0) {
-    //             memmem_ptr = content_start + i;
-    //             break;
-    //         }
-    //     }
-    //     char *next_boundary =
-    //         memmem_ptr ? (char *)memmem_ptr : ptr_body + body_len;
-    //
-    //     size_t content_len = (size_t)(next_boundary - content_start);
-    //     if (content_len >= 2 && content_start[content_len - 2] == '\r' &&
-    //         content_start[content_len - 1] == '\n') {
-    //         content_len -= 2; // strip trailing \r\n before boundary
-    //     }
-    //
-    //     printf("\nContent Start: %p %c", content_start, content_start[0]);
-    //     printf("\nContent Start: %p %c", content_start, content_start[-1]);
-    //
-    //     // Save the file
-    //     const char *dir = "static/";
-    //     size_t path_len = strlen(dir) + filename_len + 1;
-    //     char *path = malloc(path_len);
-    //     if (!path) {
-    //         perror("malloc path");
-    //         free(boundary);
-    //         free(full_boundary);
-    //         free(filename);
-    //         return;
-    //     }
-    //     strcpy(path, dir);
-    //     strcat(path, filename);
-    //
-    //     FILE *fp = fopen(path, "wb");
-    //     if (!fp) {
-    //         perror("fopen file");
-    //         free(boundary);
-    //         free(full_boundary);
-    //         free(filename);
-    //         free(path);
-    //         return;
-    //     }
-    //
-    //     size_t written = fwrite(content_start, 1, content_len, fp);
-    //     fclose(fp);
-    //
-    //     printf("Saved file: %s (%zu bytes)\n", path, written);
-    //     printf("\nContent len: %ld", content_len);
-    //
-    //     free(boundary);
-    //     free(full_boundary);
-    //     free(filename);
-    //     free(path);
-    // }
     if (strstr(ctx->ptr_body_content_type, "multipart/form-data")) {
-        char *header_start = strstr(ptr_body, ctx->ptr_boundary);
-        header_start += strlen(ctx->ptr_boundary) + strlen("\r\n");
-        char *file_name_start = strstr(header_start, "filename=");
-        file_name_start += strlen("filename=") + 1;
-        char *file_name_end = strstr(header_start, "\r\n") - 1;
+        char *ptr_body = *ctx->ptr_ptr_http_client_buffer;
+        size_t body_len = *ctx->ptr_body_content_length;
+
+        size_t boundary_len = strlen(ctx->ptr_boundary);
+        char *header_start =
+            memmem(ptr_body, body_len, ctx->ptr_boundary, boundary_len);
+        header_start += boundary_len;
+        header_start += 2;
+
+        const char *filename_key = "filename=\"";
+        char *file_name_start =
+            memmem(header_start, body_len - (header_start - ptr_body),
+                   filename_key, strlen(filename_key));
+
+        file_name_start += strlen(filename_key);
+
+        char *file_name_end =
+            memchr(file_name_start, '"', ptr_body + body_len - file_name_start);
+
         size_t file_name_len = file_name_end - file_name_start;
-        char *file_name = malloc(sizeof(char) * (file_name_len + 1));
+        char *file_name = malloc(file_name_len + 1);
         file_name[file_name_len] = '\0';
         strncpy(file_name, file_name_start, file_name_len);
-        printf("\nFile Name: %s", file_name);
 
         size_t full_path_len = file_name_len + strlen("static/");
-        char *full_path = malloc(sizeof(char) * (full_path_len + 1));
+        char *full_path = malloc(full_path_len + 1);
         full_path[full_path_len] = '\0';
         strcpy(full_path, "static/");
         strcat(full_path, file_name);
-        printf("\nFull path: %s", full_path);
-        printf("\nBoundary: %s", ctx->ptr_boundary);
 
-        size_t full_boundary_len = strlen(ctx->ptr_boundary) + strlen("--");
-        char *full_boundary = malloc(sizeof(char) * (full_boundary_len + 1));
+        size_t full_boundary_len = strlen(ctx->ptr_boundary) + 2;
+        char *full_boundary = malloc(full_boundary_len + 1);
         full_boundary[full_boundary_len] = '\0';
         strcpy(full_boundary, "--");
         strcat(full_boundary, ctx->ptr_boundary);
-        printf("\nFull Boundary: %s", full_boundary);
 
-        char *cursor = memmem(ptr_body, strlen(ptr_body), full_boundary,
-                              full_boundary_len);
-        cursor += full_boundary_len + strlen("\r\n");
-        cursor = strstr(cursor, "\r\n\r\n");
+        char *cursor =
+            memmem(ptr_body, body_len, full_boundary, full_boundary_len);
+
+        cursor += full_boundary_len;
+        cursor += 2;
+
+        cursor = memmem(cursor, body_len - (cursor - ptr_body), "\r\n\r\n", 4);
         cursor += 4;
         char *content_start = cursor;
-        size_t rest_len =
-            (ptr_body + *ctx->ptr_body_content_length) - content_start;
-        size_t content_len =
-            rest_len - full_boundary_len - strlen("--\r\n") - 2;
-        printf("\nContent-len: %ld", content_len);
 
-        printf("\nContent Start: %p %c", content_start, content_start[0]);
+        size_t rest_len = (ptr_body + body_len) - content_start;
+
+        char *next_boundary =
+            memmem(content_start, rest_len, full_boundary, full_boundary_len);
+        printf("\nnext boundary: %s", next_boundary);
+        size_t content_len = next_boundary - content_start;
 
         FILE *file_to_be_saved = fopen(full_path, "wb");
+
         size_t bytes_written =
             fwrite(content_start, 1, content_len, file_to_be_saved);
         printf("\nBytes written: %ld", bytes_written);
         fclose(file_to_be_saved);
+
+        free(full_boundary);
+        free(file_name);
+        free(full_path);
         free(ctx->ptr_boundary);
     }
 
