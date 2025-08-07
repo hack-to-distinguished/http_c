@@ -377,10 +377,7 @@ void parse_body_of_POST(http_request_ctx *ctx) {
             (int)*ctx->ptr_body_content_length + 1);
     ptr_body[(int)*ctx->ptr_body_content_length] = '\0';
 
-    printf("\nBody: %s", ptr_body);
     const char *body = ptr_body;
-
-    printf("\nContent Body Length: %zu", *ctx->ptr_body_content_length);
 
     if (strstr(ctx->ptr_body_content_type, "multipart/form-data")) {
         char *ptr_body = *ctx->ptr_ptr_http_client_buffer;
@@ -433,14 +430,12 @@ void parse_body_of_POST(http_request_ctx *ctx) {
 
         char *next_boundary =
             memmem(content_start, rest_len, full_boundary, full_boundary_len);
-        printf("\nnext boundary: %s", next_boundary);
         size_t content_len = next_boundary - content_start;
 
         FILE *file_to_be_saved = fopen(full_path, "wb");
 
         size_t bytes_written =
             fwrite(content_start, 1, content_len, file_to_be_saved);
-        printf("\nBytes written: %ld", bytes_written);
         fclose(file_to_be_saved);
 
         free(full_boundary);
