@@ -1,10 +1,14 @@
-# 🌐 C HTTP Server
+# Project Overview
 
-A bare-bones HTTP server written in C from scratch using low-level socket programming. This project walks through core networking concepts like TCP, echo servers, request parsing, and HTTP response construction.
+This project is composed of two core components:
 
-- Thread Pool.
-- Stateful Parsing.
-- GET, HEAD Requests supported.
+## 🔧 HTTP_C Web Server  
+A custom-built HTTP/1.1 web server written from scratch in C.  
+It uses a thread pool to efficiently handle multiple simultaneous client connections, enabling fast and scalable request processing.
+
+## 💬 Messaging System  
+A real-time messaging platform that leverages the WebSocket protocol for persistent, bidirectional communication.  
+It features a TypeScript-based frontend that allows users to send and receive messages seamlessly.
 
 ---
 
