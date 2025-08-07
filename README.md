@@ -3,12 +3,14 @@
 This project is composed of two core components:
 
 ## 🔧 HTTP_C Web Server  
-A custom-built HTTP/1.1 web server written from scratch in C.  
-It uses a thread pool to efficiently handle multiple simultaneous client connections, enabling fast and scalable request processing.
+- A custom-built HTTP/1.1 web server written from scratch in C.  
+- It uses a thread pool to efficiently handle multiple simultaneous client connections, enabling fast and scalable request processing.
+- Uses stateful parsing for HTTP Request Packets:
+
 
 ## 💬 Messaging System  
-A real-time messaging platform that leverages the WebSocket protocol for persistent, bidirectional communication.  
-It features a TypeScript-based frontend that allows users to send and receive messages seamlessly.
+- A real-time messaging platform that leverages the WebSocket protocol for persistent, bidirectional communication.  
+- It features a TypeScript-based frontend that allows users to send and receive messages seamlessly.
 
 ---
 
