@@ -241,9 +241,9 @@ int main() {
         for (int i = 1; i < fd_count; i++) {
             if (pfds[i].revents & POLLIN) {
 
+		// TODO: This while loop is the culprit
                 while((bytes_recv = ws_recv_frame(pfds[i].fd, buffer, BUFFER_SIZE)) > 0) {
                     printf("Message received: \n%s \nfrom %d\n", buffer, pfds[i].fd);
-
 		}
                 if (bytes_recv <= 0) {
 		    printf("USER %d DISCONNECTED\n", pfds[i].fd);
