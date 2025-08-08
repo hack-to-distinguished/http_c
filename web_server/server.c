@@ -85,6 +85,7 @@ ssize_t ws_recv_frame(int sock, char *out, size_t max_len) {
 }
 
 void ws_send_frame(int sock, const char *msg) {
+    printf("Sending %s to %d", msg, sock);
     size_t len = strlen(msg);
     unsigned char header[2] = {0x81, 0};
     if (len < 126) {
@@ -243,25 +244,33 @@ int main() {
 
                 while((bytes_recv = ws_recv_frame(pfds[i].fd, buffer, BUFFER_SIZE)) > 0) {
                     printf("Message received: \n%s \nfrom %d\n", buffer, pfds[i].fd);
-
+		    printf("Reached");
 		}
-                if (bytes_recv <= 0) {
-		    printf("USER %d DISCONNECTED\n", pfds[i].fd);
-                    close(pfds[i].fd);
-                    conn_clients[i] = conn_clients[fd_count - 1];
-                    pfds[i] = pfds[fd_count - 1]; // Other than pos 0 we don't care about the order
-                    fd_count--;
-                    i--;
-                } else {
-                    buffer[bytes_recv] = '\0';
 
-                    for (int j = 1; j < fd_count; j++) {
-                        if (pfds[j].fd != pfds[i].fd) {
-                            ws_send_frame(pfds[j].fd, buffer);
-                        }
-                    }
-                }
-            }
+		printf("Bytes received: %d", bytes_recv);
+		if (bytes_recv <= 0) {
+		    if (bytes_recv == 0) {
+			printf("User %d disconnected\n", pfds[i].fd);
+		    } else {
+			perror("Recv error");
+		    }
+		close(pfds[i].fd);
+		conn_clients[i] = conn_clients[fd_count - 1];
+		pfds[i] = pfds[fd_count - 1];
+		// Other than pos 0 we don't care about the order
+		fd_count--;
+		i--;
+		} else {
+		    buffer[bytes_recv] = '\0';
+		    for (int j = 1; j < fd_count; j++) {
+			printf("Sending to %d", pfds[j].fd);
+			ws_send_frame(pfds[j].fd, buffer);
+			// if (pfds[j].fd != pfds[i].fd) {
+			    // ws_send_frame(pfds[j].fd, buffer);
+			// }
+		    }
+		}
+	    }
         }
     }
 }
