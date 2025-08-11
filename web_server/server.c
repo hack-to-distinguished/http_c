@@ -255,12 +255,14 @@ int main() {
 			i--;
 		    }
 		} else {
+		    // TODO: Make the messages send to the other connection!
 		    bytes_recv = ws_recv_frame(pfds[i].fd, buffer, BUFFER_SIZE);
 		    if (bytes_recv > 0) {
 			printf("From %d: %s\n", pfds[i].fd, buffer);
 
 			for (int j = 1; j < fd_count; j++) {
-			    if (is_websocket[j] && pfds[j].fd != pfds[i].fd) {
+			    if (is_websocket[pfds[j].fd] && pfds[j].fd != pfds[i].fd) {
+				printf("%d Sending '%s' to %d", pfds[i].fd, buffer, pfds[j].fd);
 				ws_send_frame(pfds[j].fd, buffer);
 			    }
 			}
