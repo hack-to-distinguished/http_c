@@ -13,11 +13,10 @@ function MessageDisplay() {
       .then(console.log);
   }
 
-
   const [msg, setMsg] = useState(null);
-  const msg_feed = []; // Temporary until we establish a real db
 
   useEffect(() => {
+    const msg_feed = []; // Temporary until we establish a real db
     let isMounted = true;
     const startPolling = () => {
       axios.get("http://localhost:8080")
@@ -64,30 +63,3 @@ function MessageDisplay() {
 }
 
 export default MessageDisplay
-
-// useEffect(() => {
-//   // Note the "ws://" protocol scheme
-//   const socket = new WebSocket("ws://localhost:8080");
-//
-//   // Connection opened
-//   socket.addEventListener("open", (event) => {
-//     console.log("WebSocket connected!");
-//     socket.send("Hello Server, from React!"); // How you send a message
-//   });
-//
-//   // Listen for messages from the server
-//   socket.addEventListener("message", (event) => {
-//     console.log("Message from server: ", event.data);
-//     // Here you would setMsg(event.data)
-//   });
-//
-//   // Handle closing
-//   socket.addEventListener("close", (event) => {
-//     console.log("WebSocket disconnected.");
-//   });
-//
-//   // Cleanup on component unmount
-//   return () => {
-//     socket.close();
-//   };
-// }, []);
