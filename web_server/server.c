@@ -262,7 +262,6 @@ int main() {
 
 			for (int j = 1; j < fd_count; j++) {
 			    if (is_websocket[pfds[j].fd] && pfds[j].fd != pfds[i].fd) {
-				printf("%d Sending '%s' to %d", pfds[i].fd, buffer, pfds[j].fd);
 				ws_send_frame(pfds[j].fd, buffer);
 			    }
 			}
