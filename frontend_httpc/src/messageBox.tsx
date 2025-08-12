@@ -50,8 +50,8 @@ function MessageDisplay() {
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    // if (currentMessage && socket.current?.readyState === WebSocket.OPEN) {
-    if (currentMessage) {
+    if (currentMessage && socket.current?.readyState === WebSocket.OPEN) {
+    // if (currentMessage) {
       console.log(`Sending message: ${currentMessage}`);
       socket.current.send(currentMessage);
       setCurrentMessage("");
@@ -83,8 +83,7 @@ function MessageDisplay() {
           onChange={(e) => setCurrentMessage(e.target.value)}
           placeholder="Type a message..."
         />
-        {/* disabled={connectionStatus !== "Connected"} */}
-        <button type="submit">
+        <button type="submit" disabled={connectionStatus !== "Connected"}>
           Send Message
         </button>
       </form>

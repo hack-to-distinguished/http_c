@@ -13,11 +13,10 @@ function MessageDisplay() {
       .then(console.log);
   }
 
-
   const [msg, setMsg] = useState(null);
-  const msg_feed = []; // Temporary until we establish a real db
 
   useEffect(() => {
+    const msg_feed = []; // Temporary until we establish a real db
     let isMounted = true;
     const startPolling = () => {
       axios.get("http://localhost:8080")
