@@ -1,6 +1,15 @@
 # Project Overview
 
-This project is composed of two core components:
+The aim of this project is to develop proficiency in C socket and network programming. By mastering these skills, we can integrate this project with our other project, [Tank Squared](https://github.com/ChristianHrs/tank_squared), enabling real-time in-game communication through chat, as well as supporting custom lobbies that players can host and join.
+
+The next major step is to develop a **database management system from scratch** to track player statistics and manage messaging. This system will also be integrated with the other components, resulting in a fully unified implementation within **Tank Squared**.
+
+**COMPONENTS:**
+- Messaging Service
+- Web Server
+- Database Management System
+
+This project is composed of two core components (soon to be three...):
 
 ---
 
