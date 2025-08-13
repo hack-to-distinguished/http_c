@@ -9,11 +9,26 @@ The next major step is to develop a **database management system from scratch** 
 - Web Server
 - Database Management System
 
-This project is composed of two core components (soon to be three...):
+---
+
+## Table of Contents
+- [Simple HTTP_C Web Server](#simple-http_c-web-server)
+  - [State Machine Diagram](#state-machine-diagram)
+- [Benchmarking Results](#benchmarking-results)
+  - [Test Parameters](#test-parameters)
+  - [Results](#results)
+  - [Observations](#observations)
+- [Messaging System](#messaging-system)
+- [Project Structure](#project-structure)
+  - [Phase 1: TCP Echo Server](#phase-1-tcp-echo-server)
+  - [Phase 2: HTTP Server](#phase-2-http-server)
+  - [Phase 3: Messaging](#phase-3-messaging)
+  - [Phase 4: Integration & Expansion](#phase-4-integration--expansion)
+- [How to Compile and Run the HTTP Web Server](#how-to-compile-and-run-the-http-web-server)
 
 ---
 
-## 🔧 Simple HTTP_C Web Server  
+## Simple HTTP_C Web Server  
 
 A custom-built HTTP/1.1 web server written from scratch in C, designed for **high performance and scalability**.  
 
@@ -21,7 +36,7 @@ A custom-built HTTP/1.1 web server written from scratch in C, designed for **hig
 - Thread pool implementation for efficiently handling multiple simultaneous client connections.
 - Stateful HTTP request parsing using a **state machine** for precise and robust request handling.
 
-**State Machine Diagram:**
+### State Machine Diagram
 
 <img width="688" height="667" alt="HTTP Request State Machine" src="https://github.com/user-attachments/assets/98b77725-f7ef-4b65-8e52-3d474b0f31fb" />
 
@@ -53,7 +68,7 @@ These results demonstrate that the server is **efficient at handling static file
 
 ---
 
-## 💬 Messaging System  
+## Messaging System  
 
 A real-time messaging platform leveraging the **WebSocket protocol** for persistent, bidirectional communication.  
 
@@ -63,15 +78,15 @@ A real-time messaging platform leveraging the **WebSocket protocol** for persist
 
 ---
 
-## 🧱 Project Structure
+## Project Structure
 
-### ✅ Phase 1: TCP Echo Server
+### Phase 1: TCP Echo Server
 - [x] Create a socket
 - [x] Bind to a port
 - [x] Listen and accept connections
 - [x] Receive data and send it back (echo)
 
-### ✅ Phase 2: HTTP Server
+### Phase 2: HTTP Server
 - [x] Listen on TCP port
 - [x] Apply HTTP protocol to incoming and outgoing data (Ongoing - NJ)
 - [x] Large data streaming
@@ -92,7 +107,7 @@ A real-time messaging platform leveraging the **WebSocket protocol** for persist
 
 ---
 
-## ⚙️ How to Compile and Run the HTTP Web Server
+## How to Compile and Run the HTTP Web Server
 
 ```bash
 # Compile
