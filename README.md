@@ -1,8 +1,8 @@
 # Project Overview
 
-The aim of this project is to develop proficiency in C socket and network programming. By mastering these skills, we can integrate this project with our other project, [`Tank Squared`](https://github.com/ChristianHrs/tank_squared), enabling real-time in-game communication through chat, as well as supporting custom lobbies that players can host and join.
+This project features a messaging service system and an HTTP web server, both built in C. These components will be integrated into [`Tank Squared`](https://github.com/ChristianHrs/tank_squared) to enable real-time in-game chat, custom player-hosted lobbies, and future database-driven features such as player statistics tracking.
 
-The next major step is to develop a **database management system from scratch** to track player statistics and manage messaging. This system will also be integrated with the other components, resulting in a fully unified implementation within **Tank Squared**.
+The next major step is to develop a database management system from scratch to track player statistics and manage messaging. This system will also be integrated with the other components, resulting in a fully unified implementation within Tank Squared.
 
 **COMPONENTS:**
 - Messaging Service
