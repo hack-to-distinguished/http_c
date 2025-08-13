@@ -52,6 +52,9 @@ We evaluated the server using [`wrk`](https://github.com/wg/wrk), a modern HTTP 
 - **Duration:** 30 seconds per test  
 - **Threads & Connections:** varied to simulate different levels of concurrency
 
+**`/static/index.html`**:
+<img width="1625" height="945" alt="image" src="https://github.com/user-attachments/assets/7bcddd8d-2e68-469c-99a4-62340721a2b2" />
+
 ### Results
 
 | Threads | Connections | Duration | Requests/sec | Avg Latency | Stdev Latency | Max Latency | Requests Completed | Transfer/sec | Notes |
