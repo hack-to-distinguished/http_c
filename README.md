@@ -5,7 +5,9 @@ This project is composed of two core components:
 ## 🔧 HTTP_C Web Server  
 - A custom-built HTTP/1.1 web server written from scratch in C.  
 - It uses a thread pool to efficiently handle multiple simultaneous client connections, enabling fast and scalable request processing.
-- Uses stateful parsing for HTTP Request Packets:
+- Uses stateful parsing for HTTP Request Packets (STATE Machine Diagram):
+<img width="688" height="667" alt="image" src="https://github.com/user-attachments/assets/98b77725-f7ef-4b65-8e52-3d474b0f31fb" />
+
 
 
 ## 💬 Messaging System  
