@@ -13,6 +13,10 @@ mul_client_server
 .DS_Store
 threadpoolserver.dSYM
 .zed
+client.dSYM/
+ssh_server/client.dYSM/
+ssh_server/server.dYSM/
+web_server/server.dYSM/
 
 # Front end development just in case
 frontend_httpc/.vite/
