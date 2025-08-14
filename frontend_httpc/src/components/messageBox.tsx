@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import "./components.css";
+import "./messageBox.css";
 
-function MessageDisplay() {
-  const serverUrl = "ws://127.0.0.0:8080";
+function MessageBox() {
+  const serverUrl = "ws://127.0.0.1:8080";
 
   // Store the socket instance in a ref to avoid re-creating it on re-renders
   const socket = useRef(null);
@@ -91,4 +91,4 @@ function MessageDisplay() {
   );
 }
 
-export default MessageDisplay;
+export default MessageBox;
