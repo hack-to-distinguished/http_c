@@ -1,52 +1,28 @@
 import { useState, useEffect, useRef } from "react";
 import "./messageBox.css";
 
-function MessageBox() {
-  const serverUrl = "ws://127.0.0.1:8080";
+function MessageBox({socket, connectionStatus}) {
 
-  // Store the socket instance in a ref to avoid re-creating it on re-renders
-  const socket = useRef(null);
-  const [connectionStatus, setConnectionStatus] = useState("Disconnected");
   const [messages, setMessages] = useState([]);
   const [currentMessage, setCurrentMessage] = useState("");
 
-  useEffect(() => {
-    console.log("Attempting to connect to WebSocket...");
-    setConnectionStatus("Connecting...");
-
-    socket.current = new WebSocket(serverUrl);
-
-    socket.current.onopen = () => {
-      console.log("WebSocket connection established!");
-      setConnectionStatus("Connected");
-    };
-
-    socket.current.onmessage = (event) => {
-      const receivedMessage = event.data;
-      console.log("Message from server: ", receivedMessage);
-
-      // Add the new message to our list of messages
-      // Use a functional update to get the previous state correctly
-      setMessages(prevMessages => [...prevMessages, receivedMessage]);
-    };
-
-    socket.current.onclose = () => {
-      console.log("WebSocket connection closed.");
-      setConnectionStatus("Disconnected");
-    };
-
-    socket.current.onerror = (error) => {
-      console.error("WebSocket error: ", error);
-      setConnectionStatus("Error");
-    };
-
-    return () => {
-      if (socket.current) {
-        console.log("Closing WebSocket connection.");
-        socket.current.close();
-      }
-    };
-  }, []);
+  // useEffect(() => {
+  //   socket.current.onmessage = (event) => {
+  //     const receivedMessage = event.data;
+  //     console.log("Message from server: ", receivedMessage);
+  //
+  //     // Add the new message to our list of messages
+  //     // Use a functional update to get the previous state correctly
+  //     setMessages(prevMessages => [...prevMessages, receivedMessage]);
+  //   };
+  //
+  //   return () => {
+  //     // if (socket.current) {
+  //     //   console.log("Closing WebSocket connection.");
+  //     //   socket.current.close();
+  //     // }
+  //   };
+  // }, [socket]);
 
   const handleSendMessage = (e) => {
     e.preventDefault();
@@ -62,10 +38,6 @@ function MessageBox() {
 
   return (
     <div className="chat-container">
-      <div className="status">
-        <strong>Connection Status:</strong> {connectionStatus}
-      </div>
-
       <div className="message-display">
         <h2>Messages from Server:</h2>
         <ul>
