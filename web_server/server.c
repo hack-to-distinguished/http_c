@@ -208,7 +208,6 @@ int main() {
     bool is_websocket[BACKLOG + 1] = {false};
 
     while (1) {
-
         int poll_count = poll(pfds, fd_count, -1);
         if (poll_count == -1) {
             error("Poll error");
@@ -237,37 +236,37 @@ int main() {
                 recv(client_fd, buffer, BUFFER_SIZE, 0);
                 const char *ws_sec_key = ws_parse_websocket_http(buffer);
                 ws_send_websocket_response(client_fd, ws_sec_key);
-		is_websocket[client_fd] = true;
+				is_websocket[client_fd] = true;
             }
         }
 
         for (int i = 1; i < fd_count; i++) {
             if (pfds[i].revents & POLLIN) {
 
-		if (!is_websocket[pfds[i].fd]) {
-		    const char *client_key = ws_parse_websocket_http(buffer);
-		    if (client_key) {
-			ws_send_websocket_response(pfds[i].fd, client_key);
-		    } else {
-			close(pfds[i].fd);
-			conn_clients[i] = conn_clients[fd_count - 1];
-			pfds[i] = pfds[fd_count - 1]; // Other than pos 0 we don't care about the order
-			fd_count--;
-			i--;
-		    }
-		} else {
-		    // TODO: Make the messages send to the other connection!
-		    bytes_recv = ws_recv_frame(pfds[i].fd, buffer, BUFFER_SIZE);
-		    if (bytes_recv > 0) {
-			printf("From %d: %s\n", pfds[i].fd, buffer);
+				if (!is_websocket[pfds[i].fd]) {
+					const char *client_key = ws_parse_websocket_http(buffer);
+					if (client_key) {
+						ws_send_websocket_response(pfds[i].fd, client_key);
+					} else {
+						close(pfds[i].fd);
+						conn_clients[i] = conn_clients[fd_count - 1];
+						pfds[i] = pfds[fd_count - 1]; // Other than pos 0 we don't care about the order
+						fd_count--;
+						i--;
+					}
+				} else {
+					// TODO: Make the messages send to the other connection!
+					bytes_recv = ws_recv_frame(pfds[i].fd, buffer, BUFFER_SIZE);
+					if (bytes_recv > 0) {
+						printf("From %d: %s\n", pfds[i].fd, buffer);
 
-			for (int j = 1; j < fd_count; j++) {
-			    if (is_websocket[pfds[j].fd] && pfds[j].fd != pfds[i].fd) {
-				ws_send_frame(pfds[j].fd, buffer);
-			    }
-			}
-		    }
-		}
+						for (int j = 1; j < fd_count; j++) {
+							if (is_websocket[pfds[j].fd] && pfds[j].fd != pfds[i].fd) {
+								ws_send_frame(pfds[j].fd, buffer);
+							}
+						}
+					}
+				}
             }
         }
     }
