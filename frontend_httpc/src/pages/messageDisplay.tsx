@@ -11,7 +11,7 @@ function MessageDisplay() {
   return (
     <>
       <div>
-		<NetworkStatus socket={socket} connectionStatus={connectionStatus} />
+        <NetworkStatus socket={socket} connectionStatus={connectionStatus} />
         <MessageBox socket={socket} connectionStatus={connectionStatus} />
       </div>
     </>
