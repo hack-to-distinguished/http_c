@@ -1,10 +1,7 @@
 // Service to receive and send messages - Will then be used by the
 // message box (send messages) and the message feed (recv msg)
-import { useState } from "react";
 
-const [messages, setMessages] = useState([]);
-
-export const recvMessage = async ({ socket }) => {
+export const recvMessage = async ({ socket, setMessages }) => {
   // TODO: Run on a setTimeout interval
 	socket.current.onmessage = (event) => {
 		const receivedMessage = event.data;
