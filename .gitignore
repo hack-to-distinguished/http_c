@@ -7,6 +7,7 @@ server
 persistent_client
 .clang-format
 mul_client_server
+skeleton
 *.o
 
 # Random
@@ -14,9 +15,10 @@ mul_client_server
 threadpoolserver.dSYM
 .zed
 client.dSYM/
-ssh_server/client.dYSM/
-ssh_server/server.dYSM/
-web_server/server.dYSM/
+ssh_server/client.dSYM/
+ssh_server/server.dSYM/
+web_server/server.dSYM/
+database/skeleton.dSYM/
 
 # Front end development just in case
 frontend_httpc/.vite/
