@@ -35,11 +35,11 @@ void getLineInput(inputLineBuffer *iPL) {
 
     if (*charactersRead == -1) {
         fprintf(stderr, "\nError occurred upon getting line from user.");
-        return;
+        exit(0);
     }
     if (*charactersRead == 0) {
         fprintf(stderr, "\nEOF was reach before any characters were read.");
-        return;
+        exit(0);
     }
 
     iPL->buffer = userInput;
@@ -52,20 +52,22 @@ void getLineInput(inputLineBuffer *iPL) {
 void processLineInput(inputLineBuffer *iPL) {
     if (*iPL->charactersReadInclEOF == 1) {
         fprintf(stderr, "\nEmpty input.");
-        return;
+        exit(0);
     }
-    printf("\niPL Buffer: %s", iPL->buffer);
-    printf("\niPL Buffer Length: %zu", *iPL->bufferLength);
-    printf("\niPL Characters Read (incl EOF): %ld",
-           *iPL->charactersReadInclEOF);
+    // printf("\niPL Buffer: %s", iPL->buffer);
+    // printf("\niPL Buffer Length: %zu", *iPL->bufferLength);
+    // printf("\niPL Characters Read (incl EOF): %ld\n\n",
+    //        *iPL->charactersReadInclEOF);
     return;
 }
 
 int main() {
-    inputLineBuffer *iPL = createInputLineBuffer();
-    getLineInput(iPL);
+    while (true) {
+        inputLineBuffer *iPL = createInputLineBuffer();
+        getLineInput(iPL);
 
-    processLineInput(iPL);
-    destroyInputLineBuffer(iPL);
+        processLineInput(iPL);
+        destroyInputLineBuffer(iPL);
+    }
     return 0;
 }
