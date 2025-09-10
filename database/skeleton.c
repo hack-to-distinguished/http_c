@@ -1,15 +1,9 @@
+#include "skeleton.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-typedef struct {
-    char *buffer;
-    size_t *bufferLength;
-    ssize_t *charactersReadInclEOF;
-
-} inputLineBuffer;
 
 inputLineBuffer *createInputLineBuffer() {
     inputLineBuffer *ptrInputLineBuffer = malloc(sizeof(inputLineBuffer));
@@ -54,10 +48,6 @@ void processLineInput(inputLineBuffer *iPL) {
         fprintf(stderr, "\nEmpty input.");
         exit(0);
     }
-    // printf("\niPL Buffer: %s", iPL->buffer);
-    // printf("\niPL Buffer Length: %zu", *iPL->bufferLength);
-    // printf("\niPL Characters Read (incl EOF): %ld\n\n",
-    //        *iPL->charactersReadInclEOF);
     return;
 }
 
