@@ -50,14 +50,3 @@ void processLineInput(inputLineBuffer *iPL) {
     }
     return;
 }
-
-int main() {
-    while (true) {
-        inputLineBuffer *iPL = createInputLineBuffer();
-        getLineInput(iPL);
-
-        processLineInput(iPL);
-        destroyInputLineBuffer(iPL);
-    }
-    return 0;
-}

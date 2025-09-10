@@ -9,12 +9,14 @@ persistent_client
 mul_client_server
 skeleton
 *.o
+sdbms
 
 # Random
 .DS_Store
 threadpoolserver.dSYM
 .zed
 client.dSYM/
+sdbms.dSYM/
 ssh_server/client.dSYM/
 ssh_server/server.dSYM/
 web_server/server.dSYM/

@@ -21,10 +21,10 @@ CLIENT_SRCS = client.c
 CLIENT_BIN = client
 
 # Simple Database Management System
-SKELETON_SRCS = database/skeleton.c
-SKELETON_BIN = database/skeleton
+SDBMS_SRCS = database/skeleton.c database/sdbms.c
+SDBMS_BIN = sdbms
 
-all: $(THREADPOOL_BIN) $(WEBSERVER_BIN) $(SSH_SERVER_BIN) $(SSH_CLIENT_BIN) $(CLIENT_BIN) $(SKELETON_BIN)
+all: $(THREADPOOL_BIN) $(WEBSERVER_BIN) $(SSH_SERVER_BIN) $(SSH_CLIENT_BIN) $(CLIENT_BIN) $(SDBMS_BIN)
 
 $(THREADPOOL_BIN): $(THREADPOOL_SRCS)
 	$(CC) $(CFLAGS) -o $@ $^
@@ -41,10 +41,10 @@ $(SSH_CLIENT_BIN): $(SSH_CLIENT_SRCS)
 $(CLIENT_BIN): $(CLIENT_SRCS)
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(SKELETON_BIN): $(SKELETON_SRCS)
+$(SDBMS_BIN): $(SDBMS_SRCS)
 	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
-	rm -f $(THREADPOOL_BIN) $(WEBSERVER_BIN) $(SSH_SERVER_BIN) $(SSH_CLIENT_BIN) $(CLIENT_BIN) $(SKELETON_BIN)
+	rm -f $(THREADPOOL_BIN) $(WEBSERVER_BIN) $(SSH_SERVER_BIN) $(SSH_CLIENT_BIN) $(CLIENT_BIN) $(SDBMS_BIN)
 
 .PHONY: all clean
