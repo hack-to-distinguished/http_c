@@ -1,0 +1,48 @@
+typedef enum {
+    // Keywords
+    // Just going to do simple SQL commands, no inner joins etc.
+    TOKEN_KEYWORD_SELECT,
+    TOKEN_KEYWORD_FROM,
+    TOKEN_KEYWORD_WHERE,
+    TOKEN_KEYWORD_INSERT,
+    TOKEN_KEYWORD_UPDATE,
+    TOKEN_KEYWORD_DELETE,
+
+    // Identifiers -> names of columns, tables, etc
+    TOKEN_IDENTIFIER,
+
+    // Literals
+    TOKEN_STRING_LITERAL,
+    TOKEN_INTEGER_LITERAL,
+    TOKEN_FLOAT_LITERAL,
+    TOKEN_NULL_LITERAL,
+
+    // Operators
+    TOKEN_OPERATOR_EQ,
+    TOKEN_OPERATOR_NEQ,
+    TOKEN_OPERATOR_LT,
+    TOKEN_OPERATOR_LTE,
+    TOKEN_OPERATOR_GT,
+    TOKEN_OPERATOR_GTE,
+    TOKEN_OPERATOR_PLUS,
+    TOKEN_OPERATOR_MINUS,
+    TOKEN_OPERATOR_STAR,
+    TOKEN_OPERATOR_SLASH,
+
+    // Punctuation
+    TOKEN_COMMA,
+    TOKEN_SEMICOLON,
+    TOKEN_LPAREN,
+    TOKEN_RPAREN,
+    TOKEN_DOT,
+
+    // Special
+    TOKEN_EOF,
+    TOKEN_UNKNOWN
+} TokenType;
+
+typedef struct {
+    TokenType type;
+    char *lexeme;
+    int line;
+} Token;
