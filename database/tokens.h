@@ -1,3 +1,4 @@
+#include <stddef.h>
 typedef enum {
     // Keywords
     // Just going to do simple SQL commands, no inner joins etc.
@@ -42,7 +43,7 @@ typedef enum {
 } TokenType;
 
 typedef struct {
-    TokenType type;
+    TokenType *type;
     char *lexeme;
-    int line;
+    size_t line;
 } Token;

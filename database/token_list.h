@@ -2,10 +2,12 @@
 #include <stddef.h>
 
 typedef struct {
-    Token **index;
+    Token *indexPosition;
+    Token *tail;
+    size_t maxSize;
 } tokenListCTX;
 
 tokenListCTX *initialiseTokenList(size_t size);
-void appendToken();
+void appendToken(Token token);
 void getItem(size_t index);
 void destroyTokenList();
