@@ -10,26 +10,23 @@ int main() {
 
     tokenListCTX *ctx = initialiseTokenList(5);
 
-    Token token1;
-    token1.line = 1;
-    ctx->indexPosition = &token1;
-    ctx->indexPosition += 1;
+    printf("\nTail Address: %p, Index Address: %p", ctx->tail,
+           ctx->indexPosition);
 
-    Token token2;
-    token2.line = 2;
-    ctx->indexPosition = &token2;
-    ctx->indexPosition += 1;
+    for (int i = 0; i < 8; i++) {
+        Token token;
+        token.line = i + 1;
+        appendToken(token, ctx);
+    }
 
-    Token token3;
-    token3.line = 3;
-    ctx->indexPosition = &token3;
-    // ctx->indexPosition += 1;
-    printf("\n%ld", ctx->indexPosition->line);
+    for (int i = 0; i < 8; i++) {
+        printf("\n%ld", (size_t)ctx->tail[i].line);
+    }
 
-    // for (int i = 0; i < ctx->maxSize; i++) {
-    //     Token token = ctx->tail[i];
-    //     printf("\nToken Line: %ld, Token Address: %p", token.line, &token);
+    // if (ctx->tail + ctx->maxSize == ctx->indexPosition) {
+    //     printf("\nToken list is full!");
     // }
+
     // while (true) {
     //     inputLineBuffer *iPL = createInputLineBuffer();
     //     getLineInput(iPL);

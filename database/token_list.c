@@ -20,8 +20,29 @@ tokenListCTX *initialiseTokenList(size_t size) {
         indexPosition = tail;
         ctx->indexPosition = indexPosition;
         ctx->maxSize = size;
+        ctx->currentSize = 0;
     }
     return ctx;
 };
 
-void appendToken(Token token) { return; }
+bool isFull(tokenListCTX *ctx) { return ctx->currentSize >= ctx->maxSize; }
+
+void appendToken(Token token, tokenListCTX *ctx) {
+    if (!isFull(ctx)) {
+        *ctx->indexPosition = token;
+        ctx->indexPosition += 1;
+        ctx->currentSize += 1;
+    } else {
+        printf("\nReallocating Memory!");
+        ctx->currentSize += 1;
+        ctx->tail =
+            (Token *)realloc(ctx->tail, (int)ctx->currentSize * sizeof(Token));
+        if (ctx->tail == NULL) {
+            fprintf(stderr, "\nMemory not reallocated successfully for tail");
+            exit(0);
+        }
+        ctx->indexPosition = ctx->tail + ctx->currentSize - 1;
+        *ctx->indexPosition = token;
+    }
+    return;
+}
