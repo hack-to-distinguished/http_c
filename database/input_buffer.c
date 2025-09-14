@@ -1,4 +1,5 @@
 #include "input_buffer.h"
+#include "scanner.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -47,6 +48,8 @@ void processLineInput(inputLineBuffer *iPL) {
     if (*iPL->charactersReadInclEOF == 1) {
         fprintf(stderr, "\nEmpty input.");
         exit(0);
+    } else {
+        scanTokens(iPL->buffer);
     }
     return;
 }
