@@ -31,7 +31,12 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx) {
 
     // TODO: Going to just focus on all single lengthed lexemes
     switch (c) {
-
+    // Skip whitespace
+    case ' ':
+    case '\r':
+    case '\t':
+    case '\n':
+        break;
     // Punctuation
     case ',':
         addToken(ctx, TOKEN_COMMA);
