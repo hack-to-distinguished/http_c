@@ -7,14 +7,14 @@ tokenListCTX *initialiseTokenList(size_t size) {
     tokenListCTX *ctx = malloc(sizeof(tokenListCTX));
     if (ctx == NULL) {
         fprintf(stderr, "\nMemory not allocated successfully for tokenListCTX");
-        exit(0);
+        exit(1);
     } else {
         Token *tail;
         Token *indexPosition;
         tail = (Token *)malloc(size * sizeof(Token));
         if (tail == NULL) {
             fprintf(stderr, "\nMemory not allocated successfully for tail");
-            exit(0);
+            exit(1);
         }
         ctx->tail = tail;
         indexPosition = tail;
@@ -39,7 +39,7 @@ void appendToken(Token token, tokenListCTX *ctx) {
             (Token *)realloc(ctx->tail, (int)ctx->currentSize * sizeof(Token));
         if (ctx->tail == NULL) {
             fprintf(stderr, "\nMemory not reallocated successfully for tail");
-            exit(0);
+            exit(1);
         }
         ctx->indexPosition = ctx->tail + ctx->currentSize - 1;
         *ctx->indexPosition = token;

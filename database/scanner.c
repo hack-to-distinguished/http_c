@@ -27,11 +27,12 @@ void scanTokens(char *buffer) {
 
 char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx) {
     char c = *currentPosOfLexeme;
-    printf("\nChar c: '%c', ASCII Value: %d", c, c);
+    // printf("\nChar c: '%c', ASCII Value: %d", c, c);
 
     // TODO: Going to just focus on all single lengthed lexemes
     switch (c) {
-    // punctuation
+
+    // Punctuation
     case ',':
         addToken(ctx, TOKEN_COMMA);
         break;
@@ -47,6 +48,53 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx) {
     case '.':
         addToken(ctx, TOKEN_DOT);
         break;
+
+    // Operators
+    case '!':
+        if (match(currentPosOfLexeme, '=')) {
+            currentPosOfLexeme += 1;
+            addToken(ctx, TOKEN_OPERATOR_NEQ);
+            break;
+        } else {
+            fprintf(stderr, "\nUnrecognised Input");
+            exit(1);
+            break;
+        }
+    case '=':
+        addToken(ctx, TOKEN_OPERATOR_EQ);
+        break;
+    case '<':
+        if (match(currentPosOfLexeme, '=')) {
+            currentPosOfLexeme += 1;
+            addToken(ctx, TOKEN_OPERATOR_LTE);
+        } else {
+            addToken(ctx, TOKEN_OPERATOR_LT);
+        }
+        break;
+    case '>':
+        if (match(currentPosOfLexeme, '=')) {
+            currentPosOfLexeme += 1;
+            addToken(ctx, TOKEN_OPERATOR_GTE);
+        } else {
+            addToken(ctx, TOKEN_OPERATOR_GT);
+        }
+        break;
+    case '+':
+        addToken(ctx, TOKEN_OPERATOR_PLUS);
+        break;
+    case '-':
+        addToken(ctx, TOKEN_OPERATOR_MINUS);
+        break;
+    case '*':
+        addToken(ctx, TOKEN_OPERATOR_STAR);
+        break;
+    case '/':
+        addToken(ctx, TOKEN_OPERATOR_SLASH);
+        break;
+    default:
+        fprintf(stderr, "\nUnrecognised Input");
+        exit(1);
+        break;
     }
 
     return (currentPosOfLexeme + 1);
@@ -61,6 +109,14 @@ void addToken(tokenListCTX *ctx, TokenType tokenType) {
 
 bool isAtEnd(char *posInBuffer) {
     if (*posInBuffer == '\n' || *posInBuffer == '\0') {
+        return true;
+    }
+    return false;
+};
+
+bool match(char *posInBuffer, char expectedChar) {
+    posInBuffer += 1;
+    if (*posInBuffer == expectedChar) {
         return true;
     }
     return false;

@@ -30,11 +30,11 @@ void getLineInput(inputLineBuffer *iPL) {
 
     if (*charactersRead == -1) {
         fprintf(stderr, "\nError occurred upon getting line from user.");
-        exit(0);
+        exit(1);
     }
     if (*charactersRead == 0) {
         fprintf(stderr, "\nEOF was reach before any characters were read.");
-        exit(0);
+        exit(1);
     }
 
     iPL->buffer = userInput;
@@ -47,7 +47,7 @@ void getLineInput(inputLineBuffer *iPL) {
 void processLineInput(inputLineBuffer *iPL) {
     if (*iPL->charactersReadInclEOF == 1) {
         fprintf(stderr, "\nEmpty input.");
-        exit(0);
+        exit(1);
     } else {
         scanTokens(iPL->buffer);
     }
