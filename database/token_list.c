@@ -46,3 +46,10 @@ void appendToken(Token token, tokenListCTX *ctx) {
     }
     return;
 }
+
+void printAllTokens(tokenListCTX *ctx) {
+    for (int i = 0; i < 1; i++) {
+        printf("\nToken Type: %d", ctx->tail[i].type);
+    }
+    return;
+};

@@ -21,13 +21,19 @@ int main() {
     // for (int i = 0; i < 8; i++) {
     //     printf("\n%ld", (size_t)ctx->tail[i].line);
     // }
+    //
+    // while (true) {
+    //     inputLineBuffer *iPL = createInputLineBuffer();
+    //     getLineInput(iPL);
+    //
+    //     processLineInput(iPL);
+    //     destroyInputLineBuffer(iPL);
+    // }
 
-    while (true) {
-        inputLineBuffer *iPL = createInputLineBuffer();
-        getLineInput(iPL);
+    inputLineBuffer *iPL = createInputLineBuffer();
+    getLineInput(iPL);
 
-        processLineInput(iPL);
-        destroyInputLineBuffer(iPL);
-    }
+    processLineInput(iPL);
+    destroyInputLineBuffer(iPL);
     return 0;
 }
