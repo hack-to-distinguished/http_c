@@ -48,8 +48,13 @@ void appendToken(Token token, tokenListCTX *ctx) {
 }
 
 void printAllTokens(tokenListCTX *ctx) {
-    for (int i = 0; i < 1; i++) {
-        printf("\nToken Type: %d", ctx->tail[i].type);
+    int counter = 0;
+    while ((ctx->currentSize > counter) && (ctx->tail[counter].type >= 0) &&
+           (ctx->tail[counter].type <= 27)) {
+        printf("\nToken Type: %d", ctx->tail[counter].type);
+        counter += 1;
     }
     return;
 };
+
+void destroyTokenList() { return; };

@@ -18,9 +18,7 @@ void scanTokens(char *buffer) {
         currentPosOfLexeme = scanToken(currentPosOfLexeme, ctx);
     }
 
-    printf("\nEnum Token Type: %d", ctx->tail[0].type);
-
-    // printAllTokens(ctx);
+    printAllTokens(ctx);
 
     // after scanning the actual tokens, we then add EOF token TODO: will do
     // later
@@ -33,8 +31,21 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx) {
 
     // TODO: Going to just focus on all single lengthed lexemes
     switch (c) {
+    // punctuation
     case ',':
         addToken(ctx, TOKEN_COMMA);
+        break;
+    case ';':
+        addToken(ctx, TOKEN_SEMICOLON);
+        break;
+    case '(':
+        addToken(ctx, TOKEN_LPAREN);
+        break;
+    case ')':
+        addToken(ctx, TOKEN_RPAREN);
+        break;
+    case '.':
+        addToken(ctx, TOKEN_DOT);
         break;
     }
 
