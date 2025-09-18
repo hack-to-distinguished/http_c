@@ -11,11 +11,48 @@ const MessageBox = ({ socket, connectionStatus }: MessageBoxProps) => {
   const [messages, setMessages] = useState<string[]>([]);
   const [currentMessage, setCurrentMessage] = useState<string>("");
 
+  // useEffect(() => {
+  //   const handleRecvMessage = async () => {
+  //     // e.preventDefault();
+  //     await recvMessage({ socket, setMessages });
+  //   };
+  //   handleRecvMessage();
+  //
+  //   const interval = setInterval(handleRecvMessage, 1000);
+  //
+  //   return () => {
+  //     clearInterval(interval);
+  //   };
+  // }, [socket]);
+
+  // useEffect(() => {
+  //   recvMessage({ socket, setMessages });
+  //
+  //   return () => {
+  //     if (socket?.current) {
+  //       socket.current.onmessage = null;
+  //     }
+  //   };
+  // }, [socket]);
+
+
   useEffect(() => {
-    const handleRecvMessage = async (e) => {
-      e.preventDefault();
-      await recvMessage({ socket, setMessages });
-    }
+    if (!socket) return;
+    console.log("SOCKET:", socket);
+
+    const handleMessage = (event: MessageEvent) => {
+      const receivedMessage = event.data;
+      console.log("Message from server: ", receivedMessage);
+      setMessages(prevMessages => [...prevMessages, receivedMessage]);
+    };
+
+    socket.onmessage = handleMessage;
+
+    return () => {
+      if (socket) {
+        socket.onmessage = null;
+      }
+    };
   }, [socket]);
 
   const handleSendMessage = async (e) => {
@@ -42,13 +79,14 @@ const MessageBox = ({ socket, connectionStatus }: MessageBoxProps) => {
 
       <form onSubmit={handleSendMessage} className="message-form">
         <input
-          type="text"
-          value={currentMessage}
+          className="msg-input-box" type="text"
+          value={currentMessage} placeholder="Type a message..."
           onChange={(e) => setCurrentMessage(e.target.value)}
-          placeholder="Type a message..."
         />
-        <button type="submit" disabled={connectionStatus !== "Connected"}>
-          Send Message
+        <button
+          type="submit"
+          disabled={connectionStatus !== "Connected"}
+          className="send-msg-button"> Send Message
         </button>
       </form>
     </div>

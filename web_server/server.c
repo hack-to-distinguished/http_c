@@ -13,16 +13,17 @@
 #include "sha1.h"
 
 #define MYPORT "8080"
-#define BACKLOG 10
-#define BUFFER_SIZE 1024
+#define BACKLOG 20
+#define BUFFER_SIZE 2048
+#define MAX_CLIENTS 20
 
 void error(const char *msg) {
     perror(msg);
-    exit(0);
+    exit(1);
 }
 
-// AI generated b64 encoder
-static const char b64_table[] ="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+// AI Generated Base64 encoder
+static const char b64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 size_t ws_base64_encode(const unsigned char *in, size_t in_len, char *out, size_t out_size) {
     size_t i = 0, o = 0;
     while (i < in_len) {
@@ -50,33 +51,49 @@ ssize_t ws_recv_frame(int sock, char *out, size_t max_len) {
     if (recv(sock, hdr, 2, 0) <= 0) return -1;
 
     // int fin = hdr[0] & 0x80;
-    // int opcode = hdr[0] & 0x0F;
+    int opcode = hdr[0] & 0x0F;
     int masked = hdr[1] & 0x80;
     size_t payload_len = hdr[1] & 0x7F;
 
+    // Handle close frame
+    if (opcode == 8) {
+        return -1;
+    }
+
     if (payload_len == 126) {
         unsigned char ext[2];
-        recv(sock, ext, 2, 0);
+        if (recv(sock, ext, 2, 0) <= 0) return -1;
         payload_len = (ext[0] << 8) | ext[1];
     } else if (payload_len == 127) {
         unsigned char ext[8];
-        recv(sock, ext, 8, 0);
+        if (recv(sock, ext, 8, 0) <= 0) return -1;
         // For simplicity, only support <= 2^32
         payload_len = 0;
-        for (int i = 0; i < 8; i++) payload_len = (payload_len << 8) | ext[i];
+        for (int i = 4; i < 8; i++) // Use lower 4 bytes only
+            payload_len = (payload_len << 8) | ext[i];
     }
 
-    unsigned char mask[4];
-    if (masked) recv(sock, mask, 4, 0);
+    if (payload_len == 0) return 0;
+    if (payload_len > max_len - 1) { // Leave room for null terminator
+        printf("Message too large (payload_len=%zu, max=%zu)\n", payload_len, max_len - 1);
+        return -1;
+    }
 
-    if (payload_len > max_len) return -1;
+    unsigned char mask[4] = {0};
+    if (masked) {
+        if (recv(sock, mask, 4, 0) <= 0) return -1;
+    }
 
-    unsigned char *data = (unsigned char *)out;
-    recv(sock, data, payload_len, 0);
+    size_t bytes_read = 0;
+    while (bytes_read < payload_len) {
+        ssize_t result = recv(sock, out + bytes_read, payload_len - bytes_read, 0);
+        if (result <= 0) return -1;
+        bytes_read += result;
+    }
 
     if (masked) {
         for (size_t i = 0; i < payload_len; i++) {
-            data[i] ^= mask[i % 4];
+            out[i] ^= mask[i % 4];
         }
     }
 
@@ -84,21 +101,51 @@ ssize_t ws_recv_frame(int sock, char *out, size_t max_len) {
     return payload_len;
 }
 
+// WebSocket frame sender
 void ws_send_frame(int sock, const char *msg) {
-    printf("Sending %s to %d", msg, sock);
     size_t len = strlen(msg);
-    unsigned char header[2] = {0x81, 0};
+
+    printf("Sending to client %d: %s\n", sock, msg);
+
+    // Prepare header (assuming len < 65536)
+    unsigned char header[10] = {0};
+    header[0] = 0x81; // Text frame, FIN bit set
+
     if (len < 126) {
         header[1] = len;
-        send(sock, header, 2, 0);
+        if (send(sock, header, 2, 0) < 2) {
+            perror("Failed to send WebSocket header");
+            return;
+        }
+    } else if (len < 65536) {
+        header[1] = 126;
+        header[2] = (len >> 8) & 0xFF;
+        header[3] = len & 0xFF;
+        if (send(sock, header, 4, 0) < 4) {
+            perror("Failed to send WebSocket header");
+            return;
+        }
+    } else {
+        header[1] = 127;
+        // Set length bytes, assuming len is less than 2^32
+        for (int i = 0; i < 8; i++) {
+            header[9-i] = (len >> (i * 8)) & 0xFF;
+        }
+        if (send(sock, header, 10, 0) < 10) {
+            perror("Failed to send WebSocket header");
+            return;
+        }
     }
-    send(sock, msg, len, 0);
+
+    // Send payload
+    if (send(sock, msg, len, 0) < (ssize_t)len) {
+        perror("Failed to send WebSocket payload");
+    }
 }
 
-
-void ws_send_http_response(int sock, char *body) {
+void ws_send_http_response(int sock, const char *body) {
     char response[BUFFER_SIZE];
-    int body_len = strlen(body) + 15; // Add 15 to account for the dict format
+    int body_len = strlen(body) + 15; // Add 15 to account for the JSON format
 
     snprintf(response, sizeof(response),
          "HTTP/1.1 200 OK\r\n"
@@ -124,10 +171,23 @@ void ws_send_websocket_response(int sock, const char *accept_key) {
 }
 
 const char *ws_parse_websocket_http(const char *http_header) {
-    // printf("Full Header: \n%s\n", http_header);
+    if (!http_header || http_header[0] == '\0') {
+        printf("Empty HTTP header\n");
+        return NULL;
+    }
+
+    // Check if it's a WebSocket upgrade request
+    if (strstr(http_header, "Upgrade: websocket") == NULL) {
+        printf("Not a WebSocket upgrade request\n");
+        return NULL;
+    }
+
     char *key = NULL;
     char *header_copy = strdup(http_header);
-    if (!header_copy) return NULL;
+    if (!header_copy) {
+        perror("Failed to allocate memory for header copy");
+        return NULL;
+    }
 
     const char *needle = "Sec-WebSocket-Key:";
     char *line = strtok(header_copy, "\r\n");
@@ -148,10 +208,9 @@ const char *ws_parse_websocket_http(const char *http_header) {
     }
 
     const char *magic_str = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-    char concat_str[128];
+    char concat_str[256];
     snprintf(concat_str, sizeof(concat_str), "%s%s", key, magic_str);
     free(key);
-
 
     unsigned char digest[20];
     SHA1_CTX ctx;
@@ -165,109 +224,203 @@ const char *ws_parse_websocket_http(const char *http_header) {
     return accept_key;
 }
 
+// Client data structure
+typedef struct {
+    int fd;
+    bool is_websocket;
+    char ip[INET6_ADDRSTRLEN];
+} client_t;
 
-
-int main() {
+int main(int argc, char *argv[]) {
     struct addrinfo hints, *res;
     struct sockaddr_storage their_addr;
     socklen_t their_addrlen = sizeof(their_addr);
     int server_fd;
     int reuse_addr_flag = 1;
-    int *ptr_reuse_addr_flag = &reuse_addr_flag;
+
+    // Initialize client array
+    client_t clients[MAX_CLIENTS];
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        clients[i].fd = -1;
+        clients[i].is_websocket = false;
+    }
 
     memset(&hints, 0, sizeof hints); // will just copy 0s
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
-    int addr_info = getaddrinfo(NULL, MYPORT, &hints, &res);
-    if (addr_info == -1) {
-        error("error getaddrinfo");
+
+    const char *host = (argc > 1) ? argv[1] : NULL;
+
+    int addr_info = getaddrinfo(host, MYPORT, &hints, &res);
+    if (addr_info != 0) {
+        fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(addr_info));
+        exit(1);
     }
 
     server_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    if (server_fd == -1) {
+        error("Failed to create socket");
+    }
 
-    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, ptr_reuse_addr_flag,
-               sizeof(reuse_addr_flag));
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse_addr_flag, sizeof(reuse_addr_flag)) == -1) {
+        error("Failed to set socket options");
+    }
 
     int bind_conn = bind(server_fd, res->ai_addr, res->ai_addrlen);
     if (bind_conn == -1) {
-        error("Unable to start the server");
+        error("Unable to bind to address");
     }
-    printf("starting server: %d\n", bind_conn);
 
-    listen(server_fd, BACKLOG);
+    freeaddrinfo(res); // No longer needed
 
+    printf("Starting WebSocket server on port %s\n", MYPORT);
 
-    int client_fd, conn_clients[BACKLOG], fd_count = 1;
-    int bytes_recv;
-    struct pollfd pfds[BACKLOG + 1]; // +1 bc adding the server to pfds
-    char buffer[BUFFER_SIZE];
+    if (listen(server_fd, BACKLOG) == -1) {
+        error("Failed to listen");
+    }
 
+    struct pollfd pfds[MAX_CLIENTS + 1]; // +1 for the server socket
     pfds[0].fd = server_fd;
-    pfds[0].events = POLLIN | POLLOUT;
-    bool is_websocket[BACKLOG + 1] = {false};
+    pfds[0].events = POLLIN;
+    int fd_count = 1;
+
+    char buffer[BUFFER_SIZE];
 
     while (1) {
         int poll_count = poll(pfds, fd_count, -1);
         if (poll_count == -1) {
             error("Poll error");
-            exit(1);
         }
 
+        // Check for new connections
         if (pfds[0].revents & POLLIN) {
-            client_fd = accept(server_fd, (struct sockaddr *)&their_addr, &their_addrlen);
+            struct sockaddr_in *client_addr;
+            int client_fd = accept(server_fd, (struct sockaddr *)&their_addr, &their_addrlen);
             if (client_fd == -1) {
-                error("client can't connect");
+                perror("Accept failed");
+                continue;
             }
 
-            if (fd_count >= BACKLOG + 1) {
-                printf("Connection to full server attempted\n");
-                char *msg = "Server full";
+            client_addr = (struct sockaddr_in*)&their_addr;
+            char client_ip[INET6_ADDRSTRLEN];
+            inet_ntop(their_addr.ss_family, &client_addr->sin_addr, client_ip, sizeof(client_ip));
+
+            printf("New connection from %s on socket %d\n", client_ip, client_fd);
+
+            // Check if we can accept more clients
+            if (fd_count >= MAX_CLIENTS + 1) {
+                printf("Server full, rejecting connection from %s\n", client_ip);
+                const char *msg = "Server full";
                 ws_send_http_response(client_fd, msg);
                 close(client_fd);
-            } else {
-                printf("%d successfully connected to the server\n", client_fd);
-                conn_clients[fd_count - 1] = client_fd;
+                continue;
+            }
+
+            // Read the initial HTTP request
+            memset(buffer, 0, BUFFER_SIZE);
+            int bytes_read = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
+            if (bytes_read <= 0) {
+                perror("Receive failed");
+                close(client_fd);
+                continue;
+            }
+            buffer[bytes_read] = '\0';
+
+            const char *accept_key = ws_parse_websocket_http(buffer);
+            if (accept_key) {
+                ws_send_websocket_response(client_fd, accept_key);
+
+                for (int i = 0; i < MAX_CLIENTS; i++) {
+                    if (clients[i].fd == -1) {
+                        clients[i].fd = client_fd;
+                        clients[i].is_websocket = true;
+                        strncpy(clients[i].ip, client_ip, sizeof(clients[i].ip));
+                        break;
+                    }
+                }
+
                 pfds[fd_count].fd = client_fd;
                 pfds[fd_count].events = POLLIN;
-                fd_count += 1;
+                fd_count++;
 
-                // recv set here to establish websocket connection
-                recv(client_fd, buffer, BUFFER_SIZE, 0);
-                const char *ws_sec_key = ws_parse_websocket_http(buffer);
-                ws_send_websocket_response(client_fd, ws_sec_key);
-				is_websocket[client_fd] = true;
+                printf("WebSocket connection established with %s on socket %d\n", client_ip, client_fd);
+            } else {
+                printf("Non-WebSocket request from %s, sending HTTP response\n", client_ip);
+                ws_send_http_response(client_fd, "This server only accepts WebSocket connections");
+                close(client_fd);
+                continue;
             }
         }
 
+        // Check existing connections for data
         for (int i = 1; i < fd_count; i++) {
             if (pfds[i].revents & POLLIN) {
+                int client_sock = pfds[i].fd;
 
-				if (!is_websocket[pfds[i].fd]) {
-					const char *client_key = ws_parse_websocket_http(buffer);
-					if (client_key) {
-						ws_send_websocket_response(pfds[i].fd, client_key);
-					} else {
-						close(pfds[i].fd);
-						conn_clients[i] = conn_clients[fd_count - 1];
-						pfds[i] = pfds[fd_count - 1]; // Other than pos 0 we don't care about the order
-						fd_count--;
-						i--;
-					}
-				} else {
-					// TODO: Make the messages send to the other connection!
-					bytes_recv = ws_recv_frame(pfds[i].fd, buffer, BUFFER_SIZE);
-					if (bytes_recv > 0) {
-						printf("From %d: %s\n", pfds[i].fd, buffer);
+                int client_idx = -1;
+                for (int j = 0; j < MAX_CLIENTS; j++) {
+                    if (clients[j].fd == client_sock) {
+                        client_idx = j;
+                        break;
+                    }
+                }
 
-						for (int j = 1; j < fd_count; j++) {
-							if (is_websocket[pfds[j].fd] && pfds[j].fd != pfds[i].fd) {
-								ws_send_frame(pfds[j].fd, buffer);
-							}
-						}
-					}
-				}
+                if (client_idx == -1 || !clients[client_idx].is_websocket) {
+                    printf("Invalid client socket %d, closing\n", client_sock);
+                    close(client_sock);
+                    pfds[i] = pfds[fd_count - 1];
+                    fd_count--;
+                    i--;
+                    continue;
+                }
+
+                memset(buffer, 0, BUFFER_SIZE);
+                ssize_t bytes_recv = ws_recv_frame(client_sock, buffer, BUFFER_SIZE - 1);
+
+                if (bytes_recv <= 0) {
+                    printf("Client %s on socket %d disconnected\n", clients[client_idx].ip, client_sock);
+                    close(client_sock);
+
+                    clients[client_idx].fd = -1;
+                    clients[client_idx].is_websocket = false;
+
+                    pfds[i] = pfds[fd_count - 1];
+                    fd_count--;
+                    i--;
+                    continue;
+                }
+
+                printf("Received from %s (%d): %s\n", clients[client_idx].ip, client_sock, buffer);
+
+                for (int j = 0; j < MAX_CLIENTS; j++) {
+                    if (clients[j].fd != -1 && clients[j].is_websocket && clients[j].fd != client_sock) {
+                        ws_send_frame(clients[j].fd, buffer);
+                    }
+                }
+            }
+
+            // Check for errors or disconnects
+            if (pfds[i].revents & (POLLERR | POLLHUP | POLLNVAL)) {
+                int client_sock = pfds[i].fd;
+
+                for (int j = 0; j < MAX_CLIENTS; j++) {
+                    if (clients[j].fd == client_sock) {
+                        printf("Client %s on socket %d has error or disconnected\n", clients[j].ip, client_sock);
+                        close(client_sock);
+                        clients[j].fd = -1;
+                        clients[j].is_websocket = false;
+                        break;
+                    }
+                }
+
+                pfds[i] = pfds[fd_count - 1];
+                fd_count--;
+                i--;
             }
         }
     }
+
+    close(server_fd);
+    return 0;
 }
