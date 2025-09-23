@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useWebSocket } from "../services/network.tsx";
 import NetworkStatus from "../components/networkStatus.tsx";
 import MessageBox from "../components/messageBox.tsx";
+import MessageFeed from "../components/messageFeed.tsx";
 
 function MessageDisplay() {
 
@@ -11,7 +12,8 @@ function MessageDisplay() {
   return (
     <>
       <div>
-        <NetworkStatus socket={socket} connectionStatus={connectionStatus} />
+        <NetworkStatus connectionStatus={connectionStatus} />
+        <MessageFeed socket={socket} connectionStatus={connectionStatus} />
         <MessageBox socket={socket} connectionStatus={connectionStatus} />
       </div>
     </>

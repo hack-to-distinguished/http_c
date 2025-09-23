@@ -1,10 +1,3 @@
-/* CSS Styling for all components */
-
-/* .message-form { */
-/*   bottom: 0; */
-/*   position: fixed; */
-/*   margin-bottom: 10vh; */
-/* } */
 
 .message-form {
 	display: flex;
@@ -31,7 +24,6 @@
   width: 50%;
 	margin: auto;
   margin-top: 1vh;
-  /* margin-bottom: 2vh; */
 	border-radius: 10px;
 	box-shadow: 3 3px 5px rgba(0, 0, 0, 0.1);
 	background-color: #f9f9f9;

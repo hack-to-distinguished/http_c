@@ -1,6 +1,7 @@
-function NetworkStatus({ socket, connectionStatus }) {
+import "./networkStatus.css"
+function NetworkStatus({ connectionStatus }) {
   return (
-    <div className="status">
+    <div className="network-status-message">
       <strong>Connection Status:</strong> {connectionStatus}
     </div>
   );
