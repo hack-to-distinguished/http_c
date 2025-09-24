@@ -1,6 +1,42 @@
 .network-status-message {
-  margin: 2vh 1vw 0 0;
-  top: 0;
-  right: 0;
-  position: fixed;
+    margin: 2vh 1vw 0 0;
+    top: 0;
+    right: 0;
+    position: fixed;
+    padding: 5px 8px;
+    border-top: 1px solid #ffffff;
+    border-left: 1px solid #ffffff;
+    border-right: 2px solid #808080;
+    border-bottom: 2px solid #808080;
+    background-color: #d4d0c8;
+    color: #000000;
+    font-family: "Tahoma", "Arial", sans-serif;
+    font-size: 11px;
+}
+
+.network-status-message strong {
+    color: #003366;
+    margin-right: 5px;
+}
+
+.status-connected {
+    color: #006600;
+}
+
+.status-disconnected {
+    color: #990000;
+}
+
+.status-connecting {
+    color: #996600;
+}
+
+.status-error {
+    color: #990000;
+}
+
+.connection-date {
+    margin-top: 3px;
+    font-size: 10px;
+    color: #666666;
 }
