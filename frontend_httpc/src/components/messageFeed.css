@@ -1,13 +1,14 @@
-/* CSS Styling for all components */
+ul {
+  list-style-type: none;
+}
 
-/* .message-form { */
-/*   bottom: 0; */
-/*   position: fixed; */
-/*   margin-bottom: 10vh; */
-/* } */
+.messages-display{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 60%;
+}
 
-/* .messages-display{ */
-/*   top: 0; */
-/*   left: 0; */
-/*   position: fixed; */
-/* } */
+.message-list {
+  text-align: left;
+}
