@@ -35,7 +35,7 @@ const MessageFeed = ({ socket, connectionStatus }: MessageBoxProps) => {
         {messages.map((msg, index) => (
           <li key={index}>
             <span style={{ color: "#003366", fontWeight: "bold" }}>
-              {new Date().toLocaleTimeString()} - User {index + 1}:
+              {new Date().toLocaleTimeString()} - Message {index + 1}:
             </span>{" "}
             {msg}
           </li>
