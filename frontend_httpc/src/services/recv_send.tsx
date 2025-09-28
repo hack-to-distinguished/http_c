@@ -19,7 +19,7 @@ export const recvMessage = async ({ socket, setMessages }) => {
   if (!socket?.current) return;
 
   if (!socket.current.onmessage) {
-    socket.current.onmessage = (event) => {
+    socket.current.onmessage = (event: MessageEvent) => {
       const receivedMessage = event.data;
       console.log("Message from server:", receivedMessage);
       setMessages(prevMessages => [...prevMessages, receivedMessage]);
@@ -29,7 +29,7 @@ export const recvMessage = async ({ socket, setMessages }) => {
 
 export const sendMessage = async ({ socket, currentMessage }) => {
   if (currentMessage && socket.current?.readyState === 1) {
-	socket.current.send(currentMessage);
+    socket.current.send(currentMessage);
     console.log(`Sent message: ${currentMessage}`);
   } else {
     console.log(
