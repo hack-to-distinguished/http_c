@@ -1,6 +1,8 @@
 #include "scanner.h"
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 void scanTokens(char *buffer) {
     tokenListCTX *ctx = malloc(sizeof(tokenListCTX));
@@ -29,9 +31,8 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx) {
     char c = *currentPosOfLexeme;
     // printf("\nChar c: '%c', ASCII Value: %d", c, c);
 
-    // TODO: Going to just focus on all single lengthed lexemes
     switch (c) {
-    // Skip whitespace
+        // Skip whitespace
     case ' ':
     case '\r':
     case '\t':
@@ -56,7 +57,7 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx) {
 
     // Operators
     case '!':
-        if (match(currentPosOfLexeme, '=')) {
+        if (matchChar(currentPosOfLexeme, '=')) {
             currentPosOfLexeme += 1;
             addToken(ctx, TOKEN_OPERATOR_NEQ);
             break;
@@ -69,7 +70,7 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx) {
         addToken(ctx, TOKEN_OPERATOR_EQ);
         break;
     case '<':
-        if (match(currentPosOfLexeme, '=')) {
+        if (matchChar(currentPosOfLexeme, '=')) {
             currentPosOfLexeme += 1;
             addToken(ctx, TOKEN_OPERATOR_LTE);
         } else {
@@ -77,7 +78,7 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx) {
         }
         break;
     case '>':
-        if (match(currentPosOfLexeme, '=')) {
+        if (matchChar(currentPosOfLexeme, '=')) {
             currentPosOfLexeme += 1;
             addToken(ctx, TOKEN_OPERATOR_GTE);
         } else {
@@ -96,6 +97,13 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx) {
     case '/':
         addToken(ctx, TOKEN_OPERATOR_SLASH);
         break;
+
+        // STRING LITERALS
+    case '\'':
+        currentPosOfLexeme = stringLiteral(currentPosOfLexeme);
+        addToken(ctx, TOKEN_STRING_LITERAL);
+        break;
+
     default:
         fprintf(stderr, "\nUnrecognised Input");
         exit(1);
@@ -119,10 +127,23 @@ bool isAtEnd(char *posInBuffer) {
     return false;
 };
 
-bool match(char *posInBuffer, char expectedChar) {
+bool matchChar(char *posInBuffer, char expectedChar) {
     posInBuffer += 1;
     if (*posInBuffer == expectedChar) {
         return true;
     }
     return false;
 };
+
+char *stringLiteral(char *currentPosOfLexeme) {
+    currentPosOfLexeme += 1;
+    while (!isAtEnd(currentPosOfLexeme) && currentPosOfLexeme[0] != '\'') {
+        currentPosOfLexeme += 1;
+    }
+
+    if (isAtEnd(currentPosOfLexeme)) {
+        fprintf(stderr, "\nUnterminated string literal");
+        exit(0);
+    }
+    return currentPosOfLexeme;
+}
