@@ -101,7 +101,8 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx) {
         // STRING LITERALS
     case '\'':
         currentPosOfLexeme = stringLiteral(currentPosOfLexeme);
-        addToken(ctx, TOKEN_STRING_LITERAL, "Placeholder");
+        addToken(ctx, TOKEN_STRING_LITERAL,
+                 getStringLiteral(currentPosOfLexeme));
         break;
 
     default:
@@ -148,3 +149,23 @@ char *stringLiteral(char *currentPosOfLexeme) {
     }
     return currentPosOfLexeme;
 }
+
+char *getStringLiteral(char *currentPosOfLexeme) {
+    size_t len = 0;
+    currentPosOfLexeme -= 1;
+    while (currentPosOfLexeme[0] != '\'') {
+        len += 1;
+        currentPosOfLexeme -= 1;
+    }
+
+    currentPosOfLexeme += 1;
+    size_t index = 0;
+    char *string = malloc(sizeof(char) * (len + 1));
+    while (currentPosOfLexeme[0] != '\'') {
+        string[index] = currentPosOfLexeme[0];
+        currentPosOfLexeme += 1;
+        index += 1;
+    }
+    string[index] = '\0';
+    return string;
+};

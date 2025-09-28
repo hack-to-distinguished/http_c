@@ -7,3 +7,4 @@ void addToken(tokenListCTX *ctx, TokenType tokenType, char *lexeme);
 bool isAtEnd(char *posInBuffer);
 bool matchChar(char *currentPosOfLexeme, char expectedChar);
 char *stringLiteral(char *currentPosOfLexeme);
+char *getStringLiteral(char *currentPosOfLexeme);
