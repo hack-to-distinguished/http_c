@@ -51,7 +51,8 @@ void printAllTokens(tokenListCTX *ctx) {
     int counter = 0;
     while ((ctx->currentSize > counter) && (ctx->tail[counter].type >= 0) &&
            (ctx->tail[counter].type <= 27)) {
-        printf("\nToken Type: %d", ctx->tail[counter].type);
+        printf("\nToken Type: %d, Lexeme: %s", ctx->tail[counter].type,
+               ctx->tail[counter].lexeme);
         counter += 1;
     }
     return;

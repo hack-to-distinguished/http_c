@@ -40,26 +40,26 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx) {
         break;
     // Punctuation
     case ',':
-        addToken(ctx, TOKEN_COMMA);
+        addToken(ctx, TOKEN_COMMA, ",");
         break;
     case ';':
-        addToken(ctx, TOKEN_SEMICOLON);
+        addToken(ctx, TOKEN_SEMICOLON, ";");
         break;
     case '(':
-        addToken(ctx, TOKEN_LPAREN);
+        addToken(ctx, TOKEN_LPAREN, "(");
         break;
     case ')':
-        addToken(ctx, TOKEN_RPAREN);
+        addToken(ctx, TOKEN_RPAREN, ")");
         break;
     case '.':
-        addToken(ctx, TOKEN_DOT);
+        addToken(ctx, TOKEN_DOT, ".");
         break;
 
     // Operators
     case '!':
         if (matchChar(currentPosOfLexeme, '=')) {
             currentPosOfLexeme += 1;
-            addToken(ctx, TOKEN_OPERATOR_NEQ);
+            addToken(ctx, TOKEN_OPERATOR_NEQ, "!=");
             break;
         } else {
             fprintf(stderr, "\nUnrecognised Input");
@@ -67,41 +67,41 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx) {
             break;
         }
     case '=':
-        addToken(ctx, TOKEN_OPERATOR_EQ);
+        addToken(ctx, TOKEN_OPERATOR_EQ, "=");
         break;
     case '<':
         if (matchChar(currentPosOfLexeme, '=')) {
             currentPosOfLexeme += 1;
-            addToken(ctx, TOKEN_OPERATOR_LTE);
+            addToken(ctx, TOKEN_OPERATOR_LTE, "<=");
         } else {
-            addToken(ctx, TOKEN_OPERATOR_LT);
+            addToken(ctx, TOKEN_OPERATOR_LT, "<");
         }
         break;
     case '>':
         if (matchChar(currentPosOfLexeme, '=')) {
             currentPosOfLexeme += 1;
-            addToken(ctx, TOKEN_OPERATOR_GTE);
+            addToken(ctx, TOKEN_OPERATOR_GTE, ">=");
         } else {
-            addToken(ctx, TOKEN_OPERATOR_GT);
+            addToken(ctx, TOKEN_OPERATOR_GT, ">");
         }
         break;
     case '+':
-        addToken(ctx, TOKEN_OPERATOR_PLUS);
+        addToken(ctx, TOKEN_OPERATOR_PLUS, "+");
         break;
     case '-':
-        addToken(ctx, TOKEN_OPERATOR_MINUS);
+        addToken(ctx, TOKEN_OPERATOR_MINUS, "-");
         break;
     case '*':
-        addToken(ctx, TOKEN_OPERATOR_STAR);
+        addToken(ctx, TOKEN_OPERATOR_STAR, "*");
         break;
     case '/':
-        addToken(ctx, TOKEN_OPERATOR_SLASH);
+        addToken(ctx, TOKEN_OPERATOR_SLASH, "/");
         break;
 
         // STRING LITERALS
     case '\'':
         currentPosOfLexeme = stringLiteral(currentPosOfLexeme);
-        addToken(ctx, TOKEN_STRING_LITERAL);
+        addToken(ctx, TOKEN_STRING_LITERAL, "Placeholder");
         break;
 
     default:
@@ -113,9 +113,10 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx) {
     return (currentPosOfLexeme + 1);
 };
 
-void addToken(tokenListCTX *ctx, TokenType tokenType) {
+void addToken(tokenListCTX *ctx, TokenType tokenType, char *lexeme) {
     Token *token = malloc(sizeof(Token));
     token->type = tokenType;
+    token->lexeme = lexeme;
     appendToken(*token, ctx);
     return;
 };
