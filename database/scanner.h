@@ -2,9 +2,12 @@
 #include <stdbool.h>
 
 void scanTokens(char *buffer);
-char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx);
+char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx, char *bufferStart);
 void addToken(tokenListCTX *ctx, TokenType tokenType, char *lexeme);
 bool isAtEnd(char *posInBuffer);
 bool matchChar(char *currentPosOfLexeme, char expectedChar);
 char *stringLiteral(char *currentPosOfLexeme);
-char *getStringLiteral(char *currentPosOfLexeme);
+char *getStringLiteral(char *currentPosOfLexeme, char *startOfLexeme);
+bool isDigit(char c);
+char *numberLiteral(char *currentPosOfLexeme);
+char *getNumberLiteral(char *currentPosOfLexeme, char *startOfLexeme);

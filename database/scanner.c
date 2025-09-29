@@ -17,7 +17,7 @@ void scanTokens(char *buffer) {
         // start off simple -> assume lexemes will have a length of 1 (just
         // focus on punctuation lexemes)
         startOfLexeme = currentPosOfLexeme;
-        currentPosOfLexeme = scanToken(currentPosOfLexeme, ctx);
+        currentPosOfLexeme = scanToken(currentPosOfLexeme, ctx, startOfLexeme);
     }
 
     printAllTokens(ctx);
@@ -27,7 +27,8 @@ void scanTokens(char *buffer) {
     return;
 }
 
-char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx) {
+char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx,
+                char *bufferStart) {
     char c = *currentPosOfLexeme;
     // printf("\nChar c: '%c', ASCII Value: %d", c, c);
 
@@ -98,18 +99,29 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx) {
         addToken(ctx, TOKEN_OPERATOR_SLASH, "/");
         break;
 
-        // STRING LITERALS
+    // STRING LITERALS
     case '\'':
         currentPosOfLexeme = stringLiteral(currentPosOfLexeme);
         addToken(ctx, TOKEN_STRING_LITERAL,
-                 getStringLiteral(currentPosOfLexeme));
+                 getStringLiteral(currentPosOfLexeme, bufferStart));
         break;
 
     default:
-        fprintf(stderr, "\nUnrecognised Input");
-        exit(1);
+
+        // INTEGER + FLOAT LITERALS
+        if (isDigit(c)) {
+            currentPosOfLexeme = numberLiteral(currentPosOfLexeme);
+            addToken(ctx, TOKEN_INTEGER_LITERAL,
+                     getNumberLiteral(currentPosOfLexeme, bufferStart));
+            currentPosOfLexeme -= 1;
+        } else {
+            fprintf(stderr, "\nUnrecognised Input");
+            exit(1);
+        }
         break;
     }
+
+    // INTEGER + FLOATING POINT LITERALS
 
     return (currentPosOfLexeme + 1);
 };
@@ -123,7 +135,7 @@ void addToken(tokenListCTX *ctx, TokenType tokenType, char *lexeme) {
 };
 
 bool isAtEnd(char *posInBuffer) {
-    if (*posInBuffer == '\n' || *posInBuffer == '\0') {
+    if (*posInBuffer == '\n' || *posInBuffer == '\0' || *posInBuffer == '\r') {
         return true;
     }
     return false;
@@ -150,17 +162,16 @@ char *stringLiteral(char *currentPosOfLexeme) {
     return currentPosOfLexeme;
 }
 
-char *getStringLiteral(char *currentPosOfLexeme) {
-    size_t len = 0;
-    currentPosOfLexeme -= 1;
-    while (currentPosOfLexeme[0] != '\'') {
-        len += 1;
-        currentPosOfLexeme -= 1;
-    }
-
-    currentPosOfLexeme += 1;
+char *getStringLiteral(char *currentPosOfLexeme, char *startOfLexeme) {
+    size_t len = (&currentPosOfLexeme[0] - startOfLexeme);
+    currentPosOfLexeme -= len;
+    // printf("\nLen: %ld", len);
+    // printf("\nstartOfLexeme Addr: %p", startOfLexeme);
+    // printf("\ncurrentPosOfLexeme Addr: %p %c", &currentPosOfLexeme[0],
+    // currentPosOfLexeme[0]);
+    char *string = malloc(sizeof(char) * len);
     size_t index = 0;
-    char *string = malloc(sizeof(char) * (len + 1));
+    currentPosOfLexeme += 1;
     while (currentPosOfLexeme[0] != '\'') {
         string[index] = currentPosOfLexeme[0];
         currentPosOfLexeme += 1;
@@ -168,4 +179,47 @@ char *getStringLiteral(char *currentPosOfLexeme) {
     }
     string[index] = '\0';
     return string;
+};
+
+bool isDigit(char c) {
+    if (c >= '0' && c <= '9') {
+        return true;
+    }
+    return false;
+};
+
+char *numberLiteral(char *currentPosOfLexeme) {
+    while (!isAtEnd(currentPosOfLexeme) &&
+           (isDigit(currentPosOfLexeme[0]) || currentPosOfLexeme[0] == '.')) {
+        currentPosOfLexeme += 1;
+    }
+
+    if (currentPosOfLexeme[0] == '.') {
+        fprintf(stderr, "\nUnrecognised number format.");
+        exit(0);
+    }
+
+    return currentPosOfLexeme;
+};
+
+char *getNumberLiteral(char *currentPosOfLexeme, char *startOfLexeme) {
+    size_t len = (&currentPosOfLexeme[0] - startOfLexeme) + 1;
+    currentPosOfLexeme -= len - 1;
+    char *number = malloc(sizeof(char) * len);
+    size_t index = 0;
+    size_t numOfDecimals = 0;
+    while (isDigit(currentPosOfLexeme[0]) || currentPosOfLexeme[0] == '.') {
+        if (currentPosOfLexeme[0] == '.') {
+            numOfDecimals += 1;
+        }
+        number[index] = currentPosOfLexeme[0];
+        currentPosOfLexeme += 1;
+        index += 1;
+    }
+    number[index] = '\0';
+    if (numOfDecimals > 1) {
+        fprintf(stderr, "\nUnrecognised number format.");
+        exit(0);
+    }
+    return number;
 };
