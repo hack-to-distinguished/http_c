@@ -107,12 +107,16 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx,
         break;
 
     default:
-
         // INTEGER + FLOAT LITERALS
         if (isDigit(c)) {
             currentPosOfLexeme = numberLiteral(currentPosOfLexeme);
-            addToken(ctx, TOKEN_INTEGER_LITERAL,
-                     getNumberLiteral(currentPosOfLexeme, bufferStart));
+            char *numberLiteral =
+                getNumberLiteral(currentPosOfLexeme, bufferStart);
+            if (checkFloat(numberLiteral)) {
+                addToken(ctx, TOKEN_FLOAT_LITERAL, numberLiteral);
+            } else {
+                addToken(ctx, TOKEN_INTEGER_LITERAL, numberLiteral);
+            }
             currentPosOfLexeme -= 1;
         } else {
             fprintf(stderr, "\nUnrecognised Input");
@@ -222,4 +226,13 @@ char *getNumberLiteral(char *currentPosOfLexeme, char *startOfLexeme) {
         exit(0);
     }
     return number;
+};
+
+bool checkFloat(char *numberLiteral) {
+    for (size_t i = 0; i < strlen(numberLiteral); i++) {
+        if (numberLiteral[i] == '.') {
+            return true;
+        }
+    }
+    return false;
 };

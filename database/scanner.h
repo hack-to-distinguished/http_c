@@ -11,3 +11,4 @@ char *getStringLiteral(char *currentPosOfLexeme, char *startOfLexeme);
 bool isDigit(char c);
 char *numberLiteral(char *currentPosOfLexeme);
 char *getNumberLiteral(char *currentPosOfLexeme, char *startOfLexeme);
+bool checkFloat(char *numberLiteral);
