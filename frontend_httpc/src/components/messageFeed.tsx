@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { recvMessage } from "../services/recv_send.tsx";
 import "./messageFeed.css";
 
 interface MessageBoxProps {
@@ -15,6 +14,7 @@ const MessageFeed = ({ socket, connectionStatus }: MessageBoxProps) => {
 
     const handleMessage = (event: MessageEvent) => {
       const receivedMessage = event.data;
+      console.log("Event", socket.current);
       console.log("Message from server:", receivedMessage);
       setMessages((prevMessages) => [...prevMessages, receivedMessage]);
     };
