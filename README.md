@@ -81,7 +81,7 @@ A real-time messaging platform leveraging the **WebSocket protocol** for persist
 
 ---
 
-## Project Structure
+## Project Plan
 
 ### Phase 1: TCP Echo Server
 - [x] Create a socket
