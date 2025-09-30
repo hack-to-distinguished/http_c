@@ -12,3 +12,7 @@ bool isDigit(char c);
 char *numberLiteral(char *currentPosOfLexeme);
 char *getNumberLiteral(char *currentPosOfLexeme, char *startOfLexeme);
 bool checkFloat(char *numberLiteral);
+bool isAlpha(char c);
+bool isAlphaNumeric(char c);
+char *identifier(char *currentPosOfLexeme);
+char *getIdentifierLiteral(char *currentPosOfLexeme, char *startOfLexeme);

@@ -132,6 +132,12 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx,
                 addToken(ctx, TOKEN_INTEGER_LITERAL, numberLiteral);
             }
             currentPosOfLexeme -= 1;
+            // assuming that any identifier will begin with a character
+        } else if (isAlpha(c)) {
+            currentPosOfLexeme = identifier(currentPosOfLexeme);
+            addToken(ctx, TOKEN_IDENTIFIER,
+                     getIdentifierLiteral(currentPosOfLexeme, bufferStart));
+            currentPosOfLexeme -= 1;
         } else {
             fprintf(stderr, "\nUnrecognised Input");
             exit(1);
@@ -183,10 +189,6 @@ char *stringLiteral(char *currentPosOfLexeme) {
 char *getStringLiteral(char *currentPosOfLexeme, char *startOfLexeme) {
     size_t len = (&currentPosOfLexeme[0] - startOfLexeme);
     currentPosOfLexeme -= len;
-    // printf("\nLen: %ld", len);
-    // printf("\nstartOfLexeme Addr: %p", startOfLexeme);
-    // printf("\ncurrentPosOfLexeme Addr: %p %c", &currentPosOfLexeme[0],
-    // currentPosOfLexeme[0]);
     char *string = malloc(sizeof(char) * len);
     size_t index = 0;
     currentPosOfLexeme += 1;
@@ -249,4 +251,34 @@ bool checkFloat(char *numberLiteral) {
         }
     }
     return false;
+};
+
+bool isAlpha(char c) {
+    if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
+        return true;
+    }
+    return false;
+};
+
+bool isAlphaNumeric(char c) { return isDigit(c) || isAlpha(c); };
+
+char *identifier(char *currentPosOfLexeme) {
+    while (isAlphaNumeric(currentPosOfLexeme[0])) {
+        currentPosOfLexeme += 1;
+    }
+    return currentPosOfLexeme;
+};
+
+char *getIdentifierLiteral(char *currentPosOfLexeme, char *startOfLexeme) {
+    size_t len = (&currentPosOfLexeme[0] - startOfLexeme) + 1;
+    currentPosOfLexeme -= len - 1;
+    char *identifier = malloc(sizeof(char) * len);
+    size_t index = 0;
+    while (isAlphaNumeric(currentPosOfLexeme[0])) {
+        identifier[index] = currentPosOfLexeme[0];
+        currentPosOfLexeme += 1;
+        index += 1;
+    }
+    identifier[index] = '\0';
+    return identifier;
 };
