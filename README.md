@@ -114,10 +114,10 @@ A real-time messaging platform leveraging the **WebSocket protocol** for persist
 
 ```bash
 # Compile
-`make all`
+make all
 
 # Run on default port 8080
-`./threadpoolserver`
+./threadpoolserver
 ```
 
 
@@ -125,16 +125,17 @@ A real-time messaging platform leveraging the **WebSocket protocol** for persist
 
 ```bash
 # Compile
-`make all`
+make all
 
 # Run on default port 8080
-`./web_server/server 127.0.0.1`
+./web_server/server 127.0.0.1
 
 # Run one or more instances of the frontend
-`cd frontend`
+cd frontend
 
 # Install the dependencies
-`npm install`
+npm install
 
 # Run the program and navigate to the URL
-`npx vite`
+npx vite
+```
