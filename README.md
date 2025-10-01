@@ -79,9 +79,12 @@ A real-time messaging platform leveraging the **WebSocket protocol** for persist
 - TypeScript-based frontend for seamless message sending and receiving.
 - Supports group messaging through the server.
 
+**Messaging Page (browser view):**
+<img width="2739" height="1540" alt="image" src="https://github.com/user-attachments/assets/d0f72822-17a8-4aeb-a669-d9ff1a166866" />
+
 ---
 
-## Project Structure
+## Project Plan
 
 ### Phase 1: TCP Echo Server
 - [x] Create a socket
@@ -91,7 +94,7 @@ A real-time messaging platform leveraging the **WebSocket protocol** for persist
 
 ### Phase 2: HTTP Server
 - [x] Listen on TCP port
-- [x] Apply HTTP protocol to incoming and outgoing data (Ongoing - NJ)
+- [x] Apply HTTP protocol to incoming and outgoing data
 - [x] Large data streaming
 
 ### Phase 3: Messaging
@@ -99,7 +102,7 @@ A real-time messaging platform leveraging the **WebSocket protocol** for persist
 - [ ] Create end-to-end messaging without using the server as a middleman
 - [x] Group chat messaging via server redirection
 - [ ] Ability to select which client to message
-- [ ] GUI for messaging (Ongoing - Christian)
+- [x] GUI for messaging
 - [ ] Host group chat online with a 6-hour timeout between messages
 
 ### Phase 4: Integration & Expansion
@@ -120,3 +123,22 @@ make all
 ./threadpoolserver
 ```
 
+
+## How to Compile and Run the HTTP Web Socket Server
+
+```bash
+# Compile
+make all
+
+# Run on default port 8080
+./web_server/server 127.0.0.1
+
+# Run one or more instances of the frontend
+cd frontend
+
+# Install the dependencies
+npm install
+
+# Run the program and navigate to the URL
+npx vite
+```

@@ -394,7 +394,7 @@ int main(int argc, char *argv[]) {
                 printf("Received from %s (%d): %s\n", clients[client_idx].ip, client_sock, buffer);
 
                 for (int j = 0; j < MAX_CLIENTS; j++) {
-                    if (clients[j].fd != -1 && clients[j].is_websocket && clients[j].fd != client_sock) {
+                    if (clients[j].fd != -1 && clients[j].is_websocket) {
                         ws_send_frame(clients[j].fd, buffer);
                     }
                 }
