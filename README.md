@@ -79,6 +79,9 @@ A real-time messaging platform leveraging the **WebSocket protocol** for persist
 - TypeScript-based frontend for seamless message sending and receiving.
 - Supports group messaging through the server.
 
+Home Page:
+<img width="2739" height="1540" alt="image" src="https://github.com/user-attachments/assets/d0f72822-17a8-4aeb-a669-d9ff1a166866" />
+
 ---
 
 ## Project Plan
