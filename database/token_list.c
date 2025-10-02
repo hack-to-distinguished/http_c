@@ -33,7 +33,6 @@ void appendToken(Token token, tokenListCTX *ctx) {
         ctx->indexPosition += 1;
         ctx->currentSize += 1;
     } else {
-        printf("\nReallocating Memory!");
         ctx->currentSize += 1;
         ctx->tail =
             (Token *)realloc(ctx->tail, (int)ctx->currentSize * sizeof(Token));
