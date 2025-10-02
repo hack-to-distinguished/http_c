@@ -1,4 +1,5 @@
 #include "scanner.h"
+#include <ctype.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -137,15 +138,19 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx,
             currentPosOfLexeme = identifier(currentPosOfLexeme);
             char *stringLiteral =
                 getIdentifierLiteral(currentPosOfLexeme, bufferStart);
+            capitaliseString(stringLiteral);
             bool found = false;
             for (int i = 0; i < (sizeof(keywords) / sizeof(Keyword)); i++) {
-                if (strcmp(keywords[i].keyword, stringLiteral) == 0) {
+                if (strcmp(keywords[i].keyword, "EXIT") == 0) {
+                    exit(0);
+                } else if (strcmp(keywords[i].keyword, stringLiteral) == 0) {
                     addToken(ctx, keywords[i].type, stringLiteral);
                     found = true;
                 }
             }
             if (!found) {
-                addToken(ctx, TOKEN_IDENTIFIER, stringLiteral);
+                addToken(ctx, TOKEN_IDENTIFIER,
+                         getIdentifierLiteral(currentPosOfLexeme, bufferStart));
             }
             currentPosOfLexeme -= 1;
         } else {
@@ -290,3 +295,10 @@ char *getIdentifierLiteral(char *currentPosOfLexeme, char *startOfLexeme) {
     identifier[index] = '\0';
     return identifier;
 };
+
+void capitaliseString(char *str) {
+    while (*str) {
+        *str = toupper((unsigned char)*str);
+        str++;
+    }
+}

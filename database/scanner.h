@@ -16,3 +16,4 @@ bool isAlpha(char c);
 bool isAlphaNumeric(char c);
 char *identifier(char *currentPosOfLexeme);
 char *getIdentifierLiteral(char *currentPosOfLexeme, char *startOfLexeme);
+void capitaliseString(char *str);
