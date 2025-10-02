@@ -135,8 +135,18 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx,
             // assuming that any identifier will begin with a character
         } else if (isAlpha(c)) {
             currentPosOfLexeme = identifier(currentPosOfLexeme);
-            addToken(ctx, TOKEN_IDENTIFIER,
-                     getIdentifierLiteral(currentPosOfLexeme, bufferStart));
+            char *stringLiteral =
+                getIdentifierLiteral(currentPosOfLexeme, bufferStart);
+            bool found = false;
+            for (int i = 0; i < (sizeof(keywords) / sizeof(Keyword)); i++) {
+                if (strcmp(keywords[i].keyword, stringLiteral) == 0) {
+                    addToken(ctx, keywords[i].type, stringLiteral);
+                    found = true;
+                }
+            }
+            if (!found) {
+                addToken(ctx, TOKEN_IDENTIFIER, stringLiteral);
+            }
             currentPosOfLexeme -= 1;
         } else {
             fprintf(stderr, "\nUnrecognised Input");
@@ -144,8 +154,6 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx,
         }
         break;
     }
-
-    // INTEGER + FLOATING POINT LITERALS
 
     return (currentPosOfLexeme + 1);
 };

@@ -47,3 +47,17 @@ typedef struct {
     char *lexeme;
     size_t line;
 } Token;
+
+typedef struct {
+    char *keyword;
+    TokenType type;
+} Keyword;
+
+static Keyword keywords[] = {{"SELECT", TOKEN_KEYWORD_SELECT},
+                             {"INSERT", TOKEN_KEYWORD_INSERT},
+                             {"DELETE", TOKEN_KEYWORD_DELETE},
+                             {"FROM", TOKEN_KEYWORD_FROM},
+                             {"UPDATE", TOKEN_KEYWORD_UPDATE},
+                             {"WHERE", TOKEN_KEYWORD_WHERE}
+
+};
