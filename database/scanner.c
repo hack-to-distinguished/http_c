@@ -139,11 +139,12 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx,
             char *stringLiteral =
                 getIdentifierLiteral(currentPosOfLexeme, bufferStart);
             capitaliseString(stringLiteral);
+            if (strcmp(stringLiteral, "EXIT") == 0) {
+                exit(0);
+            }
             bool found = false;
             for (int i = 0; i < (sizeof(keywords) / sizeof(Keyword)); i++) {
-                if (strcmp(keywords[i].keyword, "EXIT") == 0) {
-                    exit(0);
-                } else if (strcmp(keywords[i].keyword, stringLiteral) == 0) {
+                if (strcmp(keywords[i].keyword, stringLiteral) == 0) {
                     addToken(ctx, keywords[i].type, stringLiteral);
                     found = true;
                 }
