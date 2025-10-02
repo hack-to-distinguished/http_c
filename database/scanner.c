@@ -14,17 +14,10 @@ void scanTokens(char *buffer) {
 
     // scan the actual tokens
     while (!isAtEnd(currentPosOfLexeme)) {
-        // TODO: how tf to do this
-        // start off simple -> assume lexemes will have a length of 1 (just
-        // focus on punctuation lexemes)
         startOfLexeme = currentPosOfLexeme;
         currentPosOfLexeme = scanToken(currentPosOfLexeme, ctx, startOfLexeme);
     }
-
     printAllTokens(ctx);
-
-    // after scanning the actual tokens, we then add EOF token TODO: will do
-    // later
     return;
 }
 
