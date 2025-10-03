@@ -132,8 +132,6 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx,
                          getIdentifierLiteral(currentPosOfLexeme, bufferStart));
             }
             currentPosOfLexeme -= 1;
-        } else if (isAlpha(c)) {
-            printf("Alphabetical char detected!");
         } else {
             fprintf(stderr, "\nUnrecognised Input");
             exit(1);
