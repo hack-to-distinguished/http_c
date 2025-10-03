@@ -99,21 +99,6 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx,
         addToken(ctx, TOKEN_STRING_LITERAL,
                  getStringLiteral(currentPosOfLexeme, bufferStart));
         break;
-
-    // NULL LITERAL
-    case 'N':
-        // TODO: i know this is a shit implementation...
-        if (matchChar(currentPosOfLexeme, 'U')) {
-            currentPosOfLexeme += 1;
-            if (matchChar(currentPosOfLexeme, 'L')) {
-                currentPosOfLexeme += 1;
-                if (matchChar(currentPosOfLexeme, 'L'))
-                    currentPosOfLexeme += 1;
-                addToken(ctx, TOKEN_NULL_LITERAL, "NULL");
-            }
-        }
-        break;
-
     default:
         // INTEGER + FLOAT LITERALS
         if (isDigit(c)) {

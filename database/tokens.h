@@ -9,6 +9,7 @@ typedef enum {
     TOKEN_KEYWORD_UPDATE,
     TOKEN_KEYWORD_DELETE,
     TOKEN_KEYWORD_EXIT,
+    TOKEN_KEYWORD_NULL,
 
     // Identifiers -> names of columns, tables, etc
     TOKEN_IDENTIFIER,
@@ -17,7 +18,6 @@ typedef enum {
     TOKEN_STRING_LITERAL,
     TOKEN_INTEGER_LITERAL,
     TOKEN_FLOAT_LITERAL,
-    TOKEN_NULL_LITERAL,
 
     // Operators
     TOKEN_OPERATOR_EQ,
@@ -52,10 +52,13 @@ typedef struct {
     TokenType type;
 } Keyword;
 
-static Keyword keywords[] = {
-    {"SELECT", TOKEN_KEYWORD_SELECT}, {"INSERT", TOKEN_KEYWORD_INSERT},
-    {"DELETE", TOKEN_KEYWORD_DELETE}, {"FROM", TOKEN_KEYWORD_FROM},
-    {"UPDATE", TOKEN_KEYWORD_UPDATE}, {"WHERE", TOKEN_KEYWORD_WHERE},
-    {"EXIT", TOKEN_KEYWORD_EXIT}
+static Keyword keywords[] = {{"SELECT", TOKEN_KEYWORD_SELECT},
+                             {"INSERT", TOKEN_KEYWORD_INSERT},
+                             {"DELETE", TOKEN_KEYWORD_DELETE},
+                             {"FROM", TOKEN_KEYWORD_FROM},
+                             {"UPDATE", TOKEN_KEYWORD_UPDATE},
+                             {"WHERE", TOKEN_KEYWORD_WHERE},
+                             {"EXIT", TOKEN_KEYWORD_EXIT},
+                             {"NULL", TOKEN_KEYWORD_NULL}
 
 };
