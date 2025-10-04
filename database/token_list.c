@@ -27,9 +27,9 @@ tokenListCTX *initialiseTokenList(size_t size) {
 
 bool isFull(tokenListCTX *ctx) { return ctx->currentSize >= ctx->maxSize; }
 
-void appendToken(Token token, tokenListCTX *ctx) {
+void appendToken(Token *token, tokenListCTX *ctx) {
     if (!isFull(ctx)) {
-        *ctx->indexPosition = token;
+        *ctx->indexPosition = *token;
         ctx->indexPosition += 1;
         ctx->currentSize += 1;
     } else {
@@ -41,20 +41,32 @@ void appendToken(Token token, tokenListCTX *ctx) {
             exit(1);
         }
         ctx->indexPosition = ctx->tail + ctx->currentSize - 1;
-        *ctx->indexPosition = token;
+        *ctx->indexPosition = *token;
     }
     return;
 }
 
 void printAllTokens(tokenListCTX *ctx) {
     int counter = 0;
-    while ((ctx->currentSize > counter) && (ctx->tail[counter].type >= 0) &&
-           (ctx->tail[counter].type <= 27)) {
-        printf("\nToken Type: %d, Lexeme: %s", ctx->tail[counter].type,
-               ctx->tail[counter].lexeme);
+    while ((ctx->currentSize > counter)) {
+        printf("\nToken Type: %d, Lexeme: %s (%p)", ctx->tail[counter].type,
+               ctx->tail[counter].lexeme, &ctx->tail[counter]);
         counter += 1;
     }
     return;
 };
 
-void destroyTokenList() { return; };
+void destroyTokenList(tokenListCTX *ctx) {
+    // printf("\nDestroying token list!");
+    printf("\n");
+    for (size_t i = 0; i < ctx->currentSize; i++) {
+        printf("\nDestroying Token at address %p!", ctx->tail[i].self);
+        free(ctx->tail[i].self);
+    }
+    if (ctx) {
+        printf("\nFreeing tokenListCTX at address %p\n", ctx);
+        free(ctx);
+    }
+    printf("\n");
+    return;
+};

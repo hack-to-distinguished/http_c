@@ -10,6 +10,8 @@ typedef enum {
     TOKEN_KEYWORD_DELETE,
     TOKEN_KEYWORD_EXIT,
     TOKEN_KEYWORD_NULL,
+    TOKEN_KEYWORD_AND,
+    TOKEN_KEYWORD_OR,
 
     // Identifiers -> names of columns, tables, etc
     TOKEN_IDENTIFIER,
@@ -41,10 +43,11 @@ typedef enum {
     TOKEN_UNKNOWN
 } TokenType;
 
-typedef struct {
+typedef struct Token {
     TokenType type;
     char *lexeme;
     size_t line;
+    struct Token *self;
 } Token;
 
 typedef struct {
@@ -59,6 +62,8 @@ static Keyword keywords[] = {{"SELECT", TOKEN_KEYWORD_SELECT},
                              {"UPDATE", TOKEN_KEYWORD_UPDATE},
                              {"WHERE", TOKEN_KEYWORD_WHERE},
                              {"EXIT", TOKEN_KEYWORD_EXIT},
-                             {"NULL", TOKEN_KEYWORD_NULL}
+                             {"NULL", TOKEN_KEYWORD_NULL},
+                             {"AND", TOKEN_KEYWORD_AND},
+                             {"OR", TOKEN_KEYWORD_OR}
 
 };

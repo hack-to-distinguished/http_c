@@ -15,10 +15,5 @@ int main() {
         destroyInputLineBuffer(iPL);
     }
 
-    // inputLineBuffer *iPL = createInputLineBuffer();
-    // getLineInput(iPL);
-    //
-    // processLineInput(iPL);
-    // destroyInputLineBuffer(iPL);
     return 0;
 }

@@ -18,6 +18,7 @@ void scanTokens(char *buffer) {
         currentPosOfLexeme = scanToken(currentPosOfLexeme, ctx, startOfLexeme);
     }
     printAllTokens(ctx);
+    destroyTokenList(ctx);
     return;
 }
 
@@ -118,6 +119,7 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx,
                 getIdentifierLiteral(currentPosOfLexeme, bufferStart);
             capitaliseString(stringLiteral);
             if (strcmp(stringLiteral, "EXIT") == 0) {
+                destroyTokenList(ctx);
                 exit(0);
             }
             bool found = false;
@@ -134,6 +136,7 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx,
             currentPosOfLexeme -= 1;
         } else {
             fprintf(stderr, "\nUnrecognised Input");
+            destroyTokenList(ctx);
             exit(1);
         }
         break;
@@ -146,7 +149,8 @@ void addToken(tokenListCTX *ctx, TokenType tokenType, char *lexeme) {
     Token *token = malloc(sizeof(Token));
     token->type = tokenType;
     token->lexeme = lexeme;
-    appendToken(*token, ctx);
+    token->self = token;
+    appendToken(token, ctx);
     return;
 };
 
