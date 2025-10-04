@@ -61,6 +61,9 @@ void destroyTokenList(tokenListCTX *ctx) {
     printf("\n");
     for (size_t i = 0; i < ctx->currentSize; i++) {
         printf("\nDestroying Token at address %p!", ctx->tail[i].self);
+        if (ctx->tail[i].type == 11) {
+            free(ctx->tail[i].lexeme);
+        }
         free(ctx->tail[i].self);
     }
     free(ctx->tail);
