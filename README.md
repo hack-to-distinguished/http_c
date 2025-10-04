@@ -5,9 +5,9 @@ This project features a messaging service system and an HTTP web server, both bu
 The next major step is to develop a database management system from scratch to track player statistics and manage messaging. This system will also be integrated with the other components, resulting in a fully unified implementation within Tank Squared.
 
 **COMPONENTS:**
-- Messaging Service
-- Web Server
-- Database Management System
+- Messaging Service (in active development)
+- Web Server (Completed)
+- Database Management System (in active development)
 
 ---
 
@@ -19,11 +19,13 @@ The next major step is to develop a database management system from scratch to t
   - [Results](#results)
   - [Observations](#observations)
 - [Messaging System](#messaging-system)
-- [Project Structure](#project-structure)
+- [SDBMS (Simple Database Management System)](#sdbms-simple-database-management-system)
+- [Project Plan](#project-plan)
   - [Phase 1: TCP Echo Server](#phase-1-tcp-echo-server)
   - [Phase 2: HTTP Server](#phase-2-http-server)
   - [Phase 3: Messaging](#phase-3-messaging)
-  - [Phase 4: Integration & Expansion](#phase-4-integration--expansion)
+  - [Phase 4: Database Management System (SDBMS)](#phase-4-database-management-system-sdbms)
+  - [Phase 5: Integration & Expansion](#phase-5-integration--expansion)
 - [How to Compile and Run the HTTP Web Server](#how-to-compile-and-run-the-http-web-server)
 
 ---
@@ -84,32 +86,56 @@ A real-time messaging platform leveraging the **WebSocket protocol** for persist
 
 ---
 
+## SDBMS (Simple Database Management System)
+
+A simple database management system developed from scratch in C.  
+
+Currently, a **tokenizer** has been implemented — it converts SQL commands and keywords into valid tokens that will later be passed into a parser.  
+
+**Key Features:**
+- Tokenizer: Converts SQL input into structured tokens (keywords, identifiers, symbols, etc.) for the parser.  
+- Parser and Execution Engine: In development — will interpret tokens, validate syntax, and execute basic SQL-like commands.
+
+**Goal:**  
+To gain a deeper understanding of how databases work internally and to eventually implement SDBMS as the main database used for the network backend in conjunction with *Tank Squared* and the *Messaging System*.
+
+<img width="821" height="937" alt="image" src="https://github.com/user-attachments/assets/bbf9ef3e-d93e-4b09-8fe3-50012835a064" />
+
+---
 ## Project Plan
 
 ### Phase 1: TCP Echo Server
-- [x] Create a socket
-- [x] Bind to a port
-- [x] Listen and accept connections
-- [x] Receive data and send it back (echo)
+- [x] Create a socket  
+- [x] Bind to a port  
+- [x] Listen and accept connections  
+- [x] Receive data and send it back (echo)  
 
 ### Phase 2: HTTP Server
-- [x] Listen on TCP port
-- [x] Apply HTTP protocol to incoming and outgoing data
-- [x] Large data streaming
+- [x] Listen on TCP port  
+- [x] Apply HTTP protocol to incoming and outgoing data  
+- [x] Large data streaming  
 
 ### Phase 3: Messaging
-- [x] Enable users to send messages to the server
-- [ ] Create end-to-end messaging without using the server as a middleman
-- [x] Group chat messaging via server redirection
-- [ ] Ability to select which client to message
-- [x] GUI for messaging
-- [ ] Host group chat online with a 6-hour timeout between messages
+- [x] Enable users to send messages to the server  
+- [ ] Create end-to-end messaging without using the server as a middleman  
+- [x] Group chat messaging via server redirection  
+- [ ] Ability to select which client to message  
+- [x] GUI for messaging  
+- [ ] Host group chat online with a 6-hour timeout between messages  
 
-### Phase 4: Integration & Expansion
-- [ ] Use messaging system in **Tank Squared** (other project)
-- [ ] Self-host the messaging software
-- [ ] Implement blockchain-based decentralized messaging
-- [ ] Integrate packet streaming into **Tank Squared** for multiplayer
+### Phase 4: Database Management System (SDBMS)
+- [x] Implement tokenizer for SQL command parsing  
+- [ ] Implement parser to validate and interpret tokens  
+- [ ] Create execution engine for running basic SQL-like commands  
+- [ ] Integrate SDBMS as the backend database for the messaging system  
+- [ ] Integrate SDBMS with **Tank Squared** for persistent multiplayer data  
+
+### Phase 5: Integration & Expansion
+- [ ] Use messaging system within **Tank Squared** (multiplayer mode)  
+- [ ] Self-host the messaging software  
+- [ ] Implement blockchain-based decentralized messaging  
+- [ ] Integrate packet streaming into **Tank Squared** for real-time multiplayer  
+
 
 ---
 
@@ -122,7 +148,6 @@ make all
 # Run on default port 8080
 ./threadpoolserver
 ```
-
 
 ## How to Compile and Run the HTTP Web Socket Server
 
@@ -141,4 +166,13 @@ npm install
 
 # Run the program and navigate to the URL
 npx vite
+```
+
+## How to Compile and Run the SDBMS
+
+```bash
+# Compile
+make all
+
+./sdbms
 ```
