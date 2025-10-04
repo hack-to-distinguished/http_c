@@ -6,8 +6,7 @@
 #include <string.h>
 
 void scanTokens(char *buffer) {
-    tokenListCTX *ctx = malloc(sizeof(tokenListCTX));
-    ctx = initialiseTokenList(8); // just gonna set default size to 8 tokens
+    tokenListCTX *ctx = initialiseTokenList(8);
     char *startOfLexeme = buffer;
     char *currentPosOfLexeme = startOfLexeme;
     int lineNumber = 1;
@@ -115,30 +114,32 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx,
         } else if (isAlpha(c)) {
             currentPosOfLexeme = identifier(currentPosOfLexeme);
 
-            char *stringLiteral =
+            char *lexeme =
                 getIdentifierLiteral(currentPosOfLexeme, bufferStart);
 
-            capitaliseString(stringLiteral);
+            capitaliseString(lexeme);
 
-            if (strcmp(stringLiteral, "EXIT") == 0) {
-                free(stringLiteral);
+            if (strcmp(lexeme, "EXIT") == 0) {
+                free(lexeme);
                 destroyTokenList(ctx);
                 exit(0);
             }
 
             bool found = false;
             for (int i = 0; i < (sizeof(keywords) / sizeof(Keyword)); i++) {
-                if (strcmp(keywords[i].keyword, stringLiteral) == 0) {
-                    addToken(ctx, keywords[i].type, stringLiteral);
+                if (strcmp(keywords[i].keyword, lexeme) == 0) {
+                    addToken(ctx, keywords[i].type, lexeme);
                     found = true;
+                    break;
                 }
             }
 
             if (!found) {
-                addToken(ctx, TOKEN_IDENTIFIER,
-                         getIdentifierLiteral(currentPosOfLexeme, bufferStart));
+                free(lexeme);
+                char *lexemeIdentifier =
+                    getIdentifierLiteral(currentPosOfLexeme, bufferStart);
+                addToken(ctx, TOKEN_IDENTIFIER, lexemeIdentifier);
             }
-
             currentPosOfLexeme -= 1;
         } else {
             fprintf(stderr, "\nUnrecognised Input");
