@@ -27,6 +27,8 @@ The next major step is to develop a database management system from scratch to t
   - [Phase 4: Database Management System (SDBMS)](#phase-4-database-management-system-sdbms)
   - [Phase 5: Integration & Expansion](#phase-5-integration--expansion)
 - [How to Compile and Run the HTTP Web Server](#how-to-compile-and-run-the-http-web-server)
+- [How to Compile and Run the Messaging System](#how-to-compile-and-run-the-messaging-system)
+- [How to Compile and Run the SDBMS](#how-to-compile-and-run-the-sdbms)
 
 ---
 
@@ -149,7 +151,7 @@ make all
 ./threadpoolserver
 ```
 
-## How to Compile and Run the HTTP Web Socket Server
+## How to Compile and Run the Messaging System
 
 ```bash
 # Compile
