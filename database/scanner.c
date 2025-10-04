@@ -25,7 +25,6 @@ void scanTokens(char *buffer) {
 char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx,
                 char *bufferStart) {
     char c = *currentPosOfLexeme;
-    // printf("\nChar c: '%c', ASCII Value: %d", c, c);
 
     switch (c) {
         // Skip whitespace
@@ -122,8 +121,8 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx,
             capitaliseString(stringLiteral);
 
             if (strcmp(stringLiteral, "EXIT") == 0) {
-                destroyTokenList(ctx);
                 free(stringLiteral);
+                destroyTokenList(ctx);
                 exit(0);
             }
 
