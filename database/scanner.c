@@ -120,7 +120,6 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx,
             capitaliseString(stringLiteral);
             if (strcmp(stringLiteral, "EXIT") == 0) {
                 destroyTokenList(ctx);
-                free(stringLiteral);
                 exit(0);
             }
             bool found = false;
@@ -134,6 +133,7 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx,
                 addToken(ctx, TOKEN_IDENTIFIER,
                          getIdentifierLiteral(currentPosOfLexeme, bufferStart));
             }
+            free(stringLiteral);
             currentPosOfLexeme -= 1;
         } else {
             fprintf(stderr, "\nUnrecognised Input");
