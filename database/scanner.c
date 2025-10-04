@@ -115,13 +115,17 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx,
             // assuming that any identifier will begin with a character
         } else if (isAlpha(c)) {
             currentPosOfLexeme = identifier(currentPosOfLexeme);
+
             char *stringLiteral =
                 getIdentifierLiteral(currentPosOfLexeme, bufferStart);
+
             capitaliseString(stringLiteral);
+
             if (strcmp(stringLiteral, "EXIT") == 0) {
                 destroyTokenList(ctx);
                 exit(0);
             }
+
             bool found = false;
             for (int i = 0; i < (sizeof(keywords) / sizeof(Keyword)); i++) {
                 if (strcmp(keywords[i].keyword, stringLiteral) == 0) {
@@ -129,11 +133,12 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx,
                     found = true;
                 }
             }
+
             if (!found) {
                 addToken(ctx, TOKEN_IDENTIFIER,
                          getIdentifierLiteral(currentPosOfLexeme, bufferStart));
             }
-            free(stringLiteral);
+
             currentPosOfLexeme -= 1;
         } else {
             fprintf(stderr, "\nUnrecognised Input");
