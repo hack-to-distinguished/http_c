@@ -63,10 +63,9 @@ void destroyTokenList(tokenListCTX *ctx) {
         printf("\nDestroying Token at address %p!", ctx->tail[i].self);
         free(ctx->tail[i].self);
     }
-    if (ctx) {
-        printf("\nFreeing tokenListCTX at address %p\n", ctx);
-        free(ctx);
-    }
+    free(ctx->tail);
+    printf("\nFreeing tokenListCTX at address %p\n", ctx);
+    free(ctx);
     printf("\n");
     return;
 };
