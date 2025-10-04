@@ -49,8 +49,9 @@ void appendToken(Token *token, tokenListCTX *ctx) {
 void printAllTokens(tokenListCTX *ctx) {
     int counter = 0;
     while ((ctx->currentSize > counter)) {
-        printf("\nToken Type: %d, Lexeme: %s (%p)", ctx->tail[counter].type,
-               ctx->tail[counter].lexeme, &ctx->tail[counter]);
+        printf("\nToken Type: %d, Lexeme: %s (%p), Token Address: %p",
+               ctx->tail[counter].type, ctx->tail[counter].lexeme,
+               &ctx->tail[counter], ctx->tail[counter].self);
         counter += 1;
     }
     return;
@@ -62,8 +63,6 @@ void destroyTokenList(tokenListCTX *ctx) {
     for (size_t i = 0; i < ctx->currentSize; i++) {
         printf("\nDestroying Token at address %p!", ctx->tail[i].self);
         if (ctx->tail[i].type <= 13) {
-            printf("\nFreeing lexeme at %p ('%s') \n", ctx->tail[i].lexeme,
-                   ctx->tail[i].lexeme);
             free(ctx->tail[i].lexeme);
         }
         free(ctx->tail[i].self);
