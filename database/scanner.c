@@ -120,6 +120,7 @@ char *scanToken(char *currentPosOfLexeme, tokenListCTX *ctx,
             capitaliseString(stringLiteral);
             if (strcmp(stringLiteral, "EXIT") == 0) {
                 destroyTokenList(ctx);
+                free(stringLiteral);
                 exit(0);
             }
             bool found = false;
