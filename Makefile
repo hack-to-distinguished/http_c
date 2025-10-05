@@ -21,7 +21,7 @@ CLIENT_SRCS = client.c
 CLIENT_BIN = client
 
 # Simple Database Management System
-SDBMS_SRCS = database/input_buffer.c database/sdbms.c database/token_list.c database/scanner.c
+SDBMS_SRCS = database/input_buffer.c database/sdbms.c database/tokenizer/token_list.c database/tokenizer/scanner.c
 SDBMS_BIN = sdbms
 
 all: $(THREADPOOL_BIN) $(WEBSERVER_BIN) $(SSH_SERVER_BIN) $(SSH_CLIENT_BIN) $(CLIENT_BIN) $(SDBMS_BIN)
