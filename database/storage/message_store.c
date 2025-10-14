@@ -20,7 +20,7 @@ void ds_view_all_entries(flat_message_store fms[MSG_STORE_SIZE])
         // TODO: Fix the char pointer print above
         printf("Message Store send_status: %zu\n", fms[i].send_status);
         printf("Message Store recv_status: %zu\n", fms[i].recv_status);
-        if (fms[i].sender_id == NULL)
+        if (fms[i].last_item == 1)
         {
             break;
         }
@@ -44,7 +44,6 @@ void ds_stream_user_messages_desc() { return; }
 int main()
 {
     printf("Message store initalized\n\n");
-    size_t  msg_num = 0;
     time_t *sent_time, *recieved_time;
 
     // TEST: Adding this as an examples message
@@ -56,10 +55,9 @@ int main()
     fms[0].recv_time   = time(recieved_time);
     fms[0].send_status = 1;
     fms[0].recv_status = 1;
-    msg_num++;
+    fms[0].last_item   = 1;
     // TEST: Adding this as an examples message
 
-    printf("Number of messages saved: %zu\n", msg_num);
     ds_view_all_entries(fms);
 
     return (0);

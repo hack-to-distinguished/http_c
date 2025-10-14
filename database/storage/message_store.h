@@ -1,6 +1,3 @@
-// #include <stddef.h>
-// #include <stdio.h>
-// #include <string.h>
 #include <time.h>
 
 #define USER_ID_SIZE 256
@@ -16,8 +13,11 @@ typedef struct
     char   msg_type;
     size_t send_status; // 0=Failed 1=Sent 2=Pending
     size_t recv_status; // 1=Received 2=Read
+    int    last_item;   // 1=Last item
 } flat_message_store;
-
+// INFO: When appending to the list,
+// mark the current item with 0
+// and the new item with 1
 
 void ds_view_all_entries(flat_message_store fms[MSG_STORE_SIZE]);
 void ds_resize_store();
