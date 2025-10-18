@@ -5,6 +5,7 @@
 
 typedef struct
 {
+    int    ID; // Increment with each new item
     char   sender_id[USER_ID_SIZE];
     char   recipient_id[USER_ID_SIZE];
     char*  message;
@@ -14,7 +15,6 @@ typedef struct
     char   msg_type;
     size_t send_status; // 0=Failed 1=Sent 2=Pending
     size_t recv_status; // 1=Received 2=Read
-    int    item_count;  // Increment with each new item
 } flat_message_store;
 
 extern int* end_of_db_ptr;

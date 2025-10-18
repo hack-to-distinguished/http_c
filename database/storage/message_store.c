@@ -5,27 +5,14 @@
 #include <time.h>
 #include "message_store.h"
 
-int* end_of_db_ptr = NULL;
-
 void ms_view_all_entries(flat_message_store* fms)
 {
-
-    printf("Message Store sender_id: %s\n", fms->sender_id);
-    printf("Message Store recipient_id: %s\n", fms->recipient_id);
-    printf("Message Store msg_len: %zu\n", fms->msg_len);
-    printf("Message Store message: %s\n", fms->message);
-    printf("Message Store send_time: %jd\n", fms->send_time);
-    printf("Message Store recv_time: %jd\n", fms->recv_time);
-    printf("Message Store msg_type: %c\n", fms->msg_type);
-    // TODO: Fix the char pointer print above
-    printf("Message Store send_status: %zu\n", fms->send_status);
-    printf("Message Store recv_status: %zu\n", fms->recv_status);
-
+    // INFO: Start at 1 bc the first msg is empty
     int i = 1;
-    printf("Starting at item: %d\n", fms[i - 1].item_count);
-    while (fms[i].item_count > fms[i - 1].item_count)
+    while (fms[i].ID > fms[i - 1].ID)
     {
         printf("\nIteration num: %d\n", i);
+        printf("Message Store ID: %d\n", fms[i].ID);
         printf("Message Store sender_id: %s\n", fms[i].sender_id);
         printf("Message Store recipient_id: %s\n", fms[i].recipient_id);
         printf("Message Store msg_len: %zu\n", fms[i].msg_len);
@@ -38,17 +25,18 @@ void ms_view_all_entries(flat_message_store* fms)
         printf("Message Store recv_status: %zu\n", fms[i].recv_status);
         i++;
     }
+    printf("Messages printed: %d\n\n", i);
 }
 
 int* ms_point_to_last_entry(flat_message_store* fms)
 {
     int i = 1;
-    while (fms[i].item_count > fms[i - 1].item_count)
+    while (fms[i].ID > fms[i - 1].ID)
     {
         i++;
     }
-    printf("Number of items saved: %d\n", fms[i - 1].item_count);
-    return &fms[i - 1].item_count;
+    printf("End of list at: %d\n", fms[i - 1].ID);
+    return &fms[i - 1].ID;
 }
 
 // TODO: Create get latest entry
@@ -68,12 +56,14 @@ void ms_stream_user_messages_desc(char* sender_id)
     return;
 }
 
-// TODO: Implement a add message function
 void ms_add_message(char* sender_id, char* recipient_id, char* user_message,
                     time_t* sent_time, time_t* recieved_time,
                     flat_message_store* fms, int** end_of_db_ptr)
 {
     int index = **end_of_db_ptr;
+    index++;
+    printf("Inserting data at index %d\n", index);
+
     strcpy(fms[index].sender_id, sender_id);
     strcpy(fms[index].recipient_id, recipient_id);
     fms[index].msg_len = strlen(user_message);
@@ -83,8 +73,9 @@ void ms_add_message(char* sender_id, char* recipient_id, char* user_message,
     fms[index].recv_time   = time(recieved_time);
     fms[index].send_status = 1;
     fms[index].recv_status = 1;
-    fms[index].item_count  = index;
-    *end_of_db_ptr         = &fms[index].item_count;
+    fms[index].ID          = index;
+
+    *end_of_db_ptr = &fms[index].ID;
     return;
 
     // IMPROVEMENT:
@@ -92,15 +83,18 @@ void ms_add_message(char* sender_id, char* recipient_id, char* user_message,
     // - This function needs to work in conflicting cases
 }
 
-// TODO: Implement resizing mechanism when the store fills up
-void ms_resize_store() { return; }
+void ms_resize_store()
+{
+    // TODO: Implement resizing mechanism when the store fills up
+    return;
+}
 
 void free_memory(flat_message_store* fms)
 {
     printf("Freeing memory allocated to messages\n");
     int i = 1;
     free(fms[0].message);
-    while (fms[i].item_count > fms[i - 1].item_count)
+    while (fms[i].ID > fms[i - 1].ID)
     {
         free(fms[i].message);
         i++;
@@ -110,30 +104,22 @@ void free_memory(flat_message_store* fms)
 
 int main()
 {
+    // INFO: The blow is for testing purposes
     flat_message_store fms[MSG_STORE_SIZE];
-    time_t             now = time(NULL);
     printf("Message store initalized\n\n");
+    int*   end_of_db_ptr = &fms[0].ID;
+    time_t now           = time(NULL);
 
-    // TEST: Adding this as an examples message
-    strcpy(fms[0].sender_id, "christian");
-    strcpy(fms[0].recipient_id, "alejandro");
-    fms[0].msg_len = 40;
-    fms[0].message = malloc(fms[0].msg_len);
-    strcpy(fms[0].message, "Msg % from *7323 User");
-    fms[0].send_time   = time(NULL);
-    fms[0].recv_time   = time(NULL);
-    fms[0].send_status = 1;
-    fms[0].recv_status = 1;
-    fms[0].item_count  = 1;
-    // TEST: Adding this as an examples message
+    ms_add_message("Christian", "Juan", "Another One", &now, &now, fms,
+                   &end_of_db_ptr);
 
-    // ms_add_message("chris", "nj", "test-message", &now, &now, fms,
-    //                &end_of_db_ptr);
+    ms_add_message("chris", "nj", "test-message", &now, &now, fms,
+                   &end_of_db_ptr);
+    ms_add_message("Alejandro", "Christian", "test message 2", &now, &now, fms,
+                   &end_of_db_ptr);
     ms_view_all_entries(fms);
-    int* end_of_db_ptr = ms_point_to_last_entry(fms);
+    // end_of_db_ptr = ms_point_to_last_entry(fms);
 
-    // TODO: Free all memory
     free_memory(fms);
-
     return (0);
 }
