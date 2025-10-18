@@ -40,19 +40,49 @@ int* ms_point_to_last_entry(flat_message_store* fms)
 }
 
 // TODO: Create get latest entry
-void ms_stream_messages_desc()
+void ms_stream_messages_desc(flat_message_store* fms, int** end_of_db_ptr)
 {
     // TODO:
     // - Read the saved data
+    // - Send data out in desc order:
+    //    - get the end_of_db_ptr, while loop backwards
     // - Stream the results as they become available
+
+    printf("\nStreaming messages\n");
+    int index = **end_of_db_ptr;
+    while (fms[index - 1].ID < fms[index].ID)
+    {
+        // TODO: Change this to a stream to page or something
+        printf("%s\n", fms[index].message);
+        index--;
+    }
     return;
 }
-void ms_stream_user_messages_desc(char* sender_id)
+
+void ms_show_latest_msg();
+
+void ms_stream_user_messages_desc(flat_message_store* fms, int** end_of_db_ptr,
+                                  char* sender_id)
 {
+    // INFO: Creating linked lists between a users message would make
+    // getting those user's message much faster
     // TODO:
     // - Read the saved data
     // - Filter by sender_id (How does SQL have such fast filters)
     // - Stream the results as they become available
+
+    printf("\nGetting %s's messages\n", sender_id);
+    int index = **end_of_db_ptr;
+    while (fms[index - 1].ID < fms[index].ID)
+    {
+        // TODO: Change this to a stream to page or something
+        if (strcmp(fms[index].sender_id, sender_id))
+        {
+            printf("%s\n", fms[index].message);
+        }
+        index--;
+    }
+    return;
     return;
 }
 
@@ -117,7 +147,11 @@ int main()
                    &end_of_db_ptr);
     ms_add_message("Alejandro", "Christian", "test message 2", &now, &now, fms,
                    &end_of_db_ptr);
-    ms_view_all_entries(fms);
+    // ms_view_all_entries(fms);
+
+    ms_stream_messages_desc(fms, &end_of_db_ptr);
+    ms_stream_user_messages_desc(fms, &end_of_db_ptr, "Christian");
+
     // end_of_db_ptr = ms_point_to_last_entry(fms);
 
     free_memory(fms);
