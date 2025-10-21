@@ -52,10 +52,10 @@ void ms_stream_messages_desc(flat_message_store* fms, int** end_of_db_ptr)
     int index = **end_of_db_ptr;
     while (fms[index - 1].ID < fms[index].ID)
     {
-        // TODO: Change this to a stream to page or something
-        printf("%s\n", fms[index].message);
+        puts(fms[index].message);
         index--;
     }
+    printf("\n --- End of stream ---\n\n");
     return;
 }
 
@@ -75,14 +75,13 @@ void ms_stream_user_messages_desc(flat_message_store* fms, int** end_of_db_ptr,
     int index = **end_of_db_ptr;
     while (fms[index - 1].ID < fms[index].ID)
     {
-        // TODO: Change this to a stream to page or something
-        if (strcmp(fms[index].sender_id, sender_id))
+        if (strcmp(fms[index].sender_id, sender_id) == 0)
         {
-            printf("%s\n", fms[index].message);
+            puts(fms[index].message);
         }
         index--;
     }
-    return;
+    printf("\n --- End of stream ---\n\n");
     return;
 }
 
@@ -140,12 +139,12 @@ int main()
     int*   end_of_db_ptr = &fms[0].ID;
     time_t now           = time(NULL);
 
-    ms_add_message("Christian", "Juan", "Another One", &now, &now, fms,
+    ms_add_message("Christian", "Juan", "Christian test msg", &now, &now, fms,
                    &end_of_db_ptr);
 
-    ms_add_message("chris", "nj", "test-message", &now, &now, fms,
+    ms_add_message("chris", "nj", "chris test msg", &now, &now, fms,
                    &end_of_db_ptr);
-    ms_add_message("Alejandro", "Christian", "test message 2", &now, &now, fms,
+    ms_add_message("Alejandro", "Christian", "NJ test msg", &now, &now, fms,
                    &end_of_db_ptr);
     // ms_view_all_entries(fms);
 
