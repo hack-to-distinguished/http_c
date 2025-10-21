@@ -24,7 +24,11 @@ CLIENT_BIN = client
 SDBMS_SRCS = database/input_buffer.c database/sdbms.c database/token_list.c database/scanner.c
 SDBMS_BIN = sdbms
 
-all: $(THREADPOOL_BIN) $(WEBSERVER_BIN) $(SSH_SERVER_BIN) $(SSH_CLIENT_BIN) $(CLIENT_BIN) $(SDBMS_BIN)
+# Data store
+DST_SRC = database/storage/message_store.c
+DST_BIN = msgstore
+
+all: $(THREADPOOL_BIN) $(WEBSERVER_BIN) $(SSH_SERVER_BIN) $(SSH_CLIENT_BIN) $(CLIENT_BIN) $(SDBMS_BIN) $(DST_BIN)
 
 $(THREADPOOL_BIN): $(THREADPOOL_SRCS)
 	$(CC) $(CFLAGS) -o $@ $^
@@ -44,7 +48,10 @@ $(CLIENT_BIN): $(CLIENT_SRCS)
 $(SDBMS_BIN): $(SDBMS_SRCS)
 	$(CC) $(CFLAGS) -o $@ $^
 
+$(DST_BIN): $(DST_SRC)
+	$(CC) $(CFLAGS) -o $@ $^
+
 clean:
-	rm -f $(THREADPOOL_BIN) $(WEBSERVER_BIN) $(SSH_SERVER_BIN) $(SSH_CLIENT_BIN) $(CLIENT_BIN) $(SDBMS_BIN)
+	rm -f $(THREADPOOL_BIN) $(WEBSERVER_BIN) $(SSH_SERVER_BIN) $(SSH_CLIENT_BIN) $(CLIENT_BIN) $(SDBMS_BIN) $(DST_BIN)
 
 .PHONY: all clean

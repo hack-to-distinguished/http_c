@@ -10,6 +10,7 @@ mul_client_server
 skeleton
 *.o
 sdbms
+msg*
 
 # Random
 .DS_Store
