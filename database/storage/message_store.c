@@ -42,12 +42,6 @@ int* ms_point_to_last_entry(flat_message_store* fms)
 // TODO: Create get latest entry
 void ms_stream_messages_desc(flat_message_store* fms, int** end_of_db_ptr)
 {
-    // TODO:
-    // - Read the saved data
-    // - Send data out in desc order:
-    //    - get the end_of_db_ptr, while loop backwards
-    // - Stream the results as they become available
-
     printf("\nStreaming messages\n");
     int index = **end_of_db_ptr;
     while (fms[index - 1].ID < fms[index].ID)
@@ -66,11 +60,6 @@ void ms_stream_user_messages_desc(flat_message_store* fms, int** end_of_db_ptr,
 {
     // INFO: Creating linked lists between a users message would make
     // getting those user's message much faster
-    // TODO:
-    // - Read the saved data
-    // - Filter by sender_id (How does SQL have such fast filters)
-    // - Stream the results as they become available
-
     printf("\nGetting %s's messages\n", sender_id);
     int index = **end_of_db_ptr;
     while (fms[index - 1].ID < fms[index].ID)
@@ -133,7 +122,7 @@ void free_memory(flat_message_store* fms)
 
 int main()
 {
-    // INFO: The blow is for testing purposes
+    // INFO: Code below is for testing purposes
     flat_message_store fms[MSG_STORE_SIZE];
     printf("Message store initalized\n\n");
     int*   end_of_db_ptr = &fms[0].ID;
