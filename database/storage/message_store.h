@@ -25,6 +25,8 @@ void ms_resize_store();
 void ms_add_message(char* sender_id, char* recipient_id, char* user_message,
                     time_t* sent_time, time_t* recieved_time,
                     flat_message_store* fms, int** end_of_db_ptr);
-void ms_stream_messages_desc();
-void ms_stream_user_messages_desc(char* sender_id);
+void ms_stream_messages_desc(flat_message_store* fms, int** end_of_db_ptr);
+void ms_stream_user_messages_desc(flat_message_store* fms, int** end_of_db_ptr,
+                                  char* sender_id);
+void ms_show_latest_msg();
 void free_memory(flat_message_store* fms);

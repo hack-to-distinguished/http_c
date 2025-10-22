@@ -40,19 +40,37 @@ int* ms_point_to_last_entry(flat_message_store* fms)
 }
 
 // TODO: Create get latest entry
-void ms_stream_messages_desc()
+void ms_stream_messages_desc(flat_message_store* fms, int** end_of_db_ptr)
 {
-    // TODO:
-    // - Read the saved data
-    // - Stream the results as they become available
+    printf("\nStreaming messages\n");
+    int index = **end_of_db_ptr;
+    while (fms[index - 1].ID < fms[index].ID)
+    {
+        puts(fms[index].message);
+        index--;
+    }
+    printf("\n --- End of stream ---\n\n");
     return;
 }
-void ms_stream_user_messages_desc(char* sender_id)
+
+void ms_show_latest_msg();
+
+void ms_stream_user_messages_desc(flat_message_store* fms, int** end_of_db_ptr,
+                                  char* sender_id)
 {
-    // TODO:
-    // - Read the saved data
-    // - Filter by sender_id (How does SQL have such fast filters)
-    // - Stream the results as they become available
+    // INFO: Creating linked lists between a users message would make
+    // getting those user's message much faster
+    printf("\nGetting %s's messages\n", sender_id);
+    int index = **end_of_db_ptr;
+    while (fms[index - 1].ID < fms[index].ID)
+    {
+        if (strcmp(fms[index].sender_id, sender_id) == 0)
+        {
+            puts(fms[index].message);
+        }
+        index--;
+    }
+    printf("\n --- End of stream ---\n\n");
     return;
 }
 
@@ -104,20 +122,24 @@ void free_memory(flat_message_store* fms)
 
 int main()
 {
-    // INFO: The blow is for testing purposes
+    // INFO: Code below is for testing purposes
     flat_message_store fms[MSG_STORE_SIZE];
     printf("Message store initalized\n\n");
     int*   end_of_db_ptr = &fms[0].ID;
     time_t now           = time(NULL);
 
-    ms_add_message("Christian", "Juan", "Another One", &now, &now, fms,
+    ms_add_message("Christian", "Juan", "Christian test msg", &now, &now, fms,
                    &end_of_db_ptr);
 
-    ms_add_message("chris", "nj", "test-message", &now, &now, fms,
+    ms_add_message("chris", "nj", "chris test msg", &now, &now, fms,
                    &end_of_db_ptr);
-    ms_add_message("Alejandro", "Christian", "test message 2", &now, &now, fms,
+    ms_add_message("Alejandro", "Christian", "NJ test msg", &now, &now, fms,
                    &end_of_db_ptr);
-    ms_view_all_entries(fms);
+    // ms_view_all_entries(fms);
+
+    ms_stream_messages_desc(fms, &end_of_db_ptr);
+    ms_stream_user_messages_desc(fms, &end_of_db_ptr, "Christian");
+
     // end_of_db_ptr = ms_point_to_last_entry(fms);
 
     free_memory(fms);
