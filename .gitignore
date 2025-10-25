@@ -4,6 +4,7 @@ threadpoolserver
 omar
 threadedserver
 server
+websock_server
 persistent_client
 .clang-format
 mul_client_server
