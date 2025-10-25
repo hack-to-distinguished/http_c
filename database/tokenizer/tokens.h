@@ -12,6 +12,8 @@ typedef enum {
     TOKEN_KEYWORD_NULL,
     TOKEN_KEYWORD_AND,
     TOKEN_KEYWORD_OR,
+    TOKEN_KEYWORD_ORDER,
+    TOKEN_KEYWORD_BY,
 
     // Identifiers -> names of columns, tables, etc
     TOKEN_IDENTIFIER,
@@ -53,15 +55,12 @@ typedef struct {
     TokenType type;
 } Keyword;
 
-static Keyword keywords[] = {{"SELECT", TOKEN_KEYWORD_SELECT},
-                             {"INSERT", TOKEN_KEYWORD_INSERT},
-                             {"DELETE", TOKEN_KEYWORD_DELETE},
-                             {"FROM", TOKEN_KEYWORD_FROM},
-                             {"UPDATE", TOKEN_KEYWORD_UPDATE},
-                             {"WHERE", TOKEN_KEYWORD_WHERE},
-                             {"EXIT", TOKEN_KEYWORD_EXIT},
-                             {"NULL", TOKEN_KEYWORD_NULL},
-                             {"AND", TOKEN_KEYWORD_AND},
-                             {"OR", TOKEN_KEYWORD_OR}
+static Keyword keywords[] = {
+    {"SELECT", TOKEN_KEYWORD_SELECT}, {"INSERT", TOKEN_KEYWORD_INSERT},
+    {"DELETE", TOKEN_KEYWORD_DELETE}, {"FROM", TOKEN_KEYWORD_FROM},
+    {"UPDATE", TOKEN_KEYWORD_UPDATE}, {"WHERE", TOKEN_KEYWORD_WHERE},
+    {"EXIT", TOKEN_KEYWORD_EXIT},     {"NULL", TOKEN_KEYWORD_NULL},
+    {"AND", TOKEN_KEYWORD_AND},       {"OR", TOKEN_KEYWORD_OR},
+    {"ORDER", TOKEN_KEYWORD_ORDER},   {"BY", TOKEN_KEYWORD_BY},
 
 };
