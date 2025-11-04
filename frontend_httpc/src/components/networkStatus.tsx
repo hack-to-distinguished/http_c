@@ -20,7 +20,7 @@ function NetworkStatus({ connectionStatus }) {
       <strong>Connection Status:</strong>
       <span className={getStatusClass()}>{connectionStatus}</span>
       <div className="connection-date">
-        {new Date().toLocaleDateString("en-US", {
+        {new Date().toLocaleDateString("en-UK", {
           month: "short",
           day: "numeric",
           year: "numeric",
