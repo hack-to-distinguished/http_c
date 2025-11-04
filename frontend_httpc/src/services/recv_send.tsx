@@ -19,6 +19,7 @@ export const handleMessage = async ({socket, setMessages, event: MessageEvent}) 
 };
 
 
+// This one is used, the above isn't
 export const sendMessage = async ({ socket, currentMessage, setMessages }) => {
   if (currentMessage && socket.current?.readyState === 1) {
     socket.current.send(currentMessage);

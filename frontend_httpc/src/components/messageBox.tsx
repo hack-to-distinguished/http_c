@@ -3,7 +3,7 @@ import { sendMessage } from "../services/recv_send.tsx";
 import "./messageBox.css";
 
 interface MessageBoxProps {
-  socket: WebSocket;
+  socket: React.RefObject<WebSocket | null>;
   connectionStatus: string;
 }
 
