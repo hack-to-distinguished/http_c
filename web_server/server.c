@@ -23,7 +23,6 @@ void error(const char *msg) {
     exit(1);
 }
 
-// AI Generated Base64 encoder
 static const char b64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 size_t ws_base64_encode(const unsigned char *in, size_t in_len, char *out, size_t out_size) {
     size_t i = 0, o = 0;
@@ -46,7 +45,6 @@ size_t ws_base64_encode(const unsigned char *in, size_t in_len, char *out, size_
     return o;  // returns number of bytes written (not counting null terminator)
 }
 
-// AI generated frame decoder
 ssize_t ws_recv_frame(int sock, char *out, size_t max_len) {
     unsigned char hdr[2];
     if (recv(sock, hdr, 2, 0) <= 0) return -1;
@@ -58,7 +56,18 @@ ssize_t ws_recv_frame(int sock, char *out, size_t max_len) {
 
     // Handle close frame
     if (opcode == 8) {
+        printf("Received close frame from socket %d\n", sock);
+        // Send close frame back
+        unsigned char close_frame[2] = {0x88, 0x00}; // Close frame with no payload
+        send(sock, close_frame, 2, 0);
         return -1;
+    }
+
+    if (opcode == 9) {
+        printf("Received ping from socket %d, sending pong\n", sock);
+        unsigned char pong[2] = {0x8A, 0x00}; // Pong frame
+        send(sock, pong, 2, 0);
+        return 0; // Don't pass to application
     }
 
     if (payload_len == 126) {
@@ -102,7 +111,6 @@ ssize_t ws_recv_frame(int sock, char *out, size_t max_len) {
     return payload_len;
 }
 
-// WebSocket frame sender
 void ws_send_frame(int sock, const char *msg) {
     size_t len = strlen(msg);
 
@@ -146,17 +154,29 @@ void ws_send_frame(int sock, const char *msg) {
 
 void ws_send_http_response(int sock, const char *body) {
     char response[BUFFER_SIZE];
-    int body_len = strlen(body) + 15; // Add 15 to account for the JSON format
+    char escaped[BUFFER_SIZE];
+
+    // JSON escaping
+    size_t j = 0;
+    for (size_t i = 0; body[i] && j < BUFFER_SIZE - 2; i++) {
+        if (body[i] == '"' || body[i] == '\\') {
+            escaped[j++] = '\\';
+        }
+        escaped[j++] = body[i];
+    }
+    escaped[j] = '\0';
+
+    int body_len = snprintf(NULL, 0, "{\"message\": \"%s\"}", escaped);
 
     snprintf(response, sizeof(response),
          "HTTP/1.1 200 OK\r\n"
          "Content-Type: application/json\r\n"
          "Access-Control-Allow-Origin: *\r\n"
          "Content-Length: %d\r\n"
-         "Connection: keep-alive\r\n"
+         "Connection: close\r\n"
          "\r\n"
          "{\"message\": \"%s\"}",
-         body_len, body);
+         body_len, escaped);
     write(sock, response, strlen(response));
 }
 
@@ -225,7 +245,6 @@ const char *ws_parse_websocket_http(const char *http_header) {
     return accept_key;
 }
 
-// Client data structure
 typedef struct {
     int fd;
     bool is_websocket;
@@ -239,7 +258,6 @@ int main(int argc, char *argv[]) {
     int server_fd;
     int reuse_addr_flag = 1;
 
-    // Initialize client array
     client_t clients[MAX_CLIENTS];
     for (int i = 0; i < MAX_CLIENTS; i++) {
         clients[i].fd = -1;
@@ -288,10 +306,10 @@ int main(int argc, char *argv[]) {
 
     char buffer[BUFFER_SIZE];
 
-    // flat_message_store fms[MSG_STORE_SIZE];
-    // time_t now = time(NULL);
-    // int* end_of_db_ptr = &fms[0].ID;
-    // end_of_db_ptr = ms_point_to_last_entry(fms);
+    flat_message_store fms[MSG_STORE_SIZE];
+    time_t now = time(NULL);
+    int* end_of_db_ptr = &fms[0].ID;
+    end_of_db_ptr = ms_point_to_last_entry(fms);
 
     while (1) {
         int poll_count = poll(pfds, fd_count, -1);
@@ -307,6 +325,37 @@ int main(int argc, char *argv[]) {
                 perror("Accept failed");
                 continue;
             }
+
+            int keepalive = 1;
+            if (setsockopt(client_fd, SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive)) == -1) {
+                perror("Failed to set SO_KEEPALIVE");
+            }
+
+#ifdef TCP_KEEPIDLE
+            int keepidle = 10;    // Start probing after 10 seconds idle
+            if (setsockopt(client_fd, IPPROTO_TCP, TCP_KEEPIDLE, &keepidle, sizeof(keepidle)) == -1) {
+                perror("Failed to set TCP_KEEPIDLE");
+            }
+#elif defined(TCP_KEEPALIVE)  // macOS uses TCP_KEEPALIVE instead
+            int keepidle = 10;
+            if (setsockopt(client_fd, IPPROTO_TCP, TCP_KEEPALIVE, &keepidle, sizeof(keepidle)) == -1) {
+                perror("Failed to set TCP_KEEPALIVE");
+            }
+#endif
+
+#ifdef TCP_KEEPINTVL
+            int keepintvl = 5;    // Probe every 5 seconds
+            if (setsockopt(client_fd, IPPROTO_TCP, TCP_KEEPINTVL, &keepintvl, sizeof(keepintvl)) == -1) {
+                perror("Failed to set TCP_KEEPINTVL");
+            }
+#endif
+
+#ifdef TCP_KEEPCNT
+            int keepcnt = 3;      // Drop after 3 failed probes
+            if (setsockopt(client_fd, IPPROTO_TCP, TCP_KEEPCNT, &keepcnt, sizeof(keepcnt)) == -1) {
+                perror("Failed to set TCP_KEEPCNT");
+            }
+#endif
 
             client_addr = (struct sockaddr_in*)&their_addr;
             char client_ip[INET6_ADDRSTRLEN];
@@ -398,7 +447,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 printf("Received from %s (%d): %s\n", clients[client_idx].ip, client_sock, buffer);
-                // ms_add_message(clients[client_idx].ip, "all", buffer, &now, &now, fms, &end_of_db_ptr);
+                ms_add_message(clients[client_idx].ip, "all", buffer, &now, &now, fms, &end_of_db_ptr);
 
                 for (int j = 0; j < MAX_CLIENTS; j++) {
                     if (clients[j].fd != -1 && clients[j].is_websocket) {
