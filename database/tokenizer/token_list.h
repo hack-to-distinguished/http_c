@@ -4,7 +4,7 @@
 
 typedef struct {
     Token *indexPosition;
-    Token *tail;
+    Token *tokenList;
     size_t maxSize;
     size_t currentSize;
 } tokenListCTX;

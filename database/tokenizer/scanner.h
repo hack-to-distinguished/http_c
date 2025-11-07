@@ -1,4 +1,5 @@
-#include "token_list.h"
+// #include "token_list.h"
+#include "../parser/parser.h"
 #include <stdbool.h>
 
 void scanTokens(char *buffer);

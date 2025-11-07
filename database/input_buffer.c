@@ -1,5 +1,6 @@
 #include "input_buffer.h"
-#include "scanner.h"
+// #include "parser/parser.h"
+#include "tokenizer/scanner.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
