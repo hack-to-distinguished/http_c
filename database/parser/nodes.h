@@ -130,7 +130,7 @@ typedef struct SelectListNode {
     ASTNode base;
     int count;
     SimpleExprNode **items;
-    bool isStar; // supports SELECT *
+    bool isWildCard; // supports SELECT *
 } SelectListNode;
 
 typedef struct TableListNode {

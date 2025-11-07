@@ -32,6 +32,9 @@ void appendToken(Token *token, tokenListCTX *ctx) {
         *ctx->indexPosition = *token;
         ctx->indexPosition += 1;
         ctx->currentSize += 1;
+        if (ctx->currentSize == 1) {
+            ctx->head = token;
+        }
     } else {
         ctx->currentSize += 1;
         ctx->tail =
@@ -48,6 +51,7 @@ void appendToken(Token *token, tokenListCTX *ctx) {
 
 void printAllTokens(tokenListCTX *ctx) {
     int counter = 0;
+    printf("\nHead Pointer: %p", ctx->head);
     while ((ctx->currentSize > counter)) {
         printf("\nToken Type: %d, Lexeme: %s (%p), Token Address: %p",
                ctx->tail[counter].type, ctx->tail[counter].lexeme,
